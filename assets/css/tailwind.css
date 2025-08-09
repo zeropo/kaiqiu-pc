@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base tweaks */
+html, body, #__nuxt {
+  height: 100%;
+}
+
+.page-enter-active, .page-leave-active { transition: opacity 160ms ease; }
+.page-enter-from, .page-leave-to { opacity: 0; }
+
