@@ -29,7 +29,7 @@
             <td class="p-3">{{ u.score }}</td>
             <td class="p-3">{{ u.maxscore }}</td>
             <td class="p-3">{{ u.residecity }}</td>
-            <td class="p-3"><NuxtLink :to="`/points/${u.uid}`" class="text-brand-primary">详情</NuxtLink></td>
+            <td class="p-3"><a :href="`/scores/${u.uid}`" class="text-brand-primary">详情</a></td>
           </tr>
           <tr v-if="!list.length">
             <td colspan="5" class="p-6 text-center text-gray-500">暂无数据</td>
@@ -45,7 +45,7 @@
 
 <script setup>
 definePageMeta({ title: '积分列表' })
-const city = ref('')
+const { city, tryGeolocation } = useCity()
 const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
@@ -70,6 +70,7 @@ const load = async (p = 1) => {
   }
 }
 
-onMounted(() => load(1))
+onMounted(async () => { await load(1) })
 </script>
+
 

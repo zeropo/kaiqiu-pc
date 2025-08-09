@@ -21,17 +21,7 @@
 
     <div v-else>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <article v-for="m in list" :key="m.eventid" class="rounded-card border border-gray-100 overflow-hidden">
-          <NuxtImg :src="m.poster" alt="poster" class="w-full h-40 object-cover" />
-          <div class="p-4">
-            <h3 class="font-medium line-clamp-2">{{ m.title }}</h3>
-            <p class="text-sm text-gray-500 mt-1">{{ m.starttime }} · {{ m.arena_name }}</p>
-            <div class="flex items-center justify-between mt-3">
-              <span class="text-xs text-gray-500">{{ m.status }}</span>
-              <NuxtLink :to="`/matches/${m.eventid}`" class="text-brand-primary text-sm">详情</NuxtLink>
-            </div>
-          </div>
-        </article>
+        <MatchCard v-for="m in list" :key="m.eventid" :match="m" />
       </div>
 
       <div class="flex items-center justify-center mt-8" v-if="hasMore">
@@ -44,7 +34,7 @@
 
 <script setup>
 definePageMeta({ title: '比赛列表' })
-const city = ref('')
+const { city, lat, lng } = useCity()
 const sort = ref(2)
 const page = ref(1)
 const list = ref([])
@@ -56,7 +46,7 @@ const { $api } = useNuxtApp()
 const load = async (p = 1) => {
   loading.value = true
   try {
-    const res = await $api('/match/lists', { method: 'POST', body: { city: city.value, sort: sort.value, page: p } })
+    const res = await $api('/match/lists', { method: 'POST', body: { city: city.value, lat: lat.value, lng: lng.value, sort: sort.value, page: p } })
     const rows = res?.data?.data || []
     if (p === 1) list.value = rows; else list.value = list.value.concat(rows)
     page.value = p
@@ -70,6 +60,7 @@ const load = async (p = 1) => {
   }
 }
 
-onMounted(() => load(1))
+// 不在首屏自动请求定位，避免权限提示。
+onMounted(async () => { await load(1) })
 </script>
 

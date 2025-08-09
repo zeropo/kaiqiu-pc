@@ -29,7 +29,7 @@
               <td class="p-3">{{ i + 1 }}</td>
               <td class="p-3">{{ u.realname }}</td>
               <td class="p-3">{{ u.score }}</td>
-              <td class="p-3"><NuxtLink :to="`/points/${u.uid}`" class="text-brand-primary">详情</NuxtLink></td>
+              <td class="p-3"><a :href="`/scores/${u.uid}`" class="text-brand-primary">详情</a></td>
             </tr>
             <tr v-if="!list.length">
               <td colspan="4" class="p-6 text-center text-gray-500">暂无数据</td>

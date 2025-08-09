@@ -5,7 +5,7 @@ export default defineEventHandler(() => {
     '/arenas',
     '/coaches',
     '/umpires',
-    '/points',
+    '/scores',
     '/rankings',
     '/search'
   ]

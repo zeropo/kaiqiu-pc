@@ -14,17 +14,7 @@
 
     <div v-else>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <article v-for="a in list" :key="a.id" class="rounded-card border border-gray-100 overflow-hidden">
-          <NuxtImg :src="a.image" class="w-full h-36 object-cover" />
-          <div class="p-4">
-            <h3 class="font-medium line-clamp-2">{{ a.name }}</h3>
-            <p class="text-sm text-gray-500 mt-1">{{ a.address }}</p>
-            <div class="flex items-center justify-between mt-3">
-              <span class="text-xs text-gray-500">{{ a.distance }}</span>
-              <NuxtLink :to="`/arenas/${a.id}`" class="text-brand-primary text-sm">详情</NuxtLink>
-            </div>
-          </div>
-        </article>
+        <ArenaCard v-for="a in list" :key="a.id" :arena="a" />
       </div>
 
       <div class="flex items-center justify-center mt-8" v-if="hasMore">
@@ -37,7 +27,7 @@
 
 <script setup>
 definePageMeta({ title: '球馆列表' })
-const city = ref('')
+const { city, lat, lng } = useCity()
 const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
@@ -48,7 +38,7 @@ const { $api } = useNuxtApp()
 const load = async (p = 1) => {
   loading.value = true
   try {
-    const res = await $api('/arena/lists', { method: 'POST', body: { city: city.value, page: p } })
+    const res = await $api('/arena/lists', { method: 'POST', body: { city: city.value, lat: lat.value, lng: lng.value, page: p } })
     const rows = res?.data?.data || []
     if (p === 1) list.value = rows; else list.value = list.value.concat(rows)
     page.value = p
@@ -62,6 +52,6 @@ const load = async (p = 1) => {
   }
 }
 
-onMounted(() => load(1))
+onMounted(async () => { await load(1) })
 </script>
 

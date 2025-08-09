@@ -1,6 +1,7 @@
 // Nuxt configuration (JavaScript only, no TypeScript)
 export default defineNuxtConfig({
   ssr: true,
+  components: [{ path: '~/components', pathPrefix: false }],
   modules: [
     '@nuxtjs/tailwindcss',
     '@nuxt/image'
@@ -9,6 +10,12 @@ export default defineNuxtConfig({
     '@/assets/css/tailwind.css',
     '@/assets/design/tokens.css'
   ],
+  postcss: {
+    plugins: {
+      tailwindcss: {},
+      autoprefixer: {}
+    }
+  },
   app: {
     head: {
       titleTemplate: (title) => {

@@ -15,7 +15,7 @@
     <div v-else-if="detail">
       <div class="grid md:grid-cols-3 gap-6">
         <div class="md:col-span-2">
-          <NuxtImg :src="detail.poster" class="w-full h-56 object-cover rounded-card" />
+          <ImgFallback :src="detail.poster" class="w-full h-56 object-cover rounded-card" />
           <h1 class="text-xl font-semibold mt-4">{{ detail.title }}</h1>
           <p class="text-gray-600 mt-1">{{ detail.province }}{{ detail.city }} · {{ detail.arena_name }}</p>
           <p class="text-gray-600">开始 {{ detail.starttime }} · 截止 {{ detail.deadline }}</p>
@@ -57,7 +57,7 @@
           <div class="rounded-card border border-gray-100 p-4">
             <h3 class="font-medium">举办球馆</h3>
             <p class="text-sm text-gray-600">{{ detail.arena_name }}</p>
-            <NuxtLink v-if="detail.shopid" :to="`/arenas/${detail.shopid}`" class="text-brand-primary text-sm mt-2 inline-block">查看球馆</NuxtLink>
+            <a v-if="detail.shopid" :href="`/arenas/${detail.shopid}`" class="text-brand-primary text-sm mt-2 inline-block">查看球馆</a>
           </div>
         </aside>
       </div>
@@ -73,6 +73,7 @@ const id = computed(() => route.params.id)
 const detail = ref(null)
 const items = ref([])
 const decodedHtml = ref('')
+const { decode } = useHtmlDecode()
 const loading = ref(true)
 const { $api } = useNuxtApp()
 
@@ -82,7 +83,7 @@ const fetchDetail = async () => {
     const res = await $api('/enter/detail', { method: 'GET', params: { id: id.value } })
     detail.value = res?.data?.detail || null
     items.value = res?.data?.items || []
-    decodedHtml.value = decodeURIComponentSafe(res?.data?.detail?.detail || '')
+    decodedHtml.value = decode(res?.data?.detail?.detail || '')
   } catch (e) {
     detail.value = null
     items.value = []
@@ -94,8 +95,6 @@ const fetchDetail = async () => {
 
 onMounted(fetchDetail)
 
-function decodeURIComponentSafe(str) {
-  try { return decodeURIComponent(str) } catch (e) { return str }
-}
+
 </script>
 

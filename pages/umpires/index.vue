@@ -14,19 +14,7 @@
 
     <div v-else>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <article v-for="u in list" :key="u.uid" class="rounded-card border border-gray-100 p-4">
-          <div class="flex items-center gap-3">
-            <NuxtImg :src="u.image || u.portrait" class="w-14 h-14 object-cover rounded-full" />
-            <div class="text-sm">
-              <div class="font-medium">{{ u.realname }}</div>
-              <div class="text-gray-500">级别 {{ u.level }}</div>
-            </div>
-          </div>
-          <div class="flex items-center justify-between mt-3">
-            <span class="text-xs text-gray-500">{{ u.city }} {{ u.province }}</span>
-            <NuxtLink :to="`/umpires/${u.uid}`" class="text-brand-primary text-sm">详情</NuxtLink>
-          </div>
-        </article>
+        <PersonCard v-for="u in list" :key="u.uid" :person="u" type="umpire" />
       </div>
 
       <div class="flex items-center justify-center mt-8" v-if="hasMore">
@@ -39,7 +27,7 @@
 
 <script setup>
 definePageMeta({ title: '裁判列表' })
-const city = ref('')
+const { city, tryGeolocation } = useCity()
 const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
@@ -64,6 +52,6 @@ const load = async (p = 1) => {
   }
 }
 
-onMounted(() => load(1))
+onMounted(async () => { await load(1) })
 </script>
 

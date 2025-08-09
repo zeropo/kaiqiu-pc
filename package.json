@@ -10,7 +10,7 @@
     "preview": "nuxt preview"
   },
   "keywords": [],
-  "author": "",
+  "author": "zeropo",
   "license": "ISC",
   "devDependencies": {
     "@nuxt/image": "^1.11.0",

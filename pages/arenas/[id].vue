@@ -15,7 +15,7 @@
     <div v-else-if="detail">
       <div class="grid md:grid-cols-3 gap-6">
         <div class="md:col-span-2">
-          <NuxtImg :src="detail.image" class="w-full h-56 object-cover rounded-card" />
+          <ImgFallback :src="detail.image" class="w-full h-56 object-cover rounded-card" />
           <h1 class="text-xl font-semibold mt-4">{{ detail.name }}</h1>
           <p class="text-gray-600 mt-1">{{ detail.address }}</p>
           <p class="text-gray-600">电话 {{ detail.mobile }}</p>
@@ -32,7 +32,7 @@
             <ul class="mt-2 space-y-2">
               <li v-for="t in trainers" :key="t.uid" class="text-sm flex items-center justify-between">
                 <span>{{ t.realname }}</span>
-                <NuxtLink :to="`/coaches/${t.uid}`" class="text-brand-primary">查看</NuxtLink>
+                <a :href="`/coaches/${t.uid}`" class="text-brand-primary">查看</a>
               </li>
               <li v-if="!trainers.length" class="text-gray-500 text-sm">暂无</li>
             </ul>
@@ -42,7 +42,7 @@
             <ul class="mt-2 space-y-2">
               <li v-for="m in matches" :key="m.eventid" class="text-sm flex items-center justify-between">
                 <span class="line-clamp-1">{{ m.title }}</span>
-                <NuxtLink :to="`/matches/${m.eventid}`" class="text-brand-primary">详情</NuxtLink>
+                <a :href="`/matches/${m.eventid}`" class="text-brand-primary">详情</a>
               </li>
               <li v-if="!matches.length" class="text-gray-500 text-sm">暂无</li>
             </ul>

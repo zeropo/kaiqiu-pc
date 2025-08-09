@@ -9,7 +9,7 @@
 
     <div v-else-if="detail">
       <div class="flex items-center gap-4">
-        <NuxtImg :src="detail.portrait" class="w-24 h-24 rounded-full object-cover" />
+        <ImgFallback :src="detail.portrait" class="w-24 h-24 rounded-full object-cover" />
         <div>
           <h1 class="text-xl font-semibold">{{ detail.realname }}</h1>
           <p class="text-gray-600">{{ detail.city }} · {{ detail.arena_name }}</p>

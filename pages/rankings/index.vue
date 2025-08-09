@@ -9,7 +9,7 @@
           <div class="font-medium">{{ t.name }}</div>
           <div class="text-sm text-gray-500">{{ t.desc }}</div>
         </div>
-        <NuxtLink :to="`/rankings/${t.tid}`" class="text-brand-primary text-sm">查看</NuxtLink>
+        <a :href="`/rankings/${t.tid}`" class="text-brand-primary text-sm">查看</a>
       </li>
       <li v-if="!list.length" class="p-6 text-center text-gray-500">暂无数据</li>
     </ul>

@@ -76,16 +76,16 @@ const gamesHasMore = ref(false)
 const loading = ref(true)
 const { $api } = useNuxtApp()
 
-const fetchProfile = () => $api('/User/adv_profile', { method: 'GET', params: { uid: uid.value } })
-const fetchScores = () => $api('/User/getUserScores', { method: 'GET', params: { uid: uid.value } })
-const fetchGames = (p=1) => $api('/User/getGames', { method: 'GET', params: { uid: uid.value, page: p } })
+const fetchProfile = () => $api('/user/adv_profile', { method: 'GET', params: { uid: uid.value } })
+// const fetchScores = () => $api('/user/getUserScores', { method: 'GET', params: { uid: uid.value } })
+const fetchGames = (p=1) => $api('/user/getGames', { method: 'GET', params: { uid: uid.value, page: p } })
 
 const loadAll = async () => {
   loading.value = true
   try {
-    const [p, s, g] = await Promise.all([fetchProfile(), fetchScores(), fetchGames(1)])
+    const [p, g] = await Promise.all([fetchProfile(), fetchGames(1)])
     profile.value = p?.data || null
-    scores.value = s?.data || []
+    scores.value = []
     const pg = g?.data
     games.value = pg?.data || []
     gamePage.value = pg?.current_page || 1
@@ -119,4 +119,5 @@ const barHeight = (score) => {
   return `${Math.round(16 + h * 160)}px`
 }
 </script>
+
 
