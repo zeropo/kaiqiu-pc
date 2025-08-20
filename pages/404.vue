@@ -5,3 +5,9 @@
   </div>
 </template>
 
+<script setup>
+useHead({
+  title: '页面未找到'
+})
+</script>
+

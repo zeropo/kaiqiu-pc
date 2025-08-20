@@ -65,7 +65,9 @@
 </template>
 
 <script setup>
-definePageMeta({ title: '积分详情' })
+useHead({
+  title: '积分详情'
+})
 const route = useRoute()
 const uid = computed(() => route.params.uid)
 const profile = ref(null)

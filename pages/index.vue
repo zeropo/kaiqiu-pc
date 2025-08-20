@@ -55,7 +55,12 @@
 </template>
 
 <script setup>
-definePageMeta({ title: '首页' })
+// 首页直接显示"开球网"，不使用template
+useHead({
+  title: '开球网',
+  titleTemplate: null
+})
+
 const { $api } = useNuxtApp()
 const { city, lat, lng, tryGeolocation } = useCity()
 const matches = ref([])
@@ -67,7 +72,18 @@ const loadMatches = async () => {
   loadingMatches.value = true
   try {
     const res = await $api('/match/lists', { method: 'POST', body: { city: city.value, lat: lat.value, lng: lng.value, page: 1, sort: 2 } })
-    matches.value = res?.data?.data?.slice(0, 4) || []
+    let matchList = res?.data?.data || []
+    
+    // 按距离升序排序（距离越近越前面）
+    if (matchList.length > 0) {
+      matchList.sort((a, b) => {
+        const distanceA = parseFloat(a.distance) || Infinity
+        const distanceB = parseFloat(b.distance) || Infinity
+        return distanceA - distanceB
+      })
+    }
+    
+    matches.value = matchList.slice(0, 4)
   } catch (e) {
     matches.value = []
   } finally {

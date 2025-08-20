@@ -26,7 +26,9 @@
 </template>
 
 <script setup>
-definePageMeta({ title: '裁判列表' })
+useHead({
+  title: '裁判列表'
+})
 const { city, tryGeolocation } = useCity()
 const page = ref(1)
 const list = ref([])

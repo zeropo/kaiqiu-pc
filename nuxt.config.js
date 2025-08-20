@@ -18,17 +18,20 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      titleTemplate: (title) => {
-        if (!title) return '开球网（网页版）';
-        return `${title} - 开球网（网页版）`;
+      title: '开球网',
+      titleTemplate: (titleChunk) => {
+        return titleChunk && titleChunk !== '开球网' ? `${titleChunk} - 开球网` : '开球网'
       },
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: '开球网（网页版）：查询比赛、球馆、教练、裁判与积分排行榜，现代化、响应式体验。' },
-        { property: 'og:site_name', content: '开球网（网页版）' }
+        { property: 'og:site_name', content: '开球网' }
       ],
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
+        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' }
       ]
     },
     pageTransition: { name: 'page', mode: 'out-in' }

@@ -5,11 +5,13 @@
         <label class="block text-sm text-gray-500 mb-1">城市</label>
         <input v-model="city" placeholder="如：杭州市" class="w-full h-11 px-3 rounded-btn border border-gray-200" />
       </div>
-      <div>
-        <label class="block text-sm text-gray-500 mb-1">排序</label>
-        <select v-model="sort" class="h-11 px-3 rounded-btn border border-gray-200">
-          <option :value="2">默认</option>
-          <option :value="1">距离</option>
+      <div class="min-w-[160px]">
+        <label class="block text-sm text-gray-500 mb-1">排序方式</label>
+        <select v-model="sortOption" class="w-full h-11 px-3 rounded-btn border border-gray-200 text-sm">
+          <option value="distance_asc">距离：从近到远</option>
+          <option value="distance_desc">距离：从远到近</option>
+          <option value="time_asc">时间：从早到晚</option>
+          <option value="time_desc">时间：从晚到早</option>
         </select>
       </div>
       <button @click="load(1)" class="h-11 px-4 rounded-btn bg-black text-white">筛选</button>
@@ -33,9 +35,12 @@
 </template>
 
 <script setup>
-definePageMeta({ title: '比赛列表' })
+useHead({
+  title: '比赛列表'
+})
+
 const { city, lat, lng } = useCity()
-const sort = ref(2)
+const sortOption = ref('distance_asc') // 默认按距离从近到远
 const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
@@ -43,12 +48,48 @@ const loading = ref(true)
 
 const { $api } = useNuxtApp()
 
+// 客户端排序函数
+const sortMatches = (matches, sortType) => {
+  const sorted = [...matches]
+  
+  switch (sortType) {
+    case 'distance_asc':
+      return sorted.sort((a, b) => {
+        const distanceA = parseFloat(a.distance) || Infinity
+        const distanceB = parseFloat(b.distance) || Infinity
+        return distanceA - distanceB
+      })
+    case 'distance_desc':
+      return sorted.sort((a, b) => {
+        const distanceA = parseFloat(a.distance) || -Infinity
+        const distanceB = parseFloat(b.distance) || -Infinity
+        return distanceB - distanceA
+      })
+    case 'time_asc':
+      return sorted.sort((a, b) => new Date(a.starttime) - new Date(b.starttime))
+    case 'time_desc':
+      return sorted.sort((a, b) => new Date(b.starttime) - new Date(a.starttime))
+    default:
+      return sorted
+  }
+}
+
 const load = async (p = 1) => {
   loading.value = true
   try {
-    const res = await $api('/match/lists', { method: 'POST', body: { city: city.value, lat: lat.value, lng: lng.value, sort: sort.value, page: p } })
-    const rows = res?.data?.data || []
-    if (p === 1) list.value = rows; else list.value = list.value.concat(rows)
+    // 使用接口的默认排序，然后在客户端重新排序
+    const res = await $api('/match/lists', { method: 'POST', body: { city: city.value, lat: lat.value, lng: lng.value, sort: 2, page: p } })
+    let rows = res?.data?.data || []
+    
+    if (p === 1) {
+      // 第一页：直接排序并设置
+      list.value = sortMatches(rows, sortOption.value)
+    } else {
+      // 加载更多：合并数据后重新排序整个列表
+      const combinedList = list.value.concat(rows)
+      list.value = sortMatches(combinedList, sortOption.value)
+    }
+    
     page.value = p
     const pg = res?.data
     hasMore.value = pg?.current_page < pg?.last_page
@@ -59,6 +100,13 @@ const load = async (p = 1) => {
     loading.value = false
   }
 }
+
+// 监听排序变化，自动重新加载第一页
+watch(sortOption, () => {
+  if (list.value.length > 0) {
+    load(1)
+  }
+}, { immediate: false })
 
 // 不在首屏自动请求定位，避免权限提示。
 onMounted(async () => { await load(1) })

@@ -42,7 +42,9 @@
 </template>
 
 <script setup>
-definePageMeta({ title: '排行榜详情' })
+useHead({
+  title: '排行榜详情'
+})
 const route = useRoute()
 const tid = computed(() => route.params.tid)
 const city = ref('')

@@ -17,7 +17,9 @@
 </template>
 
 <script setup>
-definePageMeta({ title: '排行榜' })
+useHead({
+  title: '排行榜'
+})
 const loading = ref(true)
 const list = ref([])
 const { $api } = useNuxtApp()

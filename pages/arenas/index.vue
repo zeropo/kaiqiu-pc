@@ -26,7 +26,10 @@
 </template>
 
 <script setup>
-definePageMeta({ title: '球馆列表' })
+useHead({
+  title: '球馆列表'
+})
+
 const { city, lat, lng } = useCity()
 const page = ref(1)
 const list = ref([])

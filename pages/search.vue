@@ -31,7 +31,10 @@
 </template>
 
 <script setup>
-definePageMeta({ title: '搜索' })
+useHead({
+  title: '搜索'
+})
+
 const q = ref('')
 const list = ref([])
 const loading = ref(true)

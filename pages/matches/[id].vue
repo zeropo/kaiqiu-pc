@@ -67,7 +67,9 @@
 </template>
 
 <script setup>
-definePageMeta({ title: '比赛详情' })
+useHead({
+  title: '比赛详情'
+})
 const route = useRoute()
 const id = computed(() => route.params.id)
 const detail = ref(null)

@@ -30,7 +30,9 @@
 </template>
 
 <script setup>
-definePageMeta({ title: '裁判详情' })
+useHead({
+  title: '裁判详情'
+})
 const route = useRoute()
 const id = computed(() => route.params.id)
 const detail = ref(null)
