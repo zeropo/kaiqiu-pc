@@ -28,7 +28,7 @@ const fetchNames = async (tradeDate) => {
     sortTypes: '1'
   })}`
   const data = await $fetch(url)
-  const rows = data.result.data
+  const rows = data && data.result && data.result.data ? data.result.data : []
   const map = {}
   for (const row of rows) map[row.SECURITY_CODE] = row.SECURITY_NAME_ABBR
   return map
@@ -36,10 +36,11 @@ const fetchNames = async (tradeDate) => {
 
 export default defineEventHandler(async (event) => {
   const { tradeDate } = getQuery(event)
-  if (!tradeDate) throw createError({ statusCode: 400, statusMessage: '缺少tradeDate' })
-  const nameMap = await fetchNames(tradeDate)
+  const td = Array.isArray(tradeDate) ? tradeDate[0] : tradeDate
+  if (!td) throw createError({ statusCode: 400, statusMessage: '缺少tradeDate' })
+  const nameMap = await fetchNames(td)
 
-  const filter = `(TRADE_DATE='${tradeDate}')`
+  const filter = `(TRADE_DATE='${td}')`
   const url = `${BASE_URL}?${buildParams({
     reportName: BUY_REPORT,
     columns: BUY_COLUMNS,
@@ -48,15 +49,19 @@ export default defineEventHandler(async (event) => {
     sortColumns: 'BUY',
     sortTypes: '-1'
   })}`
-  const data = await $fetch(url)
-  const rows = data.result.data
-  return rows.map((row) => ({
-    date: row.TRADE_DATE.slice(0, 10),
-    code: row.SECURITY_CODE,
-    name: nameMap[row.SECURITY_CODE] || '',
-    deptName: row.OPERATEDEPT_NAME,
-    buyAmt: Number(row.BUY),
-    sellAmt: row.SELL == null ? 0 : Number(row.SELL)
-  }))
+  try {
+    const data = await $fetch(url)
+    const rows = data && data.result && data.result.data ? data.result.data : []
+    return rows.map((row) => ({
+      date: row.TRADE_DATE.slice(0, 10),
+      code: row.SECURITY_CODE,
+      name: nameMap[row.SECURITY_CODE] || '',
+      deptName: row.OPERATEDEPT_NAME,
+      buyAmt: Number(row.BUY),
+      sellAmt: row.SELL == null ? 0 : Number(row.SELL)
+    }))
+  } catch (e) {
+    throw createError({ statusCode: 502, statusMessage: e && e.message ? e.message : '上游接口异常' })
+  }
 })
 

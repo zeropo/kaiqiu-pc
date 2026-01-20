@@ -17,8 +17,13 @@ const buildParams = (extra) => {
 
 export default defineEventHandler(async () => {
   const url = `${BASE_URL}?${buildParams({ reportName: DAILY_REPORT, columns: DAILY_COLUMNS })}`
-  const data = await $fetch(url)
-  const first = data.result.data[0]
-  return { tradeDate: first.TRADE_DATE.slice(0, 10) }
+  try {
+    const data = await $fetch(url)
+    const rows = data && data.result && data.result.data ? data.result.data : []
+    if (rows.length === 0) throw new Error('东财返回空数据')
+    return { tradeDate: rows[0].TRADE_DATE.slice(0, 10) }
+  } catch (e) {
+    throw createError({ statusCode: 502, statusMessage: e && e.message ? e.message : '上游接口异常' })
+  }
 })
 
