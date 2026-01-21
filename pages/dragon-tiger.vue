@@ -6,13 +6,33 @@
           <h1 class="text-xl md:text-2xl font-semibold">龙虎榜真机构买入筛选</h1>
           <p class="text-sm text-gray-500 mt-1">仅看买入营业部为“机构专用”，且卖出为0或无卖出</p>
         </div>
-        <div class="flex items-center gap-2">
-          <input v-model="tradeDate" type="date" class="h-11 px-3 rounded-btn border border-gray-200 bg-white" />
-          <button class="h-11 px-4 rounded-btn bg-surfaceMuted hover:bg-gray-100 transition" :disabled="loading" @click="loadLatestDate">
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            class="h-11 px-4 rounded-btn bg-surfaceMuted hover:bg-gray-100 transition"
+            :disabled="loading"
+            @click="switchPrevDate"
+          >
+            上个交易日
+          </button>
+          <input
+            v-model="tradeDate"
+            type="date"
+            class="h-11 px-3 rounded-btn border border-gray-200 bg-white"
+            @change="queryRecords"
+          />
+          <button
+            class="h-11 px-4 rounded-btn bg-surfaceMuted hover:bg-gray-100 transition"
+            :disabled="loading"
+            @click="applyLatestDate"
+          >
             最新交易日
           </button>
-          <button class="h-11 px-4 rounded-btn bg-brand-primary text-white shadow-card hover:shadow-cardHover transition" :disabled="loading" @click="queryRecords">
-            查询
+          <button
+            class="h-11 px-4 rounded-btn bg-surfaceMuted hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="loading || isNextDisabled"
+            @click="switchNextDate"
+          >
+            下个交易日
           </button>
         </div>
       </div>
@@ -29,7 +49,7 @@
         <div>代码</div>
         <div>名称</div>
         <div>机构买入合计(万元)</div>
-        <div>席位条数</div>
+        <div>席位个数</div>
       </div>
       <div v-if="institutionStocks.length === 0" class="px-4 py-10 text-center text-sm text-gray-500">
         暂无符合条件的个股
@@ -37,7 +57,7 @@
       <div v-for="stock in institutionStocks" :key="stock.code" class="grid grid-cols-4 gap-3 px-4 py-3 border-t border-gray-100 text-sm">
         <div class="font-mono">{{ stock.code }}</div>
         <div class="font-medium">{{ stock.name }}</div>
-        <div class="tabular-nums">{{ stock.totalBuy.toFixed(2) }}</div>
+        <div class="tabular-nums">{{ (stock.totalBuy / 10000).toFixed(2) }}</div>
         <div class="tabular-nums">{{ stock.items.length }}</div>
       </div>
     </div>
@@ -46,12 +66,15 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { fetchLatestTradeDate, fetchLhbRecords } from '@/services/dragon-tiger'
+import { fetchLatestTradeDate, fetchNextTradeDate, fetchPrevTradeDate, fetchLhbRecords } from '@/services/dragon-tiger'
 
 useHead({ title: '龙虎榜真机构' })
 
 const { $api } = useNuxtApp()
-const tradeDate = ref('')
+const pad2 = (n) => String(n).padStart(2, '0')
+const formatYmd = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+const tradeDate = ref(formatYmd(new Date()))
+const latestTradeDate = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
 const records = ref([])
@@ -75,15 +98,16 @@ const institutionStocks = computed(() => {
   return Array.from(map.values()).sort((a, b) => b.totalBuy - a.totalBuy)
 })
 
-const loadLatestDate = async () => {
+const isNextDisabled = computed(() => {
+  return !latestTradeDate.value || tradeDate.value === latestTradeDate.value
+})
+
+const refreshLatestTradeDate = async () => {
   errorMessage.value = ''
-  loading.value = true
   try {
-    tradeDate.value = await fetchLatestTradeDate($api)
+    latestTradeDate.value = await fetchLatestTradeDate($api)
   } catch (e) {
     errorMessage.value = e && e.message ? e.message : '获取最新交易日失败'
-  } finally {
-    loading.value = false
   }
 }
 
@@ -103,8 +127,51 @@ const queryRecords = async () => {
   }
 }
 
+const applyLatestDate = async () => {
+  errorMessage.value = ''
+  loading.value = true
+  try {
+    if (!latestTradeDate.value) await refreshLatestTradeDate()
+    tradeDate.value = latestTradeDate.value
+  } catch (e) {
+    errorMessage.value = e && e.message ? e.message : '获取最新交易日失败'
+  } finally {
+    loading.value = false
+  }
+  if (tradeDate.value) await queryRecords()
+}
+
+const switchPrevDate = async () => {
+  if (!tradeDate.value) return
+  errorMessage.value = ''
+  loading.value = true
+  try {
+    tradeDate.value = await fetchPrevTradeDate($api, tradeDate.value)
+  } catch (e) {
+    errorMessage.value = e && e.message ? e.message : '切换上个交易日失败'
+  } finally {
+    loading.value = false
+  }
+  if (tradeDate.value) await queryRecords()
+}
+
+const switchNextDate = async () => {
+  if (!tradeDate.value) return
+  if (isNextDisabled.value) return
+  errorMessage.value = ''
+  loading.value = true
+  try {
+    tradeDate.value = await fetchNextTradeDate($api, tradeDate.value)
+  } catch (e) {
+    errorMessage.value = e && e.message ? e.message : '切换下个交易日失败'
+  } finally {
+    loading.value = false
+  }
+  if (tradeDate.value) await queryRecords()
+}
+
 onMounted(async () => {
-  await loadLatestDate()
+  await refreshLatestTradeDate()
   if (tradeDate.value) await queryRecords()
 })
 </script>

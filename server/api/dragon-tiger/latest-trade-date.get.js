@@ -18,7 +18,14 @@ const buildParams = (extra) => {
 export default defineEventHandler(async () => {
   const url = `${BASE_URL}?${buildParams({ reportName: DAILY_REPORT, columns: DAILY_COLUMNS })}`
   try {
-    const data = await $fetch(url)
+    const data = await $fetch(url, {
+      responseType: 'json',
+      headers: {
+        Accept: 'application/json, text/plain, */*',
+        Referer: 'https://data.eastmoney.com/',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    })
     const rows = data && data.result && data.result.data ? data.result.data : []
     if (rows.length === 0) throw new Error('东财返回空数据')
     return { tradeDate: rows[0].TRADE_DATE.slice(0, 10) }
