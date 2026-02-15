@@ -1,0 +1,19 @@
+:root {
+  --color-text: #111827;
+  --color-text-muted: #6B7280;
+  --color-brand: #D61F26;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F7F7F8;
+  --radius-card: 12px;
+  --radius-btn: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text: #e5e7eb;
+    --color-text-muted: #9ca3af;
+    --color-surface: #0F0F10;
+    --color-surface-muted: #111214;
+  }
+}
+

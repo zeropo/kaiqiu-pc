@@ -1,0 +1,11 @@
+node_modules/
+.nuxt/
+.output/
+.prompt
+.vercel/
+.env
+.env.*
+dist/
+*.log
+package-lock.json
+

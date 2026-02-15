@@ -1,0 +1,25 @@
+{
+  "name": "kaiqiu-pc",
+  "version": "1.0.0",
+  "description": "需求： 把微信小程序中的开球网移植到网页上，请你详细阅读`/api/标准`下的接口文档以及`/ui`下的小程序截图，要求新建的网站功能与小程序尽可能一样（不需要登录、报名相关的功能,只支持查询），但小程序是为手机设计的UI，请你仔细参考WTT官方网站https://www.worldtabletennis.com/为网页端设计合理的布局，要求现代化风格，界面美观、动画流畅，不要滥用emoji，不要使用烂大街的蓝紫色渐变，要求支持响应式，对不同设备（电脑、平板、手机）都完美支持，并且布局切换合理 技术栈： 必须使用Vite+Nuxt+JS，严禁使用TS，使用Github进行版本管理，使用Tailwind支持响应式，做好SEO管理，做好后续部署到Vercel的准备",
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev --port 3000",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "preview": "nuxt preview"
+  },
+  "keywords": [],
+  "author": "zeropo",
+  "license": "ISC",
+  "devDependencies": {
+    "@nuxt/image": "^1.11.0",
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@tailwindcss/line-clamp": "^0.4.4",
+    "@tailwindcss/typography": "^0.5.16",
+    "autoprefixer": "^10.4.21",
+    "nuxt": "^4.0.3",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17"
+  }
+}
