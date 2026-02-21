@@ -163,6 +163,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 
+definePageMeta({ layout: 'empty' })
 useHead({ title: '现代家谱系统' })
 
 const containerRef = ref(null)
