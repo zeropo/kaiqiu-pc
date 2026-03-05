@@ -58,7 +58,10 @@
         <div class="font-mono">{{ stock.code }}</div>
         <div class="font-medium">{{ stock.name }}</div>
         <div class="tabular-nums">{{ (stock.totalBuy / 10000).toFixed(2) }}</div>
-        <div class="tabular-nums">{{ stock.items.length }}</div>
+        <div class="tabular-nums">
+          {{ stock.items.length }}
+          <span v-if="stock.hasThreeDayBoard" class="ml-1 text-orange-600 text-xs">(三日榜)</span>
+        </div>
       </div>
     </div>
   </div>
@@ -68,6 +71,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { fetchLatestTradeDate, fetchNextTradeDate, fetchPrevTradeDate, fetchLhbRecords } from '@/services/dragon-tiger'
 
+definePageMeta({ layout: 'empty' })
 useHead({ title: '龙虎榜真机构' })
 
 const { $api } = useNuxtApp()
@@ -90,7 +94,11 @@ const institutionStocks = computed(() => {
     if (row.deptName !== '机构专用') continue
     if (row.sellAmt !== 0) continue
     const key = `${row.code}|${row.name}`
-    const current = map.get(key) || { code: row.code, name: row.name, totalBuy: 0, items: [] }
+    const current = map.get(key) || { code: row.code, name: row.name, totalBuy: 0, items: [], _seen: new Set(), hasThreeDayBoard: false }
+    const dedupKey = `${row.deptName}|${row.buyAmt}`
+    if (current._seen.has(dedupKey)) continue
+    current._seen.add(dedupKey)
+    if (row.reason && row.reason.includes('连续三个交易日')) current.hasThreeDayBoard = true
     current.totalBuy += row.buyAmt
     current.items.push(row)
     map.set(key, current)

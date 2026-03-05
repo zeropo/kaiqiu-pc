@@ -65,6 +65,7 @@ export default defineEventHandler(async (event) => {
       date: row.TRADE_DATE.slice(0, 10),
       code: row.SECURITY_CODE,
       name: nameMap[row.SECURITY_CODE] || '',
+      reason: row.EXPLANATION || '',
       deptName: row.OPERATEDEPT_NAME,
       buyAmt: Number(row.BUY),
       sellAmt: row.SELL == null ? 0 : Number(row.SELL)
