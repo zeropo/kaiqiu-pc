@@ -14,7 +14,7 @@
           >
             上个交易日
           </button>
-          <div class="relative">
+          <div ref="calendarRef" class="relative">
             <button
               type="button"
               class="h-11 min-w-[150px] px-3 rounded-btn border border-gray-200 bg-white text-left"
@@ -123,7 +123,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { fetchLatestTradeDate, fetchMonthTradeDates, fetchNextTradeDate, fetchPrevTradeDate, fetchLhbRecords } from '@/services/dragon-tiger'
 
 definePageMeta({ layout: 'empty' })
@@ -150,6 +150,13 @@ const latestTradeDate = ref('')
 const loading = ref(false)
 const calendarLoading = ref(false)
 const calendarOpen = ref(false)
+const calendarRef = ref(null)
+
+const onClickOutside = (e) => {
+  if (calendarRef.value && !calendarRef.value.contains(e.target)) {
+    calendarOpen.value = false
+  }
+}
 const calendarMonth = ref(formatMonth(new Date()))
 const monthTradeDateMap = ref({})
 const errorMessage = ref('')
@@ -332,6 +339,7 @@ const switchNextDate = async () => {
 }
 
 onMounted(async () => {
+  document.addEventListener('click', onClickOutside)
   await refreshLatestTradeDate()
   tradeDate.value = latestTradeDate.value
   if (tradeDate.value) {
@@ -339,6 +347,10 @@ onMounted(async () => {
     await ensureMonthTradeDates(calendarMonth.value)
   }
   if (tradeDate.value) await queryRecords()
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onClickOutside)
 })
 </script>
 
