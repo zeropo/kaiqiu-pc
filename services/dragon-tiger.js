@@ -3,6 +3,11 @@ export async function fetchLatestTradeDate($api) {
   return res.tradeDate
 }
 
+export async function fetchMonthTradeDates($api, month) {
+  const res = await $api('/dragon-tiger/month-trade-dates', { method: 'GET', params: { month } })
+  return res.tradeDates
+}
+
 export async function fetchPrevTradeDate($api, tradeDate) {
   const res = await $api('/dragon-tiger/prev-trade-date', { method: 'GET', params: { tradeDate } })
   return res.tradeDate

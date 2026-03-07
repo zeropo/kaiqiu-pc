@@ -14,12 +14,67 @@
           >
             上个交易日
           </button>
-          <input
-            v-model="tradeDate"
-            type="date"
-            class="h-11 px-3 rounded-btn border border-gray-200 bg-white"
-            @change="queryRecords"
-          />
+          <div class="relative">
+            <button
+              type="button"
+              class="h-11 min-w-[150px] px-3 rounded-btn border border-gray-200 bg-white text-left"
+              :disabled="loading"
+              @click="toggleCalendar"
+            >
+              {{ tradeDate || '请选择交易日期' }}
+            </button>
+            <div
+              v-if="calendarOpen"
+              class="absolute right-0 z-20 mt-2 w-[320px] rounded-card border border-gray-100 bg-white p-4 shadow-xl"
+            >
+              <div class="flex items-center justify-between">
+                <button
+                  type="button"
+                  class="h-9 px-3 rounded-btn bg-surfaceMuted hover:bg-gray-100 transition"
+                  :disabled="calendarLoading"
+                  @click="switchCalendarMonth(-1)"
+                >
+                  上月
+                </button>
+                <div class="text-sm font-medium">{{ calendarTitle }}</div>
+                <button
+                  type="button"
+                  class="h-9 px-3 rounded-btn bg-surfaceMuted hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="calendarLoading || isCalendarNextMonthDisabled"
+                  @click="switchCalendarMonth(1)"
+                >
+                  下月
+                </button>
+              </div>
+
+              <div class="mt-3 grid grid-cols-7 gap-1 text-center text-xs text-gray-400">
+                <div v-for="week in weekLabels" :key="week" class="h-7 leading-7">{{ week }}</div>
+              </div>
+
+              <div class="grid grid-cols-7 gap-1">
+                <button
+                  v-for="day in calendarDays"
+                  :key="day.date"
+                  type="button"
+                  class="h-9 rounded-btn text-sm transition disabled:cursor-not-allowed"
+                  :class="[
+                    day.isSelected ? 'bg-gray-900 text-white hover:bg-gray-900' : '',
+                    !day.inCurrentMonth ? 'text-gray-200' : '',
+                    day.inCurrentMonth && !day.disabled && !day.isSelected ? 'bg-surfaceMuted hover:bg-gray-100 text-gray-700' : '',
+                    day.inCurrentMonth && day.disabled ? 'bg-gray-50 text-gray-300' : ''
+                  ]"
+                  :disabled="day.disabled || loading || calendarLoading"
+                  @click="selectTradeDate(day.date)"
+                >
+                  {{ day.label }}
+                </button>
+              </div>
+
+              <div class="mt-3 text-xs text-gray-400">
+                {{ calendarLoading ? '交易日加载中...' : '仅可选择交易日' }}
+              </div>
+            </div>
+          </div>
           <button
             class="h-11 px-4 rounded-btn bg-surfaceMuted hover:bg-gray-100 transition"
             :disabled="loading"
@@ -69,7 +124,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { fetchLatestTradeDate, fetchNextTradeDate, fetchPrevTradeDate, fetchLhbRecords } from '@/services/dragon-tiger'
+import { fetchLatestTradeDate, fetchMonthTradeDates, fetchNextTradeDate, fetchPrevTradeDate, fetchLhbRecords } from '@/services/dragon-tiger'
 
 definePageMeta({ layout: 'empty' })
 useHead({ title: '龙虎榜真机构' })
@@ -77,9 +132,26 @@ useHead({ title: '龙虎榜真机构' })
 const { $api } = useNuxtApp()
 const pad2 = (n) => String(n).padStart(2, '0')
 const formatYmd = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
-const tradeDate = ref(formatYmd(new Date()))
+const formatMonth = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`
+const parseYmd = (value) => {
+  const [year, month, day] = value.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+const parseMonth = (value) => parseYmd(`${value}-01`)
+const addMonths = (value, offset) => {
+  const date = parseMonth(value)
+  date.setMonth(date.getMonth() + offset)
+  return formatMonth(date)
+}
+
+const weekLabels = ['日', '一', '二', '三', '四', '五', '六']
+const tradeDate = ref('')
 const latestTradeDate = ref('')
 const loading = ref(false)
+const calendarLoading = ref(false)
+const calendarOpen = ref(false)
+const calendarMonth = ref(formatMonth(new Date()))
+const monthTradeDateMap = ref({})
 const errorMessage = ref('')
 const records = ref([])
 
@@ -87,10 +159,15 @@ const isAStock = (code) => {
   return code && (code.startsWith('0') || code.startsWith('3') || code.startsWith('6'))
 }
 
+const isStStock = (name) => {
+  return name.includes('ST')
+}
+
 const institutionStocks = computed(() => {
   const map = new Map()
   for (const row of records.value) {
     if (!isAStock(row.code)) continue
+    if (isStStock(row.name)) continue
     if (row.deptName !== '机构专用') continue
     if (row.sellAmt !== 0) continue
     const key = `${row.code}|${row.name}`
@@ -110,12 +187,65 @@ const isNextDisabled = computed(() => {
   return !latestTradeDate.value || tradeDate.value === latestTradeDate.value
 })
 
+const isCalendarNextMonthDisabled = computed(() => {
+  return !latestTradeDate.value || calendarMonth.value >= latestTradeDate.value.slice(0, 7)
+})
+
+const calendarTitle = computed(() => {
+  const [year, month] = calendarMonth.value.split('-')
+  return `${year}年${month}月`
+})
+
+const currentMonthTradeDateSet = computed(() => {
+  return new Set(monthTradeDateMap.value[calendarMonth.value] || [])
+})
+
+const calendarDays = computed(() => {
+  const firstDay = parseMonth(calendarMonth.value)
+  const start = new Date(firstDay)
+  start.setDate(1 - firstDay.getDay())
+  const days = []
+
+  for (let i = 0; i < 42; i += 1) {
+    const current = new Date(start)
+    current.setDate(start.getDate() + i)
+    const date = formatYmd(current)
+    const inCurrentMonth = formatMonth(current) === calendarMonth.value
+    const isTradeDate = currentMonthTradeDateSet.value.has(date)
+    days.push({
+      date,
+      label: current.getDate(),
+      inCurrentMonth,
+      isSelected: date === tradeDate.value,
+      disabled: !inCurrentMonth || !isTradeDate || (latestTradeDate.value && date > latestTradeDate.value)
+    })
+  }
+
+  return days
+})
+
 const refreshLatestTradeDate = async () => {
   errorMessage.value = ''
   try {
     latestTradeDate.value = await fetchLatestTradeDate($api)
   } catch (e) {
     errorMessage.value = e && e.message ? e.message : '获取最新交易日失败'
+  }
+}
+
+const ensureMonthTradeDates = async (month) => {
+  if (monthTradeDateMap.value[month]) return
+  calendarLoading.value = true
+  try {
+    const tradeDates = await fetchMonthTradeDates($api, month)
+    monthTradeDateMap.value = {
+      ...monthTradeDateMap.value,
+      [month]: tradeDates
+    }
+  } catch (e) {
+    errorMessage.value = e && e.message ? e.message : '获取交易日历失败'
+  } finally {
+    calendarLoading.value = false
   }
 }
 
@@ -133,6 +263,29 @@ const queryRecords = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const toggleCalendar = async () => {
+  if (calendarOpen.value) {
+    calendarOpen.value = false
+    return
+  }
+  calendarMonth.value = tradeDate.value ? tradeDate.value.slice(0, 7) : (latestTradeDate.value ? latestTradeDate.value.slice(0, 7) : formatMonth(new Date()))
+  calendarOpen.value = true
+  await ensureMonthTradeDates(calendarMonth.value)
+}
+
+const switchCalendarMonth = async (offset) => {
+  const nextMonth = addMonths(calendarMonth.value, offset)
+  if (offset > 0 && latestTradeDate.value && nextMonth > latestTradeDate.value.slice(0, 7)) return
+  calendarMonth.value = nextMonth
+  await ensureMonthTradeDates(calendarMonth.value)
+}
+
+const selectTradeDate = async (date) => {
+  tradeDate.value = date
+  calendarOpen.value = false
+  await queryRecords()
 }
 
 const applyLatestDate = async () => {
@@ -180,6 +333,11 @@ const switchNextDate = async () => {
 
 onMounted(async () => {
   await refreshLatestTradeDate()
+  tradeDate.value = latestTradeDate.value
+  if (tradeDate.value) {
+    calendarMonth.value = tradeDate.value.slice(0, 7)
+    await ensureMonthTradeDates(calendarMonth.value)
+  }
   if (tradeDate.value) await queryRecords()
 })
 </script>
