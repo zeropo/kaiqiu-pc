@@ -1,43 +1,62 @@
 <template>
-  <div class="container py-8">
-    <div class="flex flex-col md:flex-row md:items-end gap-3 mb-6">
+  <div class="container py-10 md:py-16">
+    <div class="mb-8">
+      <h1 class="font-display text-3xl font-bold text-text-main">积分排行</h1>
+      <p class="text-text-muted mt-2">查询选手的实时积分与历史最高记录</p>
+    </div>
+
+    <div class="bg-white rounded-card shadow-sm border border-border p-5 mb-10 flex flex-col md:flex-row md:items-end gap-4">
       <div class="flex-1">
-        <label class="block text-sm text-gray-500 mb-1">城市</label>
-        <input v-model="city" placeholder="如：杭州市" class="w-full h-11 px-3 rounded-btn border border-gray-200" />
+        <label class="block text-sm font-medium text-text-muted mb-1.5">城市</label>
+        <div class="relative">
+          <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+          <input v-model="city" placeholder="如：杭州市" class="w-full h-11 pl-10 pr-4 rounded-btn border border-border focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all outline-none" />
+        </div>
       </div>
-      <button @click="load(1)" class="h-11 px-4 rounded-btn bg-black text-white">筛选</button>
+      <button @click="load(1)" class="h-11 px-8 rounded-btn bg-brand-primary text-white font-medium hover:bg-brand-primaryHover shadow-card hover:shadow-cardHover transition-all active:scale-95">筛选</button>
     </div>
 
-    <div v-if="loading" class="space-y-3">
-      <div v-for="n in 8" :key="n" class="h-12 bg-surfaceMuted rounded-card animate-pulse" />
+    <div v-if="loading" class="space-y-4">
+      <div v-for="n in 8" :key="n" class="h-16 bg-white border border-border rounded-xl animate-pulse" />
     </div>
 
-    <div v-else class="rounded-card border border-gray-100 overflow-hidden">
-      <table class="min-w-full text-sm">
-        <thead class="bg-surfaceMuted text-gray-500">
-          <tr>
-            <th class="text-left p-3">姓名</th>
-            <th class="text-left p-3">积分</th>
-            <th class="text-left p-3">最高分</th>
-            <th class="text-left p-3">城市</th>
-            <th class="text-left p-3">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="u in list" :key="u.uid" class="border-t">
-            <td class="p-3">{{ u.realname }}</td>
-            <td class="p-3">{{ u.score }}</td>
-            <td class="p-3">{{ u.maxscore }}</td>
-            <td class="p-3">{{ u.residecity }}</td>
-            <td class="p-3"><a :href="`/scores/${u.uid}`" class="text-brand-primary">详情</a></td>
-          </tr>
-          <tr v-if="!list.length">
-            <td colspan="5" class="p-6 text-center text-gray-500">暂无数据</td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="flex items-center justify-center py-6" v-if="hasMore">
-        <button @click="load(page+1)" class="h-10 px-6 rounded-btn border border-gray-200">加载更多</button>
+    <div v-else class="bg-white rounded-card border border-border shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-left whitespace-nowrap">
+          <thead class="bg-surfaceSoft text-text-muted font-medium border-b border-border">
+            <tr>
+              <th class="px-6 py-4 rounded-tl-card">姓名</th>
+              <th class="px-6 py-4">积分</th>
+              <th class="px-6 py-4">最高分</th>
+              <th class="px-6 py-4">城市</th>
+              <th class="px-6 py-4 rounded-tr-card text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr v-for="u in list" :key="u.uid" class="hover:bg-surfaceMuted transition-colors group">
+              <td class="px-6 py-4 font-medium text-text-main flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-surfaceSoft flex-shrink-0 flex items-center justify-center font-bold text-brand-secondary text-xs shadow-inner">
+                  {{ u.realname?.charAt(0) || 'K' }}
+                </div>
+                {{ u.realname }}
+              </td>
+              <td class="px-6 py-4 font-display font-bold text-brand-primary text-base">{{ u.score }}</td>
+              <td class="px-6 py-4 text-text-muted">{{ u.maxscore }}</td>
+              <td class="px-6 py-4 text-text-muted">{{ u.residecity || '-' }}</td>
+              <td class="px-6 py-4 text-right">
+                <a :href="`/scores/${u.uid}`" class="inline-flex items-center text-brand-primary font-medium hover:text-brand-primaryHover">
+                  详情 <svg class="w-4 h-4 ml-0.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+              </td>
+            </tr>
+            <tr v-if="!list.length">
+              <td colspan="5" class="px-6 py-16 text-center text-text-muted">暂无符合条件的数据</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="flex items-center justify-center py-6 border-t border-border bg-surfaceMuted" v-if="hasMore">
+        <button @click="load(page+1)" class="h-10 px-8 rounded-btn border border-border bg-white text-text-main hover:border-brand-primary hover:text-brand-primary transition-colors font-medium shadow-sm">加载更多</button>
       </div>
     </div>
   </div>

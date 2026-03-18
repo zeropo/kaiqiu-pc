@@ -8,12 +8,26 @@
 </template>
 
 <script setup>
+useHead({
+  link: [
+    { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+    { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+    { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap' }
+  ]
+})
 </script>
 
 <style>
 html, body, #__nuxt {
-  background: var(--color-surface);
-  color: var(--color-text);
+  background: theme('colors.surfaceMuted');
+  color: theme('colors.text.main');
+  font-family: theme('fontFamily.sans');
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: theme('colors.brand.primary');
+  color: white;
 }
 </style>
-
