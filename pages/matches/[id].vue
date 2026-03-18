@@ -16,9 +16,14 @@
     <div v-else-if="detail">
       <!-- Full-width hero banner for the poster -->
       <div class="w-full bg-white rounded-card shadow-sm border border-border overflow-hidden mb-8">
-        <div class="w-full relative bg-surfaceMuted aspect-video md:aspect-[21/9] flex items-center justify-center">
-          <!-- Using object-contain prevents stretching and cutting off text -->
-          <ImgFallback :src="detail.poster" class="w-full h-full object-contain backdrop-blur-sm" />
+        <div class="w-full relative h-[280px] sm:h-[360px] md:h-[420px] lg:h-[460px] flex items-center justify-center overflow-hidden bg-gray-900">
+          <!-- Blurred full-width background to fill empty spaces beautifully -->
+          <ImgFallback :src="detail.poster" class="absolute inset-0 w-full h-full object-cover blur-3xl opacity-50 scale-125 saturate-150" />
+          <!-- Dark gradient overlay for contrast -->
+          <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/20 to-gray-900/40"></div>
+          
+          <!-- Actual poster perfectly contained and shadowed -->
+          <ImgFallback :src="detail.poster" class="relative z-10 w-full h-[85%] md:h-[90%] object-contain drop-shadow-2xl rounded-sm" />
         </div>
         <div class="p-6 md:p-8">
           <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand-primary/10 text-brand-primary text-xs font-semibold rounded-md mb-4 uppercase tracking-wider">
