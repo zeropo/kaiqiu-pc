@@ -83,8 +83,8 @@
             <h2 class="font-display text-xl font-bold text-text-main mb-6 flex items-center gap-2 border-l-4 border-brand-primary pl-3">
               赛事详情
             </h2>
-            <!-- Fixed prose images: prose-img forces width and prose-p ensures centering -->
-            <div class="prose max-w-none prose-img:w-full prose-img:max-w-3xl prose-img:mx-auto prose-img:rounded-xl prose-img:shadow-sm prose-p:leading-relaxed prose-headings:font-display prose-a:text-brand-primary" v-html="decodedHtml"></div>
+            <!-- Adjusted prose spacing: tighter margins for paragraphs and headings, fixed image styling -->
+            <div class="prose max-w-none prose-p:my-2 prose-p:leading-relaxed prose-headings:mt-6 prose-headings:mb-3 prose-ul:my-2 prose-li:my-0.5 prose-img:w-full prose-img:max-w-3xl prose-img:mx-auto prose-img:rounded-xl prose-img:shadow-sm prose-headings:font-display prose-a:text-brand-primary" v-html="decodedHtml"></div>
           </section>
 
         </div>
