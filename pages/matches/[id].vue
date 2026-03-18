@@ -83,8 +83,8 @@
             <h2 class="font-display text-xl font-bold text-text-main mb-6 flex items-center gap-2 border-l-4 border-brand-primary pl-3">
               赛事详情
             </h2>
-            <!-- Force tighter line-height and specific margins for lists/paragraphs -->
-            <div class="prose max-w-none prose-p:!mb-3 prose-p:!mt-0 prose-p:leading-snug prose-headings:!mt-8 prose-headings:!mb-3 prose-ul:!mb-3 prose-ul:!mt-0 prose-li:!my-0 prose-img:w-full prose-img:max-w-3xl prose-img:mx-auto prose-img:rounded-xl prose-img:shadow-sm prose-headings:font-display prose-a:text-brand-primary [&>p:empty]:hidden [&>div]:!mb-2" v-html="decodedHtml"></div>
+            <!-- Restored normal prose paragraph margins, rely on JS regex for fine-grained list spacing -->
+            <div class="prose max-w-none prose-p:!mb-3 prose-p:!mt-0 prose-p:leading-relaxed prose-headings:!mt-8 prose-headings:!mb-3 prose-ul:!mb-3 prose-ul:!mt-0 prose-li:!my-0 prose-img:w-full prose-img:max-w-3xl prose-img:mx-auto prose-img:rounded-xl prose-img:shadow-sm prose-headings:font-display prose-a:text-brand-primary" v-html="decodedHtml"></div>
           </section>
 
         </div>
@@ -147,13 +147,18 @@ const fetchDetail = async () => {
       }
     })
     detail.value = res?.data?.detail || null
-    const rawHtml = decode(res?.data?.detail?.detail || '')
+    let rawHtml = decode(res?.data?.detail?.detail || '')
+    
+    // 1. Remove invisible phantom paragraphs ONLY if they are immediately followed by a numbered list item.
+    // This perfectly tightens "small bullet points" while preserving the original editor spacing between "large structural paragraphs".
+    rawHtml = rawHtml.replace(/(?:<p>([\s\n\r]*|&nbsp;|<br\s*\/?>)*<\/p>\s*)+(?=<p>(\s*|&nbsp;|<br>)*\d+[、.])/gi, '')
+    
     // Smartly format messy Chinese rich-text by injecting Tailwind classes
     decodedHtml.value = rawHtml
-      // paragraphs starting with Chinese numerals (一、 二、) -> Treat as headings
-      .replace(/<p>(\s*|&nbsp;|<br>)*([一二三四五六七八九十]+[、.])/g, '<p class="!mt-8 !mb-3 font-bold text-lg text-text-main">$2')
-      // paragraphs starting with Arabic numerals (1、 2.) -> Treat as list items (tighter)
-      .replace(/<p>(\s*|&nbsp;|<br>)*(\d+[、.])/g, '<p class="!my-1 text-text-muted">$2')
+      // 2. paragraphs starting with Chinese numerals (一、 二、) -> Treat as large headings
+      .replace(/<p>(\s*|&nbsp;|<br>)*([一二三四五六七八九十]+[、.])/g, '<p class="!mt-8 !mb-4 font-bold text-lg text-text-main">$2')
+      // 3. paragraphs starting with Arabic numerals (1、 2.) -> Treat as list items (tighter spacing)
+      .replace(/<p>(\s*|&nbsp;|<br>)*(\d+[、.])/g, '<p class="!my-0.5 text-text-muted">$2')
   } catch (e) {
     detail.value = null
     items.value = []
