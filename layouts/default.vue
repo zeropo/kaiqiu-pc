@@ -49,16 +49,11 @@
       <slot />
     </main>
 
-    <footer class="bg-white border-t border-border py-12 text-sm text-text-muted mt-auto">
+    <footer class="bg-white border-t border-border py-10 md:py-12 text-sm text-text-muted mt-auto">
       <div class="container flex flex-col md:flex-row items-center justify-between gap-6">
         <div class="flex items-center gap-2">
           <div class="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white font-bold text-xs">K</div>
           <span class="font-display font-medium text-text-main">开球网网页版</span>
-        </div>
-        <div class="flex gap-6">
-          <a href="#" class="hover:text-brand-primary transition">关于我们</a>
-          <a href="#" class="hover:text-brand-primary transition">隐私政策</a>
-          <a href="#" class="hover:text-brand-primary transition">服务条款</a>
         </div>
         <div class="text-xs text-text-light text-center md:text-right">
           © 2026 Kaiqiu PC.<br/>此站仅为查询数据演示，非官方应用。
