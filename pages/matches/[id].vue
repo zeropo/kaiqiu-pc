@@ -135,6 +135,26 @@ const { lat, lng } = useCity()
 const loading = ref(true)
 const { $api } = useNuxtApp()
 
+const normalizeItems = (payload) => {
+  const list = Array.isArray(payload?.items) ? payload.items : []
+  if (list.length) {
+    return list.map((item) => ({
+      ...item,
+      condition: item?.condition?.trim?.() || item?.match_type || '-'
+    }))
+  }
+
+  const selectedItem = payload?.detail?.selectedItem
+  if (selectedItem && typeof selectedItem === 'object') {
+    return [{
+      ...selectedItem,
+      condition: selectedItem?.condition?.trim?.() || selectedItem?.match_type || '-'
+    }]
+  }
+
+  return []
+}
+
 const fetchDetail = async () => {
   loading.value = true
   try {
@@ -147,6 +167,7 @@ const fetchDetail = async () => {
       }
     })
     detail.value = res?.data?.detail || null
+    items.value = normalizeItems(res?.data)
     let rawHtml = decode(res?.data?.detail?.detail || '')
     
     // 1. Remove invisible phantom paragraphs ONLY if they are immediately followed by a numbered list item.
