@@ -56,7 +56,7 @@
           <span class="font-display font-medium text-text-main">开球网网页版</span>
         </div>
         <div class="text-xs text-text-light text-center md:text-right">
-          © 2026 Kaiqiu PC.<br/>此站仅为查询数据演示，非官方应用。
+          © 2026 Kaiqiu PC.
         </div>
       </div>
     </footer>
