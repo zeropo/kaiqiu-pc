@@ -40,5 +40,3 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 全局 metadata 在 `nuxt.config.js`
   - 页面级 metadata 通过 `useHead(...)`
   - `server/routes/**` 里生成 `robots.txt` 与 `sitemap.xml`
-- `pages/dragon-tiger.vue` 是独立功能，它配套使用 `services/dragon-tiger.js` 和 `server/api/dragon-tiger/**`；这一组 Nitro 路由直接请求东方财富，不走 `KQ_BASE_URL`。
-- 并非所有页面都属于开球网查询主链路：`pages/family-tree.vue` 基本是一个自包含页面，使用 `empty` 布局。
