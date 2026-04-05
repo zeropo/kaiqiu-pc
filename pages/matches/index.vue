@@ -15,22 +15,11 @@
     <div class="mb-10 rounded-card border border-border bg-white p-5 shadow-sm">
       <div class="flex flex-col gap-5">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center">
-          <div class="inline-flex w-full rounded-full bg-surfaceSoft p-1 sm:w-auto">
-            <button
-              v-for="tab in tabs"
-              :key="tab.value"
-              type="button"
-              :class="[
-                'flex-1 rounded-full px-4 py-2.5 text-sm font-semibold transition-all sm:flex-none',
-                activeTab === tab.value
-                  ? 'bg-brand-primary text-white shadow-card'
-                  : 'text-text-muted hover:text-text-main'
-              ]"
-              @click="changeTab(tab.value)"
-            >
-              {{ tab.label }}
-            </button>
-          </div>
+          <SegmentTabs
+            :model-value="activeTab"
+            :tabs="tabs"
+            @update:model-value="changeTab"
+          />
         </div>
 
         <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
