@@ -12,6 +12,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 当前仓库没有 lint 脚本、test 脚本，也没有项目内测试框架配置，因此暂时没有“运行单个测试”的标准命令。
 
+## 协作约定
+
+- 不要对每一次小改动都执行 `npm run build`。
+- 仅在以下情况优先执行构建验证：
+  - 大改动或跨多个页面/模块的改动
+  - 涉及数据流、路由、SSR、Nitro API、构建配置的改动
+  - 容易引发编译错误或用户明确要求做完整验证时
+- 对纯样式微调、文案调整、单组件轻量布局修改，默认不跑构建，优先节省时间。
+
 ## 架构概览
 
 - 技术栈：Nuxt 4 + Vue 3 + Tailwind CSS，启用 SSR，且只使用 JavaScript。不要引入 TypeScript。
