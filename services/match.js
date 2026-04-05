@@ -15,3 +15,40 @@ export async function fetchMatchMemberDetail($api, { id, matchId }) {
     }
   })
 }
+
+export async function fetchMatchGroups($api, { eventId, itemId }) {
+  return await $api('/match/get_groups', {
+    method: 'GET',
+    params: {
+      eventid: eventId,
+      itemid: itemId
+    }
+  })
+}
+
+export async function fetchMatchAllHonors($api, { eventId }) {
+  return await $api('/match/get_all_honors', {
+    method: 'GET',
+    params: {
+      eventid: eventId
+    }
+  })
+}
+
+export async function fetchMatchIncrementResult($api, { eventId, itemId, posttime = 0 }) {
+  return await $api('/match/getIncrementResult', {
+    method: 'GET',
+    params: {
+      eventid: eventId,
+      itemid: itemId,
+      posttime
+    }
+  })
+}
+
+export async function fetchMatchScoreChange($api, { eventid }) {
+  return await $api('/match/getScoreChange2', {
+    method: 'GET',
+    params: { eventid }
+  })
+}

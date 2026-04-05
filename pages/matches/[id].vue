@@ -17,25 +17,16 @@
           <ImgFallback :src="detail.poster" class="relative z-10 w-full h-[85%] md:h-[90%] object-contain drop-shadow-2xl rounded-sm" />
         </div>
 
-        <div class="p-6 md:p-8">
-          <div class="flex flex-wrap items-center gap-3 mb-4">
-            <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand-primary/10 text-brand-primary text-xs font-semibold rounded-md uppercase tracking-wider">
-              赛事详情
-            </div>
-            <div v-if="detail.membernum" class="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-md">
-              已报名 {{ detail.membernum }} 人
-            </div>
-          </div>
-
-          <h1 class="text-2xl md:text-3xl font-display font-bold text-text-main mb-4 leading-snug">
-            {{ detail.title }}
-          </h1>
+          <div class="p-6 md:p-8">
+            <h1 class="text-2xl md:text-3xl font-display font-bold text-text-main mb-4 leading-snug">
+              {{ detail.title }}
+            </h1>
 
           <p v-if="detail.note" class="max-w-4xl text-sm md:text-base text-text-muted leading-relaxed">
             {{ detail.note }}
           </p>
 
-          <div class="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4 mt-6">
+          <div class="mt-6 grid items-start gap-5 md:grid-cols-2 md:gap-6 xl:grid-cols-4 xl:gap-8">
             <div class="rounded-2xl border border-border bg-surfaceSoft/40 p-4">
               <p class="text-sm font-semibold uppercase tracking-[0.16em] text-text-light">报名时间</p>
               <p class="mt-3 text-sm font-semibold leading-6 text-text-main">{{ registrationTimeText }}</p>
@@ -136,18 +127,126 @@
                 </section>
               </div>
 
-              <section v-else-if="activeTab === 'schedule'" class="bg-white rounded-card shadow-sm border border-border p-8 md:p-10">
-                <h2 class="font-display text-xl font-bold text-text-main">赛程</h2>
-                <p class="mt-4 text-sm leading-7 text-text-muted">
-                  赛程模块预留中，后续会在这里补充分组、轮次和对阵安排。
-                </p>
-              </section>
+              <MatchCompetitionPanel
+                v-else-if="activeTab === 'schedule'"
+                title="赛程成绩"
+                :items="competitionItems"
+                :model-value="activeCompetitionItemId"
+                :loading="competitionLoading"
+                :error="competitionError"
+                :show-refresh="true"
+                :refreshing="competitionLoading"
+                refresh-label="刷新赛程成绩"
+                @update:model-value="activeCompetitionItemId = $event"
+                @refresh="fetchCompetitionData()"
+              />
 
-              <section v-else class="bg-white rounded-card shadow-sm border border-border p-8 md:p-10">
-                <h2 class="font-display text-xl font-bold text-text-main">积分</h2>
-                <p class="mt-4 text-sm leading-7 text-text-muted">
-                  积分模块预留中，后续会在这里补充赛事积分相关内容。
-                </p>
+              <section v-else class="bg-white rounded-card shadow-sm border border-border p-6 md:p-8">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                  <h2 class="flex items-center border-l-4 border-brand-primary pl-3 font-display text-xl font-bold text-text-main">
+                    积分变动
+                  </h2>
+                </div>
+
+                <div class="mt-6 space-y-6">
+                  <MatchItemTabs
+                    v-if="pointTabItems.length > 1"
+                    :model-value="activePointsItemId"
+                    :tabs="pointTabItems"
+                    @update:model-value="activePointsItemId = $event"
+                  />
+
+                  <div v-if="pointsLoading" class="rounded-2xl border border-border bg-surfaceSoft/60 px-4 py-10 text-center text-sm text-text-muted">
+                    积分变动加载中...
+                  </div>
+
+                  <div v-else-if="pointsError" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-10 text-center text-sm text-red-600">
+                    {{ pointsError }}
+                  </div>
+
+                  <div v-else-if="pointsNotice && !selectedScoreChangeGroup" class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-10 text-center text-sm text-amber-700">
+                    {{ pointsNotice }}
+                  </div>
+
+                  <article
+                    v-else-if="selectedScoreChangeGroup"
+                    class="overflow-hidden rounded-2xl border border-border"
+                  >
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surfaceSoft/50 px-5 py-4">
+                      <div>
+                        <h3 class="text-lg font-display font-bold text-text-main">{{ selectedScoreChangeGroup.name }}</h3>
+                        <p v-if="selectedScoreChangeGroup.condition" class="mt-1 text-sm text-text-muted">
+                          {{ selectedScoreChangeGroup.condition }}
+                        </p>
+                      </div>
+
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex rounded-full bg-white px-3 py-1 text-xs font-semibold text-text-muted">
+                          {{ selectedScoreChangeGroup.rows.length }} 人
+                        </span>
+                        <span
+                          class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                          :class="selectedScoreChangeGroup.calculated ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'"
+                        >
+                          {{ selectedScoreChangeGroup.calculated ? '已算分' : '未算分' }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div v-if="selectedScoreChangeGroup.rows.length" class="overflow-x-auto">
+                      <table class="min-w-full text-sm text-left">
+                        <thead class="bg-white text-text-muted">
+                          <tr>
+                            <th class="p-4 font-medium">排名</th>
+                            <th class="p-4 font-medium">选手</th>
+                            <th class="p-4 font-medium">赛前积分</th>
+                            <th class="p-4 font-medium">积分变动</th>
+                            <th class="p-4 font-medium">赛后积分</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border">
+                          <tr
+                            v-for="row in selectedScoreChangeGroup.rows"
+                            :key="row.sid || `${selectedScoreChangeGroup.id}-${row.uid}-${row.rank}`"
+                            class="hover:bg-surfaceMuted transition-colors"
+                          >
+                            <td class="p-4 font-medium text-text-main">{{ row.rank }}</td>
+                            <td class="p-4">
+                              <a
+                                v-if="row.uid"
+                                :href="`/scores/${row.uid}`"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="font-medium text-brand-primary transition-colors hover:text-brand-primaryHover"
+                              >
+                                {{ row.displayName }}
+                              </a>
+                              <span v-else class="font-medium text-text-main">{{ row.displayName }}</span>
+                            </td>
+                            <td class="p-4 text-text-main">{{ row.prescoreText }}</td>
+                            <td class="p-4">
+                              <span
+                                class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
+                                :class="row.changeToneClass"
+                              >
+                                {{ row.changeText }}
+                              </span>
+                            </td>
+                            <td class="p-4 text-text-main">{{ row.postscoreText }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div v-else class="px-5 py-8 text-center text-sm text-text-muted">
+                      {{ selectedScoreChangeGroup.calculated ? '当前组别暂无积分变动数据' : '当前组别积分还未计算' }}
+                    </div>
+                  </article>
+
+                  <div v-else class="rounded-2xl border border-border bg-surfaceSoft/60 px-4 py-10 text-center text-sm text-text-muted">
+                    当前暂无积分变动数据
+                  </div>
+                </div>
               </section>
             </div>
           </Transition>
@@ -260,7 +359,14 @@
 </template>
 
 <script setup>
-import { fetchMatchDetail, fetchMatchMemberDetail } from '~/services/match'
+import {
+  fetchMatchDetail,
+  fetchMatchMemberDetail,
+  fetchMatchGroups,
+  fetchMatchAllHonors,
+  fetchMatchIncrementResult,
+  fetchMatchScoreChange
+} from '~/services/match'
 
 const route = useRoute()
 const id = computed(() => route.params.id)
@@ -268,6 +374,8 @@ const detail = ref(null)
 const items = ref([])
 const decodedHtml = ref('')
 const activeTab = ref('detail')
+const activeCompetitionItemId = ref('')
+const activePointsItemId = ref('')
 const tabTransitionName = ref('detail-tab-forward')
 const membersModalOpen = ref(false)
 const membersLoading = ref(false)
@@ -275,15 +383,23 @@ const membersError = ref('')
 const memberRows = ref([])
 const currentMemberItem = ref(null)
 const memberCache = ref({})
+const competitionLoading = ref(false)
+const competitionError = ref('')
+const competitionItems = ref([])
+const pointsLoading = ref(false)
+const pointsLoaded = ref(false)
+const pointsError = ref('')
+const pointsNotice = ref('')
+const scoreChangeData = ref(null)
 const { decode } = useHtmlDecode()
 const { lat, lng } = useCity()
 const loading = ref(true)
 const { $api } = useNuxtApp()
 
 const tabs = [
-  { value: 'detail', label: '详情' },
-  { value: 'schedule', label: '赛程' },
-  { value: 'points', label: '积分' }
+  { value: 'detail', label: '赛事详情' },
+  { value: 'schedule', label: '赛程成绩' },
+  { value: 'points', label: '积分变动' }
 ]
 
 useHead(() => ({
@@ -335,6 +451,10 @@ const changeDetailTab = (tab) => {
 
   tabTransitionName.value = nextIndex > currentIndex ? 'detail-tab-forward' : 'detail-tab-backward'
   activeTab.value = tab
+
+  if (tab === 'points') {
+    void fetchScoreChanges()
+  }
 }
 
 const normalizeMemberScore = (value) => String(value ?? '').trim()
@@ -367,14 +487,8 @@ const getInitialScoreMeta = (member) => {
 }
 
 const getInitialScoreText = (member) => getInitialScoreMeta(member).value
-
-const hasInitialScore = (member) => {
-  return !!getInitialScoreText(member)
-}
-
-const hasCurrentScore = (member) => {
-  return !!getCurrentScoreText(member)
-}
+const hasInitialScore = (member) => !!getInitialScoreText(member)
+const hasCurrentScore = (member) => !!getCurrentScoreText(member)
 
 const shouldShowCurrentScore = (member) => {
   const currentScore = getCurrentScoreText(member)
@@ -398,6 +512,19 @@ const getSexLabel = (value) => {
 }
 
 const isMemberPaid = (member) => String(member?.paid ?? '').trim() === '1'
+const normalizeText = (value) => String(value ?? '').trim()
+const createEmptyScoreChangeData = () => ({
+  sc: {},
+  ifCal: {},
+  showName: detail.value?.showName || 'realname'
+})
+const normalizeScoreChangeMap = (value) => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value
+  }
+
+  return {}
+}
 
 const normalizeItems = (payload) => {
   const list = Array.isArray(payload?.items) ? payload.items : []
@@ -417,6 +544,368 @@ const normalizeItems = (payload) => {
   }
 
   return []
+}
+
+const pointTabItems = computed(() => {
+  return items.value
+    .filter((item) => normalizeText(item?.id))
+    .map((item) => ({
+      value: normalizeText(item.id),
+      label: item?.name || `组别 ${item.id}`
+    }))
+})
+
+const resetCompetitionState = () => {
+  competitionLoading.value = false
+  competitionError.value = ''
+  competitionItems.value = []
+  activeCompetitionItemId.value = ''
+}
+
+const getScoreChangeDisplayField = (value) => {
+  const field = normalizeText(value)
+  return field === 'username' ? 'username' : 'realname'
+}
+
+const getScoreChangeDisplayName = (row, field) => {
+  const preferred = normalizeText(row?.[field])
+  if (preferred) return preferred
+
+  return normalizeText(row?.realname) || normalizeText(row?.username) || normalizeText(row?.uid) || '-'
+}
+
+const formatScoreValue = (value) => normalizeText(value) || '-'
+
+const formatScoreDelta = (value) => {
+  const text = normalizeText(value)
+
+  if (!text) return '0'
+  if (text === '-') return text
+  if (/^[+-]/.test(text)) return text
+
+  const num = Number(text)
+  if (Number.isNaN(num)) return text
+  if (num > 0) return `+${num}`
+
+  return `${num}`
+}
+
+const getScoreDeltaClass = (value) => {
+  const num = Number(normalizeText(value))
+
+  if (!Number.isNaN(num)) {
+    if (num > 0) return 'bg-emerald-50 text-emerald-700'
+    if (num < 0) return 'bg-rose-50 text-rose-700'
+  }
+
+  return 'bg-surfaceSoft text-text-muted'
+}
+
+const isScoreGroupCalculated = (value, rows = []) => {
+  const normalized = normalizeText(value)
+  return normalized === '1' || normalized.toLowerCase?.() === 'true' || rows.length > 0
+}
+
+const scoreChangeGroups = computed(() => {
+  const data = scoreChangeData.value
+  const scoreMap = normalizeScoreChangeMap(data?.sc)
+  const ifCalMap = normalizeScoreChangeMap(data?.ifCal)
+  const showField = getScoreChangeDisplayField(data?.showName)
+  const itemMap = new Map(
+    items.value
+      .filter((item) => normalizeText(item?.id))
+      .map((item) => [normalizeText(item.id), item])
+  )
+  const orderedIds = []
+  const seen = new Set()
+
+  const appendGroupId = (value) => {
+    const groupId = normalizeText(value)
+    if (!groupId || seen.has(groupId)) return
+
+    if (itemMap.size && !itemMap.has(groupId)) return
+
+    seen.add(groupId)
+    orderedIds.push(groupId)
+  }
+
+  items.value.forEach((item) => appendGroupId(item?.id))
+  Object.keys(scoreMap).forEach(appendGroupId)
+  Object.keys(ifCalMap).forEach(appendGroupId)
+
+  return orderedIds.map((groupId, groupIndex) => {
+    const item = itemMap.get(groupId)
+    const rows = Array.isArray(scoreMap[groupId]) ? scoreMap[groupId] : []
+
+    return {
+      id: groupId,
+      name: item?.name || `组别 ${groupIndex + 1}`,
+      condition: normalizeText(item?.condition) || normalizeText(item?.match_type),
+      calculated: isScoreGroupCalculated(ifCalMap[groupId], rows),
+      rows: rows.map((row, rowIndex) => ({
+        ...row,
+        rank: rowIndex + 1,
+        displayName: getScoreChangeDisplayName(row, showField),
+        prescoreText: formatScoreValue(row?.prescore),
+        postscoreText: formatScoreValue(row?.postscore),
+        changeText: formatScoreDelta(row?.change),
+        changeToneClass: getScoreDeltaClass(row?.change)
+      }))
+    }
+  })
+})
+
+const selectedScoreChangeGroup = computed(() => {
+  if (!scoreChangeGroups.value.length) return null
+
+  return scoreChangeGroups.value.find((group) => group.id === activePointsItemId.value) || scoreChangeGroups.value[0]
+})
+
+const resetScoreChangeState = () => {
+  pointsLoading.value = false
+  pointsLoaded.value = false
+  pointsError.value = ''
+  pointsNotice.value = ''
+  scoreChangeData.value = null
+  activePointsItemId.value = ''
+}
+
+const getCompetitionItemIds = (itemsList, groupsPayload, honorsPayload) => {
+  const ids = []
+  const seen = new Set()
+  const knownItemIds = new Set(
+    (itemsList || [])
+      .map((item) => normalizeText(item?.id))
+      .filter(Boolean)
+  )
+
+  const pushId = (value) => {
+    const normalized = normalizeText(value)
+    if (!normalized || seen.has(normalized)) return
+    seen.add(normalized)
+    ids.push(normalized)
+  }
+
+  const pushPayloadId = (value) => {
+    const normalized = normalizeText(value)
+
+    if (!normalized) return
+    if (knownItemIds.size && !knownItemIds.has(normalized)) return
+
+    pushId(normalized)
+  }
+
+  ;(itemsList || []).forEach((item) => pushId(item?.id))
+  Object.keys(groupsPayload || {}).forEach(pushPayloadId)
+  Object.keys(honorsPayload || {}).forEach(pushPayloadId)
+
+  return ids
+}
+
+const parseProcessMeta = (process) => {
+  const raw = Array.isArray(process) ? process[0] : process
+  const normalized = normalizeText(raw)
+
+  if (!normalized) {
+    return { value: '', tone: '' }
+  }
+
+  const [value = '', toneToken = ''] = normalized.split(/\s+/)
+
+  return {
+    value,
+    tone: toneToken === '_c0' ? 'blue' : toneToken === '_c1' ? 'red' : ''
+  }
+}
+
+const normalizeScoreValue = (value) => {
+  if (value === undefined || value === null || value === '') return ''
+  return String(value)
+}
+
+const normalizePlayerName = (...candidates) => {
+  for (const candidate of candidates) {
+    const normalized = normalizeText(candidate)
+    if (normalized) return normalized
+  }
+
+  return '-'
+}
+
+const formatGroupStartTime = (rawTime, fallbackTime = '') => {
+  const dateText = formatDateTime(rawTime)
+
+  if (dateText) return dateText
+  if (fallbackTime) return fallbackTime
+
+  return '待公布'
+}
+
+const compareMatchScoreSegment = (left, right) => {
+  const normalizedLeft = normalizeText(left).toLowerCase()
+  const normalizedRight = normalizeText(right).toLowerCase()
+
+  if (!normalizedLeft && !normalizedRight) return 0
+  if (normalizedLeft === 'wo' && normalizedRight === 'wo') return 0
+  if (normalizedLeft === 'wo') return -1
+  if (normalizedRight === 'wo') return 1
+
+  const leftNumber = Number(normalizedLeft)
+  const rightNumber = Number(normalizedRight)
+
+  if (!Number.isNaN(leftNumber) && !Number.isNaN(rightNumber)) {
+    if (leftNumber === rightNumber) return 0
+    return leftNumber > rightNumber ? 1 : -1
+  }
+
+  return 0
+}
+
+const buildNameLookup = (groupsPayload, honorsPayload) => {
+  const lookup = {}
+
+  Object.values(groupsPayload || {}).forEach((itemGroups) => {
+    const groups = Array.isArray(itemGroups?.groups) ? itemGroups.groups : []
+
+    groups.forEach((group) => {
+      ;(group || []).forEach((player) => {
+        const uid = normalizeText(player?.uid)
+        if (!uid) return
+        lookup[uid] = normalizePlayerName(player?.realname, player?.username, lookup[uid])
+      })
+    })
+  })
+
+  Object.values(honorsPayload || {}).forEach((honors) => {
+    ;(honors || []).forEach((honor) => {
+      const uid = normalizeText(honor?.uid)
+      if (!uid) return
+      lookup[uid] = normalizePlayerName(lookup[uid], honor?.name, honor?.username)
+    })
+  })
+
+  return lookup
+}
+
+const normalizeKnockoutRounds = (rounds, nameLookup = {}) => {
+  if (!Array.isArray(rounds)) return []
+
+  return rounds
+    .map((round, roundIndex) => {
+      const matches = Array.isArray(round?.games)
+        ? round.games.map((game, gameIndex) => {
+            const uid1 = normalizeText(game?.uid1)
+            const uid2 = normalizeText(game?.uid2)
+            const result1 = normalizeScoreValue(game?.result1) || '0'
+            const result2 = normalizeScoreValue(game?.result2) || '0'
+            const compareResult = compareMatchScoreSegment(result1, result2)
+
+            return {
+              id: `${roundIndex}-${gameIndex}-${uid1}-${uid2}`,
+              player1: {
+                uid: uid1,
+                name: normalizePlayerName(nameLookup[uid1], game?.username1),
+                score: result1,
+                isWinner: compareResult > 0
+              },
+              player2: {
+                uid: uid2,
+                name: normalizePlayerName(nameLookup[uid2], game?.username2),
+                score: result2,
+                isWinner: compareResult < 0
+              }
+            }
+          })
+        : []
+
+      return {
+        title: round?.roundname || `第${roundIndex + 1}轮`,
+        matches: matches.filter((match) => match.player1.name !== '-' || match.player2.name !== '-')
+      }
+    })
+    .filter((round) => round.matches.length)
+}
+
+const normalizeCompetitionData = ({ itemsList, groupsPayload, honorsPayload, resultPayloads }) => {
+  const itemMap = Object.fromEntries((itemsList || []).map((item) => [normalizeText(item.id), item]))
+  const itemIds = getCompetitionItemIds(itemsList, groupsPayload, honorsPayload)
+  const resultMap = Object.fromEntries((resultPayloads || []).map((entry) => [normalizeText(entry.itemId), entry.data || {}]))
+  const nameLookup = buildNameLookup(groupsPayload, honorsPayload)
+
+  return itemIds
+    .map((itemId, itemIndex) => {
+      const groupMeta = groupsPayload?.[itemId] && typeof groupsPayload[itemId] === 'object'
+        ? groupsPayload[itemId]
+        : {}
+      const resultMeta = resultMap[itemId] && typeof resultMap[itemId] === 'object'
+        ? resultMap[itemId]
+        : {}
+      const groups = Array.isArray(groupMeta?.groups) ? groupMeta.groups : []
+      const scoreMap = resultMeta?.scores && typeof resultMeta.scores === 'object' && !Array.isArray(resultMeta.scores)
+        ? resultMeta.scores
+        : {}
+      const resultGameMap = resultMeta?.games && typeof resultMeta.games === 'object' && !Array.isArray(resultMeta.games)
+        ? resultMeta.games
+        : {}
+      const knockoutRounds = resultMeta?.ttgames && typeof resultMeta.ttgames === 'object'
+        ? resultMeta.ttgames[itemId]
+        : []
+      const honors = Array.isArray(honorsPayload?.[itemId])
+        ? honorsPayload[itemId].map((honor, honorIndex) => ({
+            id: honor?.hid || `${itemId}-${honorIndex}`,
+            uid: normalizeText(honor?.uid),
+            honor: honor?.honor || `名次 ${honorIndex + 1}`,
+            name: normalizePlayerName(nameLookup[normalizeText(honor?.uid)], honor?.name, honor?.username),
+            subject: honor?.subject || ''
+          }))
+        : []
+      const qualifyCount = Number(itemMap[itemId]?.qualNum || 0) || 0
+
+      const normalizedGroups = groups
+        .map((groupMembers, groupIndex) => {
+          const members = Array.isArray(groupMembers) ? groupMembers : []
+          const groupId = normalizeText(members[0]?.groupid)
+          const groupScoreRows = Array.isArray(scoreMap[groupId]) ? scoreMap[groupId] : []
+          const groupResults = resultGameMap[groupId] && typeof resultGameMap[groupId] === 'object'
+            ? resultGameMap[groupId]
+            : {}
+          const scoreLookup = Object.fromEntries(groupScoreRows.map((row) => [normalizeText(row?.uid), row]))
+          const tableNumber = normalizeText(members[0]?.tablenum || groupMeta?.groups_tablenum?.[groupIndex])
+
+          return {
+            id: groupId || `${itemId}-${groupIndex}`,
+            title: `第${groupIndex + 1}组`,
+            startTimeText: formatGroupStartTime(members[0]?.starttime, groupMeta?.starttimes?.[groupIndex] || ''),
+            tableText: tableNumber ? `${tableNumber}号台` : '待公布',
+            qualifyCount,
+            games: groupResults,
+            players: members.map((member) => {
+              const uid = normalizeText(member?.uid)
+              const scoreMeta = uid ? scoreLookup[uid] || {} : {}
+              const processMeta = parseProcessMeta(scoreMeta?.process)
+
+              return {
+                uid,
+                name: normalizePlayerName(member?.realname, member?.username, nameLookup[uid]),
+                score: normalizeScoreValue(scoreMeta?.score),
+                rank: normalizeScoreValue(scoreMeta?.rank),
+                calcValue: processMeta.value,
+                calcTone: processMeta.tone
+              }
+            })
+          }
+        })
+        .filter((group) => group.players.length)
+
+      return {
+        id: itemId,
+        label: itemMap[itemId]?.name || `积分组别 ${itemIndex + 1}`,
+        groups: normalizedGroups,
+        honors,
+        knockoutRounds: normalizeKnockoutRounds(knockoutRounds, nameLookup)
+      }
+    })
+    .filter((item) => item.groups.length || item.honors.length || item.knockoutRounds.length || item.label)
 }
 
 const closeMembersModal = () => {
@@ -452,7 +941,7 @@ const openMembersModal = async (item) => {
       ...memberCache.value,
       [item.id]: rows
     }
-  } catch (e) {
+  } catch (error) {
     membersError.value = '参赛名单加载失败，请稍后重试'
     memberRows.value = []
   } finally {
@@ -460,8 +949,119 @@ const openMembersModal = async (item) => {
   }
 }
 
+const fetchScoreChanges = async ({ force = false } = {}) => {
+  if (pointsLoading.value || (pointsLoaded.value && !force)) return
+
+  pointsLoading.value = true
+  pointsError.value = ''
+  pointsNotice.value = ''
+
+  try {
+    const res = await fetchMatchScoreChange($api, { eventid: id.value })
+    const code = Number(res?.code)
+    const message = normalizeText(res?.msg)
+    const hasData = !!(res?.data && typeof res.data === 'object')
+
+    if (hasData) {
+      scoreChangeData.value = res.data
+
+      if (code !== 1 && message) {
+        pointsNotice.value = message
+      } else if (!scoreChangeGroups.value.length) {
+        pointsNotice.value = '当前暂无积分变动数据'
+      }
+    } else if (code === 0) {
+      scoreChangeData.value = createEmptyScoreChangeData()
+      pointsNotice.value = message || '积分还未计算'
+    } else {
+      scoreChangeData.value = createEmptyScoreChangeData()
+      pointsError.value = message || '积分变动加载失败，请稍后重试'
+    }
+  } catch (error) {
+    scoreChangeData.value = createEmptyScoreChangeData()
+    pointsError.value = '积分变动加载失败，请稍后重试'
+  } finally {
+    pointsLoading.value = false
+    pointsLoaded.value = true
+
+    if (scoreChangeGroups.value.length && !scoreChangeGroups.value.some((group) => group.id === activePointsItemId.value)) {
+      activePointsItemId.value = scoreChangeGroups.value[0].id
+    }
+  }
+}
+
+const fetchCompetitionData = async (itemsList = items.value) => {
+  const firstItemId = itemsList?.[0]?.id
+
+  if (!id.value || !firstItemId) {
+    resetCompetitionState()
+    return
+  }
+
+  competitionLoading.value = true
+  competitionError.value = ''
+
+  try {
+    const [groupsRes, honorsRes] = await Promise.all([
+      fetchMatchGroups($api, {
+        eventId: id.value,
+        itemId: firstItemId
+      }),
+      fetchMatchAllHonors($api, {
+        eventId: id.value
+      })
+    ])
+
+    const groupsPayload = groupsRes?.data && typeof groupsRes.data === 'object' ? groupsRes.data : {}
+    const honorsPayload = honorsRes?.data && typeof honorsRes.data === 'object' ? honorsRes.data : {}
+    const itemIds = getCompetitionItemIds(itemsList, groupsPayload, honorsPayload)
+
+    const resultPayloads = await Promise.all(
+      itemIds.map(async (itemId) => {
+        try {
+          const resultRes = await fetchMatchIncrementResult($api, {
+            eventId: id.value,
+            itemId,
+            posttime: 0
+          })
+
+          return {
+            itemId,
+            data: resultRes?.data || {}
+          }
+        } catch (error) {
+          return {
+            itemId,
+            data: {}
+          }
+        }
+      })
+    )
+
+    const normalizedItems = normalizeCompetitionData({
+      itemsList,
+      groupsPayload,
+      honorsPayload,
+      resultPayloads
+    })
+
+    competitionItems.value = normalizedItems
+    activeCompetitionItemId.value = normalizedItems.some((item) => item.id === activeCompetitionItemId.value)
+      ? activeCompetitionItemId.value
+      : normalizedItems[0]?.id || ''
+  } catch (error) {
+    competitionItems.value = []
+    competitionError.value = '赛程与积分数据加载失败，请稍后重试'
+    activeCompetitionItemId.value = ''
+  } finally {
+    competitionLoading.value = false
+  }
+}
+
 const fetchDetail = async () => {
   loading.value = true
+  resetScoreChangeState()
+
   try {
     const res = await fetchMatchDetail($api, {
       id: id.value,
@@ -470,7 +1070,9 @@ const fetchDetail = async () => {
     })
 
     detail.value = res?.data?.detail || null
-    items.value = normalizeItems(res?.data)
+    const normalizedItems = normalizeItems(res?.data)
+    items.value = normalizedItems
+    activePointsItemId.value = normalizedItems[0]?.id || ''
     memberCache.value = {}
     memberRows.value = []
     membersModalOpen.value = false
@@ -483,16 +1085,29 @@ const fetchDetail = async () => {
     decodedHtml.value = rawHtml
       .replace(/<p>(\s*|&nbsp;|<br>)*([一二三四五六七八九十]+[、.])/g, '<p class="!mt-8 !mb-4 font-bold text-lg text-text-main">$2')
       .replace(/<p>(\s*|&nbsp;|<br>)*(\d+[、.])/g, '<p class="!my-0.5 text-text-muted">$2')
-  } catch (e) {
+
+    await fetchCompetitionData(normalizedItems)
+  } catch (error) {
     detail.value = null
     items.value = []
     decodedHtml.value = ''
+    resetCompetitionState()
+    resetScoreChangeState()
   } finally {
     loading.value = false
+
+    if (activeTab.value === 'points' && detail.value) {
+      void fetchScoreChanges()
+    }
   }
 }
 
 onMounted(fetchDetail)
+watch(id, (nextId, prevId) => {
+  if (nextId !== prevId) {
+    fetchDetail()
+  }
+})
 </script>
 
 <style scoped>
