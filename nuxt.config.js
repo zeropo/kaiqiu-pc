@@ -1,5 +1,6 @@
-// Nuxt configuration (JavaScript only, no TypeScript)
-export default defineNuxtConfig({
+// Nuxt mutates the loaded config object during startup. Returning a fresh
+// object on each load avoids reusing a previously patched config instance.
+export default defineNuxtConfig(() => ({
   ssr: true,
   components: [{ path: '~/components', pathPrefix: false }],
   modules: [
@@ -58,4 +59,4 @@ export default defineNuxtConfig({
   tailwindcss: {
     viewer: false
   }
-});
+}));

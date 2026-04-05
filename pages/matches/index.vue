@@ -1,48 +1,97 @@
 <template>
   <div class="container py-10 md:py-16">
-    <div class="mb-8">
-      <h1 class="font-display text-3xl font-bold text-text-main">比赛大厅</h1>
-      <p class="text-text-muted mt-2">浏览、搜索并筛选您身边的乒乓球赛事</p>
-    </div>
-    
-    <div class="bg-white rounded-card shadow-sm border border-border p-5 mb-10 flex flex-col md:flex-row md:items-end gap-4">
-      <div class="flex-1">
-        <label class="block text-sm font-medium text-text-muted mb-1.5">城市</label>
-        <div class="relative">
-          <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-          <input v-model="city" placeholder="如：杭州市" class="w-full h-11 pl-10 pr-4 rounded-btn border border-border focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all outline-none" />
-        </div>
+    <div class="mb-8 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-text-main">比赛大厅</h1>
+        <p class="mt-2 text-text-muted">浏览、搜索并筛选您身边的乒乓球赛事</p>
       </div>
-      <div class="min-w-[180px]">
-        <label class="block text-sm font-medium text-text-muted mb-1.5">排序方式</label>
-        <select v-model="sortOption" class="w-full h-11 px-3 rounded-btn border border-border focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all outline-none bg-white appearance-none cursor-pointer">
-          <option value="distance_asc">距离：从近到远</option>
-          <option value="distance_desc">距离：从远到近</option>
-          <option value="time_asc">时间：从早到晚</option>
-          <option value="time_desc">时间：从晚到早</option>
-        </select>
+
+      <div class="inline-flex items-center gap-2 self-start rounded-full bg-brand-primary/10 px-4 py-2 text-sm font-medium text-brand-primary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        <span>当前城市 {{ cityLabel }}</span>
       </div>
-      <button @click="load(1)" class="h-11 px-8 rounded-btn bg-brand-primary text-white font-medium hover:bg-brand-primaryHover shadow-card hover:shadow-cardHover transition-all active:scale-95">筛选结果</button>
     </div>
 
-    <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="n in 6" :key="n" class="h-64 bg-white border border-border rounded-card animate-pulse" />
+    <div class="mb-10 rounded-card border border-border bg-white p-5 shadow-sm">
+      <div class="flex flex-col gap-5">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center">
+          <div class="inline-flex w-full rounded-full bg-surfaceSoft p-1 sm:w-auto">
+            <button
+              v-for="tab in tabs"
+              :key="tab.value"
+              type="button"
+              :class="[
+                'flex-1 rounded-full px-4 py-2.5 text-sm font-semibold transition-all sm:flex-none',
+                activeTab === tab.value
+                  ? 'bg-brand-primary text-white shadow-card'
+                  : 'text-text-muted hover:text-text-main'
+              ]"
+              @click="changeTab(tab.value)"
+            >
+              {{ tab.label }}
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div class="space-y-1">
+            <p class="text-sm font-semibold text-text-main">{{ currentViewLabel }}</p>
+            <p class="text-sm text-text-muted">
+              当前共展示 {{ displayList.length }} 场赛事
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 md:grid-cols-4 xl:min-w-[720px]">
+            <button
+              v-for="option in sortOptions"
+              :key="option.value"
+              type="button"
+              :class="[
+                'rounded-2xl border px-4 py-3 text-left transition-all',
+                sortOption === option.value
+                  ? 'border-brand-primary bg-brand-primary text-white shadow-card'
+                  : 'border-border bg-white text-text-main hover:border-brand-primary hover:bg-brand-primary/5'
+              ]"
+              @click="sortOption = option.value"
+            >
+              <span class="block text-sm font-semibold">{{ option.label }}</span>
+              <span
+                :class="[
+                  'mt-1 block text-xs',
+                  sortOption === option.value ? 'text-white/80' : 'text-text-muted'
+                ]"
+              >
+                {{ option.description }}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div v-for="n in 6" :key="n" class="h-64 rounded-card border border-border bg-white animate-pulse" />
     </div>
 
     <div v-else>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <MatchCard v-for="m in list" :key="m.eventid" :match="m" />
+      <div v-if="displayList.length" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <MatchCard v-for="match in displayList" :key="getMatchKey(match)" :match="match" />
       </div>
 
-      <div class="flex items-center justify-center mt-12" v-if="hasMore">
-        <button @click="load(page+1)" class="h-11 px-8 rounded-btn border border-border text-text-main hover:border-brand-primary hover:text-brand-primary transition-colors bg-white font-medium">加载更多</button>
-      </div>
-      <div v-if="!list.length && !loading" class="flex flex-col items-center justify-center py-20 bg-white rounded-card shadow-sm border border-border">
-        <div class="w-20 h-20 bg-surfaceSoft rounded-full flex items-center justify-center mb-4">
-          <svg class="w-10 h-10 text-text-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div v-if="!displayList.length" class="flex flex-col items-center justify-center rounded-card border border-border bg-white py-20 shadow-sm">
+        <div class="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-surfaceSoft">
+          <svg class="h-10 w-10 text-text-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         </div>
-        <p class="text-text-muted font-medium text-lg">当前城市暂无比赛数据</p>
+        <p class="text-lg font-medium text-text-muted">{{ emptyTitle }}</p>
+        <p class="mt-2 text-sm text-text-light">{{ emptyDescription }}</p>
       </div>
+
+      <div
+        v-if="hasMore"
+        ref="loadMoreSentinel"
+        class="h-px w-full opacity-0 pointer-events-none"
+        aria-hidden="true"
+      ></div>
     </div>
   </div>
 </template>
@@ -52,76 +101,230 @@ useHead({
   title: '比赛列表'
 })
 
+const tabs = [
+  { value: 'local', label: '同城赛事' },
+  { value: 'history', label: '历史赛事' }
+]
+
+const sortOptions = [
+  { value: 'time_asc', label: '开赛更早', description: '按时间由早到晚' },
+  { value: 'time_desc', label: '开赛更晚', description: '按时间由晚到早' },
+  { value: 'distance_asc', label: '距离最近', description: '按距离由近到远' },
+  { value: 'distance_desc', label: '距离最远', description: '按距离由远到近' }
+]
+
 const { city, lat, lng } = useCity()
-const sortOption = ref('distance_asc') // 默认按距离从近到远
+const activeTab = ref('local')
+const sortOption = ref('time_asc')
 const page = ref(1)
-const list = ref([])
+const rawList = ref([])
 const hasMore = ref(false)
 const loading = ref(true)
+const loadingMore = ref(false)
+const initialized = ref(false)
 
 const { $api } = useNuxtApp()
+const canAutoLoadMore = computed(() => hasMore.value && !loading.value && !loadingMore.value)
+const { loadMoreSentinel } = useAutoLoadMore({
+  canLoadMore: canAutoLoadMore,
+  onLoadMore: () => load(page.value + 1)
+})
 
-// 客户端排序函数
-const sortMatches = (matches, sortType) => {
-  const sorted = [...matches]
-  
-  switch (sortType) {
+const cityLabel = computed(() => city.value || '杭州市')
+const requestCityName = computed(() => cityLabel.value)
+const currentViewLabel = computed(() => activeTab.value === 'history' ? '历史赛事' : '同城赛事')
+const requestCity = computed(() => activeTab.value === 'history' ? '-1' : city.value)
+const emptyTitle = computed(() => activeTab.value === 'history' ? '暂无历史赛事数据' : `${cityLabel.value}暂无比赛数据`)
+const emptyDescription = computed(() => activeTab.value === 'history'
+  ? '当前未查询到已结束的赛事，可稍后再来看看。'
+  : '当前城市暂无可报名或未结束赛事。')
+
+const parseGrade = (match) => {
+  const value = Number(match?.grade)
+  return Number.isFinite(value) && value > 0 ? value : 0
+}
+
+const parseDistance = (match, fallback = Infinity) => {
+  const value = Number(match?.juli)
+  if (Number.isFinite(value)) return value
+
+  const textValue = parseFloat(match?.distance)
+  return Number.isFinite(textValue) ? textValue : fallback
+}
+
+const parseTime = (match, fallback = Infinity) => {
+  const value = new Date(match?.starttime || '').getTime()
+  return Number.isFinite(value) ? value : fallback
+}
+
+const isRecommended = (match) => parseGrade(match) > 0
+
+const isHistoryMatch = (match) => {
+  const status = String(match?.status || '')
+  if (status.includes('积分已计算')) return true
+  if (status.includes('已结束') && !status.includes('报名已结束')) return true
+
+  const endFlag = match?.ifend
+  if (endFlag !== undefined && endFlag !== null && endFlag !== '') {
+    return String(endFlag) !== '0'
+  }
+
+  return false
+}
+
+const compareDistanceAsc = (a, b) => parseDistance(a) - parseDistance(b)
+const compareDistanceDesc = (a, b) => parseDistance(b, -Infinity) - parseDistance(a, -Infinity)
+const compareTimeAsc = (a, b) => parseTime(a) - parseTime(b)
+const compareTimeDesc = (a, b) => parseTime(b, -Infinity) - parseTime(a, -Infinity)
+
+const compareBySelectedSort = (a, b) => {
+  switch (sortOption.value) {
     case 'distance_asc':
-      return sorted.sort((a, b) => {
-        const distanceA = parseFloat(a.distance) || Infinity
-        const distanceB = parseFloat(b.distance) || Infinity
-        return distanceA - distanceB
-      })
+      return compareDistanceAsc(a, b)
     case 'distance_desc':
-      return sorted.sort((a, b) => {
-        const distanceA = parseFloat(a.distance) || -Infinity
-        const distanceB = parseFloat(b.distance) || -Infinity
-        return distanceB - distanceA
-      })
+      return compareDistanceDesc(a, b)
     case 'time_asc':
-      return sorted.sort((a, b) => new Date(a.starttime) - new Date(b.starttime))
+      return compareTimeAsc(a, b)
     case 'time_desc':
-      return sorted.sort((a, b) => new Date(b.starttime) - new Date(a.starttime))
+      return compareTimeDesc(a, b)
     default:
-      return sorted
+      return 0
   }
 }
+
+const compareMatches = (a, b) => {
+  const recommendedA = isRecommended(a)
+  const recommendedB = isRecommended(b)
+
+  if (recommendedA !== recommendedB) {
+    return recommendedA ? -1 : 1
+  }
+
+  if (recommendedA && recommendedB) {
+    const gradeDiff = parseGrade(b) - parseGrade(a)
+    if (gradeDiff !== 0) return gradeDiff
+  }
+
+  const selectedDiff = compareBySelectedSort(a, b)
+  if (selectedDiff !== 0) return selectedDiff
+
+  const distanceDiff = compareDistanceAsc(a, b)
+  if (distanceDiff !== 0) return distanceDiff
+
+  const timeDiff = compareTimeAsc(a, b)
+  if (timeDiff !== 0) return timeDiff
+
+  return String(a?.eventid || '').localeCompare(String(b?.eventid || ''))
+}
+
+const getMatchKey = (match) => match?.eventid || `${match?.title || 'match'}-${match?.starttime || ''}-${match?.arena_name || ''}`
+
+const dedupeMatches = (matches = []) => {
+  const mapped = new Map()
+
+  matches.forEach((match, index) => {
+    const key = match?.eventid || `${match?.title || 'match'}-${match?.starttime || ''}-${index}`
+    const prev = mapped.get(key)
+    mapped.set(key, prev ? { ...prev, ...match } : match)
+  })
+
+  return Array.from(mapped.values())
+}
+
+const resolveHasMore = ({ rows, currentPage, lastPage, previousCount, nextCount }) => {
+  if (!rows.length) return false
+
+  if (Number.isFinite(currentPage) && Number.isFinite(lastPage) && currentPage > 0 && lastPage > 0) {
+    return currentPage < lastPage
+  }
+
+  // History-match responses can omit pagination metadata entirely.
+  // In that case keep requesting while we still receive unseen rows.
+  return nextCount > previousCount
+}
+
+const displayList = computed(() => {
+  return rawList.value
+    .filter((match) => activeTab.value === 'history' ? isHistoryMatch(match) : !isHistoryMatch(match))
+    .sort(compareMatches)
+})
 
 const load = async (p = 1) => {
-  loading.value = true
+  const isFirstPage = p === 1
+
+  if (isFirstPage) {
+    loading.value = true
+  } else {
+    if (loading.value || loadingMore.value || !hasMore.value) return
+    loadingMore.value = true
+  }
+
   try {
-    // 使用接口的默认排序，然后在客户端重新排序
-    const res = await $api('/match/lists', { method: 'POST', body: { city: city.value, lat: lat.value, lng: lng.value, sort: 2, page: p } })
-    let rows = res?.data?.data || []
-    
-    if (p === 1) {
-      // 第一页：直接排序并设置
-      list.value = sortMatches(rows, sortOption.value)
-    } else {
-      // 加载更多：合并数据后重新排序整个列表
-      const combinedList = list.value.concat(rows)
-      list.value = sortMatches(combinedList, sortOption.value)
-    }
-    
-    page.value = p
-    const pg = res?.data
-    hasMore.value = pg?.current_page < pg?.last_page
-  } catch (e) {
-    if (p === 1) list.value = []
+    const res = await $api('/match/lists', {
+      method: 'POST',
+      body: {
+        city: requestCity.value,
+        cityName: requestCityName.value,
+        lat: lat.value,
+        lng: lng.value,
+        sort: 2,
+        page: p
+      }
+    })
+
+    const rows = Array.isArray(res?.data?.data) ? res.data.data : []
+    const previousCount = rawList.value.length
+    const nextList = isFirstPage ? dedupeMatches(rows) : dedupeMatches(rawList.value.concat(rows))
+
+    const currentPage = Number(res?.data?.current_page)
+    const lastPage = Number(res?.data?.last_page)
+    const resolvedCurrentPage = Number.isFinite(currentPage) && currentPage > 0 ? currentPage : p
+
+    rawList.value = nextList
+    page.value = resolvedCurrentPage
+    hasMore.value = resolveHasMore({
+      rows,
+      currentPage,
+      lastPage,
+      previousCount,
+      nextCount: nextList.length
+    })
+  } catch (error) {
+    if (isFirstPage) rawList.value = []
     hasMore.value = false
   } finally {
-    loading.value = false
+    if (isFirstPage) {
+      loading.value = false
+    } else {
+      loadingMore.value = false
+    }
   }
 }
 
-// 监听排序变化，自动重新加载第一页
-watch(sortOption, () => {
-  if (list.value.length > 0) {
-    load(1)
-  }
-}, { immediate: false })
+const changeTab = async (tab) => {
+  if (tab === activeTab.value) return
 
-// 不在首屏自动请求定位，避免权限提示。
-onMounted(async () => { await load(1) })
+  activeTab.value = tab
+  sortOption.value = tab === 'history' ? 'time_desc' : 'time_asc'
+  page.value = 1
+  rawList.value = []
+  hasMore.value = false
+  await load(1)
+}
+
+watch([city, lat, lng], async ([nextCity, nextLat, nextLng], [prevCity, prevLat, prevLng]) => {
+  if (!initialized.value || activeTab.value !== 'local') return
+
+  if (nextCity === prevCity && nextLat === prevLat && nextLng === prevLng) return
+
+  page.value = 1
+  rawList.value = []
+  hasMore.value = false
+  await load(1)
+})
+
+onMounted(async () => {
+  await load(1)
+  initialized.value = true
+})
 </script>
-

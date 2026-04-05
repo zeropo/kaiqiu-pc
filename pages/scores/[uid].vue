@@ -54,9 +54,12 @@
               </tr>
             </tbody>
           </table>
-          <div class="flex items-center justify-center py-6" v-if="gamesHasMore">
-            <button @click="loadGames(gamePage+1)" class="h-10 px-6 rounded-btn border border-gray-200">加载更多</button>
-          </div>
+          <div
+            v-if="gamesHasMore"
+            ref="gamesLoadMoreSentinel"
+            class="h-px w-full opacity-0 pointer-events-none"
+            aria-hidden="true"
+          ></div>
         </div>
       </section>
     </div>
@@ -76,7 +79,13 @@ const games = ref([])
 const gamePage = ref(1)
 const gamesHasMore = ref(false)
 const loading = ref(true)
+const gamesLoadingMore = ref(false)
 const { $api } = useNuxtApp()
+const canAutoLoadGames = computed(() => gamesHasMore.value && !loading.value && !gamesLoadingMore.value)
+const { loadMoreSentinel: gamesLoadMoreSentinel } = useAutoLoadMore({
+  canLoadMore: canAutoLoadGames,
+  onLoadMore: () => loadGames(gamePage.value + 1)
+})
 
 const fetchProfile = () => $api('/user/adv_profile', { method: 'GET', params: { uid: uid.value } })
 // const fetchScores = () => $api('/user/getUserScores', { method: 'GET', params: { uid: uid.value } })
@@ -88,10 +97,13 @@ const loadAll = async () => {
     const [p, g] = await Promise.all([fetchProfile(), fetchGames(1)])
     profile.value = p?.data || null
     scores.value = []
-    const pg = g?.data
-    games.value = pg?.data || []
-    gamePage.value = pg?.current_page || 1
-    gamesHasMore.value = pg?.current_page < pg?.last_page
+    const rows = Array.isArray(g?.data?.data) ? g.data.data : []
+    const currentPage = Number(g?.data?.current_page ?? 1)
+    const lastPage = Number(g?.data?.last_page ?? currentPage)
+
+    games.value = rows
+    gamePage.value = currentPage
+    gamesHasMore.value = rows.length > 0 && Number.isFinite(currentPage) && Number.isFinite(lastPage) && currentPage < lastPage
   } catch (e) {
     profile.value = null
     scores.value = []
@@ -99,17 +111,29 @@ const loadAll = async () => {
     gamesHasMore.value = false
   } finally {
     loading.value = false
+    gamesLoadingMore.value = false
   }
 }
 
 const loadGames = async (p) => {
+  if (loading.value || gamesLoadingMore.value || !gamesHasMore.value) return
+
+  gamesLoadingMore.value = true
+
   try {
     const res = await fetchGames(p)
-    const pg = res?.data
-    games.value = games.value.concat(pg?.data || [])
-    gamePage.value = pg?.current_page || p
-    gamesHasMore.value = pg?.current_page < pg?.last_page
-  } catch (e) {}
+    const rows = Array.isArray(res?.data?.data) ? res.data.data : []
+    const currentPage = Number(res?.data?.current_page ?? p)
+    const lastPage = Number(res?.data?.last_page ?? currentPage)
+
+    games.value = games.value.concat(rows)
+    gamePage.value = currentPage
+    gamesHasMore.value = rows.length > 0 && Number.isFinite(currentPage) && Number.isFinite(lastPage) && currentPage < lastPage
+  } catch (e) {
+    gamesHasMore.value = false
+  } finally {
+    gamesLoadingMore.value = false
+  }
 }
 
 onMounted(loadAll)
@@ -121,5 +145,4 @@ const barHeight = (score) => {
   return `${Math.round(16 + h * 160)}px`
 }
 </script>
-
 

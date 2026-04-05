@@ -3,8 +3,13 @@
     <div class="relative overflow-hidden aspect-[4/3]">
       <div class="absolute inset-0 bg-surfaceSoft z-0 animate-pulse"></div>
       <ImgFallback :src="match.poster" alt="poster" class="w-full h-full object-cover relative z-10 group-hover:scale-105 transition-transform duration-700 ease-out" />
-      <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
-      <div class="absolute bottom-3 left-3 z-20 flex gap-2">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent z-10"></div>
+      <div v-if="cityLabel" class="absolute top-3 left-3 z-20 pointer-events-none">
+        <span class="inline-flex items-center rounded-sm bg-[#39b54a] px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
+          {{ cityLabel }}
+        </span>
+      </div>
+      <div class="absolute bottom-3 left-3 z-20 flex gap-2 pointer-events-none">
         <span class="text-xs text-white bg-black/40 backdrop-blur-md px-2 py-1 rounded-md font-medium border border-white/10">
           {{ match.status }}
         </span>
@@ -26,14 +31,21 @@
         </div>
       </div>
       
-      <div class="flex items-center justify-between mt-5 pt-4 border-t border-surfaceSoft">
-        <span v-if="match.distance !== undefined" class="text-xs font-semibold text-brand-secondary bg-brand-secondary/10 px-2.5 py-1 rounded-md">
+      <div class="mt-5 flex items-center justify-between border-t border-surfaceSoft pt-4">
+        <span v-if="match.distance !== undefined" class="rounded-md bg-brand-secondary/10 px-2.5 py-1 text-xs font-semibold text-brand-secondary">
           距您 {{ formatDistance(match.distance) }}
         </span>
         <span v-else></span>
-        <a :href="`/matches/${match.eventid}`" class="inline-flex items-center font-medium text-brand-primary text-sm group-hover:translate-x-1 transition-transform">
-          详情 <svg class="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-        </a>
+        <span
+          v-if="joinCountLabel"
+          class="inline-flex items-center rounded-md border border-[#39b54a] bg-white px-2.5 py-1 text-xs font-semibold text-[#39b54a]"
+        >
+          {{ joinCountLabel }}
+        </span>
+        <span v-else class="inline-flex items-center text-sm font-medium text-brand-primary transition-transform group-hover:translate-x-1">
+          详情
+          <svg class="ml-0.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </span>
       </div>
     </div>
     <!-- Overlay link applied to entire card -->
@@ -41,7 +53,19 @@
   </article>
 </template>
 <script setup>
-defineProps({ match: { type: Object, required: true } })
+const props = defineProps({ match: { type: Object, required: true } })
+
+const cityLabel = computed(() => {
+  const city = props.match?.city?.trim?.()
+  const province = props.match?.province?.trim?.()
+  return city || province || ''
+})
+
+const joinCountLabel = computed(() => {
+  const count = props.match?.membernum
+  if (count === null || count === undefined || count === '') return ''
+  return `${count}人参加`
+})
 
 // 格式化距离显示
 const formatDistance = (distance) => {
@@ -54,4 +78,3 @@ const formatDistance = (distance) => {
   }
 }
 </script>
-

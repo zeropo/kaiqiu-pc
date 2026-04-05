@@ -55,9 +55,12 @@
           </tbody>
         </table>
       </div>
-      <div class="flex items-center justify-center py-6 border-t border-border bg-surfaceMuted" v-if="hasMore">
-        <button @click="load(page+1)" class="h-10 px-8 rounded-btn border border-border bg-white text-text-main hover:border-brand-primary hover:text-brand-primary transition-colors font-medium shadow-sm">加载更多</button>
-      </div>
+      <div
+        v-if="hasMore"
+        ref="loadMoreSentinel"
+        class="h-px w-full opacity-0 pointer-events-none"
+        aria-hidden="true"
+      ></div>
     </div>
   </div>
 </template>
@@ -71,27 +74,52 @@ const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
 const loading = ref(true)
+const loadingMore = ref(false)
 
 const { $api } = useNuxtApp()
+const canAutoLoadMore = computed(() => hasMore.value && !loading.value && !loadingMore.value)
+const { loadMoreSentinel } = useAutoLoadMore({
+  canLoadMore: canAutoLoadMore,
+  onLoadMore: () => load(page.value + 1)
+})
 
 const load = async (p = 1) => {
-  loading.value = true
+  const isFirstPage = p === 1
+
+  if (isFirstPage) {
+    loading.value = true
+  } else {
+    if (loading.value || loadingMore.value || !hasMore.value) return
+    loadingMore.value = true
+  }
+
   try {
     const res = await $api('/user/lists', { method: 'POST', body: { city: city.value, sort: 2, page: p, index: 0 } })
-    const rows = res?.data?.data || []
-    if (p === 1) list.value = rows; else list.value = list.value.concat(rows)
-    page.value = p
-    const pg = res?.data
-    hasMore.value = pg?.current_page < pg?.last_page
+    const rows = Array.isArray(res?.data?.data) ? res.data.data : []
+
+    if (isFirstPage) {
+      list.value = rows
+    } else {
+      list.value = list.value.concat(rows)
+    }
+
+    const currentPage = Number(res?.data?.current_page ?? p)
+    const lastPage = Number(res?.data?.last_page ?? currentPage)
+
+    page.value = currentPage
+    hasMore.value = rows.length > 0 && Number.isFinite(currentPage) && Number.isFinite(lastPage) && currentPage < lastPage
   } catch (e) {
-    if (p === 1) list.value = []
+    if (isFirstPage) list.value = []
     hasMore.value = false
   } finally {
-    loading.value = false
+    if (isFirstPage) {
+      loading.value = false
+    } else {
+      loadingMore.value = false
+    }
   }
 }
 
 onMounted(async () => { await load(1) })
 </script>
-
 
