@@ -12,14 +12,30 @@
         
         <!-- Desktop Nav -->
         <nav class="hidden md:flex items-center gap-8 text-[15px] font-medium text-text-muted">
-          <a v-for="link in links" :key="link.path" :href="link.path" class="relative py-2 hover:text-brand-primary transition-colors after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-brand-primary after:transition-all hover:after:w-full">
+          <NuxtLink
+            v-for="link in links"
+            :key="link.path"
+            :to="link.path"
+            :aria-current="isActiveLink(link.path) ? 'page' : undefined"
+            class="relative px-1 py-2 transition-colors after:absolute after:bottom-0 after:left-1/2 after:h-[2px] after:-translate-x-1/2 after:bg-brand-primary after:transition-all"
+            :class="isActiveLink(link.path)
+              ? 'text-brand-primary after:w-8'
+              : 'hover:text-brand-primary after:w-0 hover:after:w-6'"
+          >
             {{ link.name }}
-          </a>
+          </NuxtLink>
           
-          <a href="/search" class="ml-4 inline-flex items-center justify-center h-10 px-6 rounded-full bg-surfaceSoft text-text-main border border-border hover:border-brand-primary hover:text-brand-primary transition-all duration-smooth font-medium text-sm">
+          <NuxtLink
+            to="/search"
+            :aria-current="isActiveLink('/search') ? 'page' : undefined"
+            class="ml-4 inline-flex items-center justify-center h-10 px-6 rounded-full border transition-all duration-smooth font-medium text-sm"
+            :class="isActiveLink('/search')
+              ? 'bg-brand-primary text-white border-brand-primary shadow-card'
+              : 'bg-surfaceSoft text-text-main border-border hover:border-brand-primary hover:text-brand-primary'"
+          >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             搜索
-          </a>
+          </NuxtLink>
         </nav>
 
         <!-- Mobile Menu Toggle -->
@@ -33,13 +49,29 @@
       <transition enter-active-class="transition duration-smooth ease-out" enter-from-class="opacity-0 -translate-y-4" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition duration-smooth ease-in" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-4">
         <div v-show="mobileMenuOpen" class="md:hidden absolute top-full left-0 right-0 bg-white border-b border-border shadow-cardHover">
           <nav class="flex flex-col py-4 px-6 space-y-4 text-base font-medium text-text-main">
-            <a v-for="link in links" :key="link.path" :href="link.path" class="block py-2 border-b border-border/50" @click="mobileMenuOpen = false">
+            <NuxtLink
+              v-for="link in links"
+              :key="link.path"
+              :to="link.path"
+              :aria-current="isActiveLink(link.path) ? 'page' : undefined"
+              class="block py-2 border-b border-border/50 transition-colors"
+              :class="isActiveLink(link.path) ? 'text-brand-primary' : ''"
+              @click="mobileMenuOpen = false"
+            >
               {{ link.name }}
-            </a>
-            <a href="/search" class="inline-flex items-center justify-center mt-4 h-12 w-full rounded-btn bg-brand-primary text-white shadow-card active:scale-[0.98] transition-all" @click="mobileMenuOpen = false">
+            </NuxtLink>
+            <NuxtLink
+              to="/search"
+              :aria-current="isActiveLink('/search') ? 'page' : undefined"
+              class="inline-flex items-center justify-center mt-4 h-12 w-full rounded-btn shadow-card active:scale-[0.98] transition-all"
+              :class="isActiveLink('/search')
+                ? 'bg-brand-primary text-white'
+                : 'bg-surfaceSoft text-text-main border border-border'"
+              @click="mobileMenuOpen = false"
+            >
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               全局搜索
-            </a>
+            </NuxtLink>
           </nav>
         </div>
       </transition>
@@ -67,6 +99,7 @@
 import { ref } from 'vue'
 
 const mobileMenuOpen = ref(false)
+const route = useRoute()
 
 const links = [
   { name: '比赛', path: '/matches' },
@@ -76,6 +109,8 @@ const links = [
   { name: '排行', path: '/rankings' },
   { name: '裁判', path: '/umpires' }
 ]
+
+const isActiveLink = (path) => route.path === path || route.path.startsWith(`${path}/`)
 </script>
 
 <style scoped>

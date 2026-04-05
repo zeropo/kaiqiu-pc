@@ -38,6 +38,11 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     kqBaseUrl: process.env.KQ_BASE_URL || 'https://kaiqiuwang.cc/xcx/public/index.php/api',
+    kqSilentAuth: {
+      account: process.env.KQ_SILENT_LOGIN_ACCOUNT || 'wreyrwy',
+      password: process.env.KQ_SILENT_LOGIN_PASSWORD || 'zero2436426',
+      openId: process.env.KQ_SILENT_LOGIN_OPEN_ID || 'o9ocC5ZNCoOQeNxlPiXr7fAbB9tU'
+    },
     public: {
       apiBase: '/api'
     }
@@ -54,4 +59,3 @@ export default defineNuxtConfig({
     viewer: false
   }
 });
-

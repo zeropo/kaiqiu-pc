@@ -1,3 +1,5 @@
+import { buildKqAuthHeaders, ensureKqAuth } from './auth'
+
 function parseFormEncodedBody(raw = '') {
   const params = new URLSearchParams(raw)
   const parsed = {}
@@ -25,7 +27,11 @@ export default async function proxyRequest(event, method, path, { query = {}, bo
   const base = config.kqBaseUrl
   const url = `${base}${path}`
 
-  const headers = { Accept: 'application/json' }
+  const auth = await ensureKqAuth(event)
+  const headers = {
+    Accept: 'application/json',
+    ...buildKqAuthHeaders(auth)
+  }
   let fetchOptions = { method, headers }
 
   if (method === 'GET') {
@@ -34,7 +40,7 @@ export default async function proxyRequest(event, method, path, { query = {}, bo
       .filter(([, v]) => v !== undefined && v !== null && v !== '')
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
       .join('&')
-    return await $fetch(`${url}${qs ? `?${qs}` : ''}`, { method: 'GET' })
+    return await $fetch(`${url}${qs ? `?${qs}` : ''}`, { method: 'GET', headers })
   }
 
   if (method === 'POST') {
