@@ -21,7 +21,7 @@
               <div class="font-medium">{{ u.realname || u.username2 }}</div>
               <div class="text-gray-500">积分 {{ u.score }} · {{ u.residecity }}</div>
             </div>
-            <a :href="`/scores/${u.uid}`" class="text-brand-primary text-sm">查看</a>
+            <a :href="`/scores/${u.uid}`" target="_blank" rel="noopener noreferrer" class="text-brand-primary text-sm">查看</a>
           </li>
           <li v-if="!list.length" class="p-6 text-center text-gray-500">暂无数据</li>
         </ul>
@@ -75,4 +75,3 @@ watch(q, (val) => {
   timer.value = setTimeout(() => doSearch(), 500)
 })
 </script>
-

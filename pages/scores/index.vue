@@ -48,7 +48,7 @@
               <td class="px-6 py-4 text-text-muted">{{ formatSex(u.sex) }}</td>
               <td class="px-6 py-4 text-text-muted">{{ u.residecity || '-' }}</td>
               <td class="px-6 py-4 text-center">
-                <a :href="`/scores/${u.uid}`" class="inline-block text-brand-primary font-medium hover:text-brand-primaryHover">
+                <a :href="`/scores/${u.uid}`" target="_blank" rel="noopener noreferrer" class="inline-block text-brand-primary font-medium hover:text-brand-primaryHover">
                   <span class="relative inline-block">
                     详情
                     <svg class="absolute left-full top-1/2 ml-1 w-4 h-4 -translate-y-1/2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>

@@ -94,7 +94,7 @@
                   <span class="font-medium text-text-main">{{ u.maxscore }}</span>
                 </div>
               </div>
-              <NuxtLink :to="`/scores/${u.uid}`" class="absolute inset-0 z-10">
+              <NuxtLink :to="`/scores/${u.uid}`" target="_blank" rel="noopener noreferrer" class="absolute inset-0 z-10">
                 <span class="sr-only">选手详情</span>
               </NuxtLink>
             </article>
@@ -158,4 +158,3 @@ const loadUsers = async () => {
 // 首屏不主动请求定位，避免浏览器警告。仅加载数据，用户可在页面触发定位后刷新列表。
 onMounted(async () => { await Promise.all([loadMatches(), loadUsers()]) })
 </script>
-

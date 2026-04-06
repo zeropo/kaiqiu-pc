@@ -47,37 +47,39 @@
                     </svg>
                   </div>
                 </div>
-                <div class="mt-2 flex flex-wrap items-center gap-y-1 text-sm leading-6 text-text-muted md:text-base">
-                  <span>{{ profile.bg || '业余选手' }}</span>
-                  <span v-if="formattedSex" class="ml-2">· {{ formattedSex }}</span>
-                  <div
-                    v-if="resideLabel"
-                    class="relative ml-2 inline-flex items-center gap-2"
-                    :class="activeMetricTooltip === RESIDE_CITY_TOOLTIP_KEY ? 'z-20' : ''"
-                    @mouseenter="showMetricTooltip(RESIDE_CITY_TOOLTIP_KEY)"
-                    @mouseleave="closeMetricTooltip"
-                    @focusin="showMetricTooltip(RESIDE_CITY_TOOLTIP_KEY)"
-                    @focusout="closeMetricTooltip"
-                  >
-                    <span>· 常驻 {{ resideLabel }}</span>
-                    <button
-                      type="button"
-                      class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 bg-white text-xs font-bold text-text-muted transition-colors hover:border-gray-400 hover:text-text-main"
-                      :aria-label="RESIDE_CITY_TOOLTIP_TITLE"
-                      @click.stop="toggleMetricTooltip(RESIDE_CITY_TOOLTIP_KEY)"
-                    >
-                      ?
-                    </button>
+                <div class="mt-2 flex min-h-14 flex-col justify-center gap-2">
+                  <div class="flex flex-wrap items-center gap-y-1 text-sm leading-6 text-text-muted md:text-base">
+                    <span>{{ profile.bg || '业余选手' }}</span>
+                    <span v-if="formattedSex" class="ml-2">· {{ formattedSex }}</span>
                     <div
-                      v-if="activeMetricTooltip === RESIDE_CITY_TOOLTIP_KEY"
-                      class="absolute left-0 top-full z-30 mt-3 w-[min(86vw,340px)] rounded-2xl border border-border bg-white px-4 py-3 text-sm leading-6 text-text-main shadow-[0_24px_60px_-32px_rgba(15,23,42,0.35)]"
-                      @click.stop
+                      v-if="resideLabel"
+                      class="relative ml-2 inline-flex items-center gap-2"
+                      :class="activeMetricTooltip === RESIDE_CITY_TOOLTIP_KEY ? 'z-20' : ''"
+                      @mouseenter="showMetricTooltip(RESIDE_CITY_TOOLTIP_KEY)"
+                      @mouseleave="closeMetricTooltip"
+                      @focusin="showMetricTooltip(RESIDE_CITY_TOOLTIP_KEY)"
+                      @focusout="closeMetricTooltip"
                     >
-                      <p class="text-base font-semibold" :style="{ color: accentColor }">{{ RESIDE_CITY_TOOLTIP_TITLE }}</p>
-                      <p class="mt-2 whitespace-pre-line text-black/75">{{ RESIDE_CITY_TOOLTIP }}</p>
+                      <span>· 常驻 {{ resideLabel }}</span>
+                      <button
+                        type="button"
+                        class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 bg-white text-xs font-bold text-text-muted transition-colors hover:border-gray-400 hover:text-text-main"
+                        :aria-label="RESIDE_CITY_TOOLTIP_TITLE"
+                        @click.stop="toggleMetricTooltip(RESIDE_CITY_TOOLTIP_KEY)"
+                      >
+                        ?
+                      </button>
+                      <div
+                        v-if="activeMetricTooltip === RESIDE_CITY_TOOLTIP_KEY"
+                        class="absolute left-0 top-full z-30 mt-3 w-[min(86vw,340px)] rounded-2xl border border-border bg-white px-4 py-3 text-sm leading-6 text-text-main shadow-[0_24px_60px_-32px_rgba(15,23,42,0.35)]"
+                        @click.stop
+                      >
+                        <p class="text-base font-semibold" :style="{ color: accentColor }">{{ RESIDE_CITY_TOOLTIP_TITLE }}</p>
+                        <p class="mt-2 whitespace-pre-line text-black/75">{{ RESIDE_CITY_TOOLTIP }}</p>
+                      </div>
                     </div>
                   </div>
-                  <div v-if="equipmentItems.length" class="ml-5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <div v-if="equipmentItems.length" class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm leading-6 text-text-muted md:text-base">
                     <span
                       v-for="item in equipmentItems"
                       :key="item.label"
@@ -210,6 +212,8 @@
                 <NuxtLink
                   v-if="item.uid"
                   :to="`/scores/${item.uid}`"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   class="inline-flex max-w-full items-center rounded-full border border-border bg-white px-3.5 py-2 text-sm font-medium text-text-main shadow-sm transition-colors hover:border-brand-primary/20 hover:text-brand-primary"
                 >
                   <span class="truncate">{{ item.label }}</span>
@@ -315,6 +319,8 @@
                         <NuxtLink
                           v-if="member.uid && member.uid !== uid"
                           :to="`/scores/${member.uid}`"
+                          target="_blank"
+                          rel="noopener noreferrer"
                           class="block font-medium text-brand-primary transition-colors hover:text-brand-primaryHover"
                         >
                           {{ member.name }}
@@ -329,6 +335,8 @@
                         <NuxtLink
                           v-if="member.uid"
                           :to="`/scores/${member.uid}`"
+                          target="_blank"
+                          rel="noopener noreferrer"
                           class="block font-medium text-brand-primary transition-colors hover:text-brand-primaryHover"
                         >
                           {{ member.name }}
