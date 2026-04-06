@@ -98,7 +98,7 @@
               </div>
             </div>
 
-            <div class="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="mt-6 grid gap-5 sm:grid-cols-2 xl:gap-6 xl:grid-cols-4">
               <article
                 v-for="metric in heroMetrics"
                 :key="metric.label"
@@ -250,6 +250,134 @@
         <p v-else class="mt-5 rounded-[24px] border border-dashed border-border bg-surfaceSoft/60 px-4 py-10 text-center text-sm text-text-muted">
           暂无参赛地区信息
         </p>
+      </section>
+
+      <section v-if="championChallenge" class="overflow-hidden rounded-[30px] border border-border bg-white p-5 shadow-sm md:p-6">
+        <div
+          class="rounded-[26px] border border-border/70 px-4 py-4 md:px-5"
+          :style="championChallengePanelStyle"
+        >
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div class="min-w-0">
+              <p
+                class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]"
+                :style="{ backgroundColor: toRgba(accentColor, 0.1), color: accentColor }"
+              >
+                挑战冠军
+              </p>
+              <h2 class="mt-3 text-2xl font-bold tracking-tight text-text-main md:text-[2rem]">
+                {{ userName }}
+                <span class="mx-1 font-display" :style="{ color: accentColor }">{{ championChallenge.stepCount }}</span>
+                阶挑战战世界冠军
+                <span class="ml-1" :style="{ color: accentColor }">{{ championChallenge.championName }}</span>
+                成功
+              </h2>
+              <p v-if="championChallenge.pathWords.length" class="mt-2 text-sm leading-6 text-text-muted">
+                挑战链：{{ championChallenge.pathWords.join(' → ') }}
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-2 text-sm">
+              <span class="rounded-full bg-white/85 px-3 py-1 text-text-muted shadow-sm">
+                关键比赛
+                <span class="font-semibold" :style="{ color: accentColor }">{{ championChallenge.steps.length }}</span>
+                场
+              </span>
+              <span v-if="championChallenge.latestDate" class="rounded-full bg-white/85 px-3 py-1 text-text-muted shadow-sm">
+                最近一场 {{ championChallenge.latestDate }}
+              </span>
+            </div>
+          </div>
+
+          <div v-if="championChallenge.steps.length" class="mt-6 grid gap-4 xl:grid-cols-2">
+            <article
+              v-for="(step, index) in championChallenge.steps"
+              :key="step.id"
+              class="group relative overflow-hidden rounded-[26px] border border-white/80 bg-white/92 p-4 shadow-[0_20px_40px_-32px_rgba(15,23,42,0.28)]"
+              :style="buildChampionStepStyle(index)"
+            >
+              <div class="relative flex items-center gap-3">
+                <div class="shrink-0">
+                  <a
+                    v-if="step.left.uid"
+                    :href="`/scores/${step.left.uid}`"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="block"
+                  >
+                    <ImgFallback :src="step.left.avatar" :alt="step.left.name" class="h-16 w-16 rounded-full border border-white/80 object-cover shadow-sm" />
+                  </a>
+                  <ImgFallback
+                    v-else
+                    :src="step.left.avatar"
+                    :alt="step.left.name"
+                    class="h-16 w-16 rounded-full border border-white/80 object-cover shadow-sm"
+                  />
+                </div>
+
+                <div class="min-w-0 flex-1 text-center">
+                  <div class="flex items-center justify-center gap-2 text-[17px] font-semibold leading-6 text-text-main md:text-lg">
+                    <a
+                      v-if="step.left.uid"
+                      :href="`/scores/${step.left.uid}`"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="max-w-[84px] truncate transition-colors hover:text-brand-primary"
+                    >
+                      {{ step.left.name }}
+                    </a>
+                    <span v-else class="max-w-[84px] truncate">{{ step.left.name }}</span>
+                    <span class="rounded-full px-3 py-1 font-display text-lg shadow-sm" :class="step.scoreToneClass">
+                      {{ step.scoreline }}
+                    </span>
+                    <a
+                      v-if="step.right.uid"
+                      :href="`/scores/${step.right.uid}`"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="max-w-[84px] truncate transition-colors hover:text-brand-primary"
+                    >
+                      {{ step.right.name }}
+                    </a>
+                    <span v-else class="max-w-[84px] truncate">{{ step.right.name }}</span>
+                  </div>
+                  <p class="mt-2 line-clamp-2 text-sm font-medium leading-6 text-text-main/80">{{ step.title || '赛事信息待补充' }}</p>
+                  <p class="mt-1 text-sm text-text-muted">
+                    {{ step.dateline || '时间未知' }}
+                    <span v-if="step.city"> · {{ step.city }}</span>
+                  </p>
+                </div>
+
+                <div class="shrink-0">
+                  <a
+                    v-if="step.right.uid"
+                    :href="`/scores/${step.right.uid}`"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="block"
+                  >
+                    <ImgFallback :src="step.right.avatar" :alt="step.right.name" class="h-16 w-16 rounded-full border border-white/80 object-cover shadow-sm" />
+                  </a>
+                  <ImgFallback
+                    v-else
+                    :src="step.right.avatar"
+                    :alt="step.right.name"
+                    class="h-16 w-16 rounded-full border border-white/80 object-cover shadow-sm"
+                  />
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div v-else-if="championChallenge.pathWords.length" class="mt-6 flex flex-wrap gap-3">
+            <span
+              v-for="(name, index) in championChallenge.pathWords"
+              :key="`${name}-${index}`"
+              class="inline-flex items-center rounded-full border border-white/80 bg-white/90 px-4 py-2 text-sm font-medium text-text-main shadow-sm"
+            >
+              {{ name }}
+            </span>
+          </div>
+        </div>
       </section>
 
       <section v-if="recentHonors.length" class="rounded-[30px] border border-border bg-white p-5 shadow-sm md:p-6">
@@ -575,6 +703,59 @@ const cityList = computed(() => {
   if (!Array.isArray(profile.value?.allCities)) return []
   return profile.value.allCities.filter(Boolean)
 })
+const championChallenge = computed(() => {
+  const championName = normalizeDisplayText(profile.value?.champion)
+  if (!championName) return null
+
+  const steps = normalizeChampionPath(profile.value?.path).map((step, index) => {
+    const leftScore = normalizeMatchScore(step?.result1)
+    const rightScore = normalizeMatchScore(step?.result2)
+    const leftNumeric = Number(leftScore)
+    const rightNumeric = Number(rightScore)
+    const scoreToneClass = Number.isFinite(leftNumeric) && Number.isFinite(rightNumeric)
+      ? leftNumeric > rightNumeric
+        ? 'bg-emerald-50 text-emerald-700'
+        : leftNumeric < rightNumeric
+          ? 'bg-rose-50 text-rose-700'
+          : 'bg-slate-100 text-slate-600'
+      : 'bg-slate-100 text-slate-600'
+
+    return {
+      id: `champion-path-${step?.uid1 || step?.realname1 || 'left'}-${step?.uid2 || step?.realname2 || 'right'}-${step?.dateline || index}`,
+      left: {
+        uid: normalizeUidValue(step?.uid1),
+        name: normalizeDisplayText(step?.realname1) || '未知选手',
+        avatar: normalizeDisplayText(step?.face1)
+      },
+      right: {
+        uid: normalizeUidValue(step?.uid2),
+        name: normalizeDisplayText(step?.realname2) || '未知选手',
+        avatar: normalizeDisplayText(step?.face2)
+      },
+      scoreline: leftScore && rightScore ? `${leftScore}:${rightScore}` : [leftScore, rightScore].filter(Boolean).join(':') || '-',
+      scoreToneClass,
+      title: normalizeDisplayText(step?.title),
+      city: normalizeDisplayText(step?.city),
+      dateline: normalizeDisplayText(step?.dateline)
+    }
+  })
+  const pathWords = String(profile.value?.pathWords || '')
+    .split('-')
+    .map((item) => normalizeDisplayText(item))
+    .filter(Boolean)
+  const stepCount = normalizePositiveNumber(profile.value?.pathNum) || steps.length
+
+  return {
+    championName,
+    pathWords,
+    steps,
+    stepCount,
+    latestDate: steps[0]?.dateline || ''
+  }
+})
+const championChallengePanelStyle = computed(() => ({
+  backgroundImage: `radial-gradient(circle at top right, ${toRgba(accentColor.value, 0.16)}, transparent 34%), linear-gradient(135deg, ${toRgba(accentColor.value, 0.08)}, rgba(255,255,255,0.96) 42%, ${toRgba(accentColor.value, 0.03)} 100%)`
+}))
 
 const recentHonors = computed(() => {
   if (!Array.isArray(profile.value?.honors)) return []
@@ -719,6 +900,30 @@ function normalizeGameMemberName(value) {
   return text && text !== '-' && text !== '0' ? text : ''
 }
 
+function normalizeMatchScore(value) {
+  const text = String(value || '').trim()
+  return text && text !== '-' ? text : ''
+}
+
+function normalizePositiveNumber(value) {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : 0
+}
+
+function normalizeChampionPath(value) {
+  if (Array.isArray(value)) return value
+  if (!value) return []
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
 function formatEquipmentValue(brand, type) {
   const brandText = normalizeDisplayText(brand)
   const typeText = normalizeDisplayText(type)
@@ -763,6 +968,14 @@ function buildMatchLocationText(detail) {
   ].filter(Boolean)
 
   return [...new Set(segments)].join(' · ')
+}
+
+function buildChampionStepStyle(index) {
+  const anchor = index % 2 === 0 ? 'top left' : 'top right'
+
+  return {
+    backgroundImage: `radial-gradient(circle at ${anchor}, ${toRgba(accentColor.value, 0.14)}, transparent 36%), linear-gradient(135deg, rgba(255,255,255,0.96), ${toRgba(accentColor.value, 0.05)} 100%)`
+  }
 }
 
 function normalizeTags(rows) {
