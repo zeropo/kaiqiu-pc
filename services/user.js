@@ -14,6 +14,17 @@ export async function fetchAdvProfile($api, { uid }) {
   return await $api('/user/adv_profile', { method: 'GET', params: { uid } })
 }
 
+export async function fetchUserBattleFlag($api, { uid }) {
+  return await $api('/user/get_battle_flag', { method: 'GET', params: { uid } })
+}
+
+export async function fetchUserTags($api, { uid, limitByCount = 6, getNegative = false } = {}) {
+  return await $api('/user/get_tags', {
+    method: 'GET',
+    params: { uid, limitByCount, getNegative }
+  })
+}
+
 export async function fetchUserScores($api, { uid }) {
   return await $api('/user/getUserScores', { method: 'GET', params: { uid } })
 }
@@ -21,4 +32,3 @@ export async function fetchUserScores($api, { uid }) {
 export async function fetchUserGames($api, { uid, page = 1 } = {}) {
   return await $api('/user/getGames', { method: 'GET', params: { uid, page } })
 }
-
