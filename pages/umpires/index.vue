@@ -32,7 +32,7 @@
 useHead({
   title: '裁判列表'
 })
-const { city, tryGeolocation } = useCity()
+const { city, switchVersion, tryGeolocation } = useCity()
 const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
@@ -82,6 +82,12 @@ const load = async (p = 1) => {
     }
   }
 }
+
+watch(switchVersion, async () => {
+  page.value = 1
+  hasMore.value = false
+  await load(1)
+})
 
 onMounted(async () => { await load(1) })
 </script>

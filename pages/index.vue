@@ -114,7 +114,7 @@ useHead({
 })
 
 const { $api } = useNuxtApp()
-const { city, lat, lng, tryGeolocation } = useCity()
+const { city, lat, lng, switchVersion, tryGeolocation } = useCity()
 const matches = ref([])
 const users = ref([])
 const loadingMatches = ref(true)
@@ -156,5 +156,9 @@ const loadUsers = async () => {
 }
 
 // 首屏不主动请求定位，避免浏览器警告。仅加载数据，用户可在页面触发定位后刷新列表。
+watch(switchVersion, async () => {
+  await Promise.all([loadMatches(), loadUsers()])
+})
+
 onMounted(async () => { await Promise.all([loadMatches(), loadUsers()]) })
 </script>

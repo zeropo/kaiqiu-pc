@@ -88,7 +88,7 @@ const SCORE_TAB_CITY_MAP = {
   province: '-2'
 }
 
-const { city } = useCity()
+const { city, switchVersion } = useCity()
 const activeTab = ref('city')
 const page = ref(1)
 const list = ref([])
@@ -190,6 +190,12 @@ const changeTab = async (tab) => {
   hasMore.value = false
   await load(1)
 }
+
+watch(switchVersion, async () => {
+  page.value = 1
+  hasMore.value = false
+  await load(1)
+})
 
 onMounted(async () => { await load(1) })
 </script>

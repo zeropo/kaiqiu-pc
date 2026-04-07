@@ -1,21 +1,93 @@
-export function useCity() {
-  const city = useState('city', () => '杭州市')
-  const lat = useState('lat', () => '30.21')
-  const lng = useState('lng', () => '120.21')
+const DEFAULT_CITY = '杭州市'
+const DEFAULT_LAT = '30.21'
+const DEFAULT_LNG = '120.21'
 
-  const setCity = (c) => { city.value = c || '杭州市' }
-  const setLocation = (la, ln) => { lat.value = la || '30.21'; lng.value = ln || '120.21' }
+export function useCity() {
+  const city = useState('city', () => DEFAULT_CITY)
+  const lat = useState('lat', () => DEFAULT_LAT)
+  const lng = useState('lng', () => DEFAULT_LNG)
+  const cityGroups = useState('city-groups', () => [])
+  const cityLoaded = useState('city-loaded', () => false)
+  const cityLoading = useState('city-loading', () => false)
+  const switchVersion = useState('city-switch-version', () => 0)
+
+  const setCity = (c) => {
+    city.value = c || DEFAULT_CITY
+  }
+
+  const setLocation = (la, ln) => {
+    lat.value = la || DEFAULT_LAT
+    lng.value = ln || DEFAULT_LNG
+  }
+
+  const markSwitched = () => {
+    switchVersion.value += 1
+  }
+
+  const syncCitiesToStorage = () => {
+    if (!process.client || !cityGroups.value.length) return
+    window.localStorage.setItem('kq_city_groups', JSON.stringify(cityGroups.value))
+  }
+
+  const loadCitiesFromStorage = () => {
+    if (!process.client || cityLoaded.value) return false
+
+    const raw = window.localStorage.getItem('kq_city_groups')
+    if (!raw) return false
+
+    try {
+      const parsed = JSON.parse(raw)
+      cityGroups.value = parsed
+      cityLoaded.value = true
+      return true
+    } catch {
+      window.localStorage.removeItem('kq_city_groups')
+      return false
+    }
+  }
+
+  const normalizeCityGroups = (groups = []) => {
+    return groups.map((group) => ({
+      letter: group.letter,
+      list: group.list || []
+    }))
+  }
+
+  const ensureCityGroups = async (force = false) => {
+    if (!process.client) return cityGroups.value
+    if (!force && cityLoaded.value && cityGroups.value.length) return cityGroups.value
+    if (!force && loadCitiesFromStorage()) return cityGroups.value
+    if (cityLoading.value) return cityGroups.value
+
+    cityLoading.value = true
+
+    try {
+      const { $api } = useNuxtApp()
+      const res = await $api('/public/cities')
+      cityGroups.value = normalizeCityGroups(res.data || [])
+      cityLoaded.value = true
+      syncCitiesToStorage()
+    } finally {
+      cityLoading.value = false
+    }
+
+    return cityGroups.value
+  }
+
+  const switchCity = (nextCity) => {
+    setCity(nextCity)
+    setLocation(DEFAULT_LAT, DEFAULT_LNG)
+    markSwitched()
+  }
 
   const tryGeolocation = () => new Promise((resolve) => {
-    // 开发环境直接使用默认经纬度
     if (process.dev) {
-      setLocation('30.21', '120.21')
+      setLocation(DEFAULT_LAT, DEFAULT_LNG)
       return resolve(true)
     }
-    
-    // 检查浏览器支持
+
     if (!process.client || !navigator.geolocation) return resolve(false)
-    
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocation(String(pos.coords.latitude), String(pos.coords.longitude))
@@ -28,39 +100,51 @@ export function useCity() {
 
   onMounted(async () => {
     if (!process.client) return
-    
+
     const s = window.localStorage
-    city.value = s.getItem('kq_city') || '杭州市'
-    
-    // 开发环境直接使用默认经纬度
+    city.value = s.getItem('kq_city') || DEFAULT_CITY
+
     if (process.dev) {
-      lat.value = '30.21'
-      lng.value = '120.21'
+      lat.value = DEFAULT_LAT
+      lng.value = DEFAULT_LNG
+      loadCitiesFromStorage()
       return
     }
-    
-    // 线上环境：优先读取缓存，没有缓存则自动获取位置
+
     const cachedLat = s.getItem('kq_lat')
     const cachedLng = s.getItem('kq_lng')
-    
+
     if (cachedLat && cachedLng) {
       lat.value = cachedLat
       lng.value = cachedLng
     } else {
-      // 没有缓存，自动获取位置
       await tryGeolocation()
     }
+
+    loadCitiesFromStorage()
   })
 
   watch([city, lat, lng], () => {
-    if (process.client) {
-      const s = window.localStorage
-      s.setItem('kq_city', city.value)
-      s.setItem('kq_lat', lat.value)
-      s.setItem('kq_lng', lng.value)
-    }
+    if (!process.client) return
+
+    const s = window.localStorage
+    s.setItem('kq_city', city.value)
+    s.setItem('kq_lat', lat.value)
+    s.setItem('kq_lng', lng.value)
   })
 
-  return { city, lat, lng, setCity, setLocation, tryGeolocation }
+  return {
+    city,
+    lat,
+    lng,
+    cityGroups,
+    cityLoaded,
+    cityLoading,
+    switchVersion,
+    setCity,
+    setLocation,
+    switchCity,
+    ensureCityGroups,
+    tryGeolocation
+  }
 }
-

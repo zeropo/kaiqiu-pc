@@ -33,7 +33,7 @@ useHead({
   title: '球馆列表'
 })
 
-const { city, lat, lng } = useCity()
+const { city, lat, lng, switchVersion } = useCity()
 const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
@@ -83,6 +83,12 @@ const load = async (p = 1) => {
     }
   }
 }
+
+watch(switchVersion, async () => {
+  page.value = 1
+  hasMore.value = false
+  await load(1)
+})
 
 onMounted(async () => { await load(1) })
 </script>

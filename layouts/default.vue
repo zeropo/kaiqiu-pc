@@ -25,17 +25,20 @@
             {{ link.name }}
           </NuxtLink>
           
-          <NuxtLink
-            to="/search"
-            :aria-current="isActiveLink('/search') ? 'page' : undefined"
-            class="ml-4 inline-flex items-center justify-center h-10 px-6 rounded-full border transition-all duration-smooth font-medium text-sm"
-            :class="isActiveLink('/search')
-              ? 'bg-brand-primary text-white border-brand-primary shadow-card'
-              : 'bg-surfaceSoft text-text-main border-border hover:border-brand-primary hover:text-brand-primary'"
-          >
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            搜索
-          </NuxtLink>
+          <div class="ml-4 flex items-center gap-4">
+            <NuxtLink
+              to="/search"
+              :aria-current="isActiveLink('/search') ? 'page' : undefined"
+              class="inline-flex items-center justify-center h-10 px-6 rounded-full border transition-all duration-smooth font-medium text-sm"
+              :class="isActiveLink('/search')
+                ? 'bg-brand-primary text-white border-brand-primary shadow-card'
+                : 'bg-surfaceSoft text-text-main border-border hover:border-brand-primary hover:text-brand-primary'"
+            >
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              搜索
+            </NuxtLink>
+            <GlobalCitySwitcher />
+          </div>
         </nav>
 
         <!-- Mobile Menu Toggle -->
