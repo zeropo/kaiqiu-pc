@@ -1,5 +1,5 @@
 <template>
-  <div class="container py-8 md:py-10">
+  <div class="container pt-6 pb-8 md:pt-8 md:pb-10">
     <div class="rounded-card border border-gray-100 bg-white p-5 md:p-6">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

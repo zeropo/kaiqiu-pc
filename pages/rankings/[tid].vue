@@ -1,5 +1,5 @@
 <template>
-  <div class="container py-8">
+  <div class="container pt-6 pb-8">
     <div class="flex flex-col md:flex-row md:items-end gap-3 mb-6">
       <div class="flex-1">
         <label class="block text-sm text-gray-500 mb-1">城市</label>

@@ -1,8 +1,10 @@
 <template>
-  <div class="container py-10 md:py-16">
-    <div class="mb-8">
-      <h1 class="font-display text-3xl font-bold text-text-main">积分排行</h1>
-      <p class="text-text-muted mt-2">查询选手的实时积分与历史最高记录</p>
+  <div class="container pt-8 pb-10 md:pt-12 md:pb-16">
+    <div class="mb-8 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-text-main">积分排行</h1>
+        <p class="mt-2 text-text-muted">查询选手的实时积分与历史最高记录</p>
+      </div>
     </div>
 
     <div class="mb-10 rounded-card border border-border bg-white p-5 shadow-sm">

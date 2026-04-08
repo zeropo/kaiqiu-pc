@@ -1,8 +1,10 @@
 <template>
-  <div class="container py-10 md:py-16">
-    <div class="mb-10 text-center md:text-left">
-      <h1 class="font-display text-3xl md:text-4xl font-bold text-text-main">风云榜单</h1>
-      <p class="text-text-muted mt-2 text-lg pb-4">浏览各地及俱乐部的专属积分与战绩排行榜单</p>
+  <div class="container pt-8 pb-10 md:pt-12 md:pb-16">
+    <div class="mb-8 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-text-main">风云榜单</h1>
+        <p class="mt-2 text-text-muted">集中查看积分、人气、参赛、组织、俱乐部、城市与裁判等多维排行榜单</p>
+      </div>
     </div>
 
     <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -28,9 +30,12 @@
             <h3 class="font-display text-xl font-bold text-text-main mb-2 group-hover:text-brand-primary transition-colors leading-snug">{{ t.name }}</h3>
             <p class="text-text-muted text-sm line-clamp-2 min-h-[40px] leading-relaxed">{{ t.desc || '展示系统内置的积分排行榜单数据。' }}</p>
           </div>
-          <div class="mt-8 flex items-center text-brand-primary font-medium text-sm group-hover:translate-x-2 transition-transform w-fit select-none">
-            进入榜单
-            <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+          <div class="mt-8 flex items-end justify-between gap-4">
+            <div class="flex items-center text-brand-primary font-medium text-sm group-hover:translate-x-2 transition-transform w-fit select-none">
+              进入榜单
+              <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </div>
+            <span class="text-xs text-text-light">{{ t.viewnum || 0 }}次浏览</span>
           </div>
         </div>
       </a>

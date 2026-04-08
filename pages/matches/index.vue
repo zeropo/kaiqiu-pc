@@ -1,9 +1,9 @@
 <template>
-  <div class="container py-10 md:py-16">
+  <div class="container pt-8 pb-10 md:pt-12 md:pb-16">
     <div class="mb-8 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div>
         <h1 class="font-display text-3xl font-bold text-text-main">比赛大厅</h1>
-        <p class="mt-2 text-text-muted">浏览、搜索并筛选您身边的乒乓球赛事</p>
+        <p class="mt-2 text-text-muted">浏览并筛选您身边的乒乓球赛事</p>
       </div>
 
     </div>
@@ -54,12 +54,12 @@
       </div>
     </div>
 
-    <div v-if="loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div v-if="loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       <div v-for="n in 6" :key="n" class="h-64 rounded-card border border-border bg-white animate-pulse" />
     </div>
 
     <div v-else>
-      <div v-if="displayList.length" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div v-if="displayList.length" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <MatchCard v-for="match in displayList" :key="getMatchKey(match)" :match="match" />
       </div>
 

@@ -1,29 +1,117 @@
 <template>
-  <div class="container py-8">
-    <div class="flex flex-col md:flex-row md:items-end gap-3 mb-6">
-      <div class="flex-1">
-        <label class="block text-sm text-gray-500 mb-1">城市</label>
-        <input v-model="city" placeholder="如：杭州市" class="w-full h-11 px-3 rounded-btn border border-gray-200" />
+  <div class="container pt-8 pb-10 md:pt-12 md:pb-16">
+    <div class="mb-8 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-text-main">裁判大厅</h1>
+        <p class="mt-2 text-text-muted">浏览全国注册裁判信息，并按执裁等级快速筛选。</p>
       </div>
-      <button @click="load(1)" class="h-11 px-4 rounded-btn bg-black text-white">筛选</button>
     </div>
 
-    <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div v-for="n in 6" :key="n" class="h-32 bg-surfaceMuted rounded-card animate-pulse" />
+    <div class="mb-10 rounded-card border border-border bg-white p-5 shadow-sm">
+      <div class="flex flex-col gap-5">
+        <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div class="space-y-1">
+            <p class="text-sm font-semibold text-text-main">{{ currentViewLabel }}</p>
+            <p class="text-sm text-text-muted">当前共展示 {{ displayList.length }} 位裁判</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 md:grid-cols-4 xl:min-w-[720px]">
+            <button
+              v-for="option in levelOptions"
+              :key="option.value"
+              type="button"
+              :class="[
+                'rounded-2xl border px-4 py-3 text-left transition-all',
+                selectedLevel === option.value
+                  ? 'border-brand-primary bg-brand-primary text-white shadow-card'
+                  : 'border-border bg-white text-text-main hover:border-brand-primary hover:bg-brand-primary/5'
+              ]"
+              @click="changeLevel(option.value)"
+            >
+              <span class="block text-sm font-semibold">{{ option.label }}</span>
+              <span
+                :class="[
+                  'mt-1 block text-xs',
+                  selectedLevel === option.value ? 'text-white/80' : 'text-text-muted'
+                ]"
+              >
+                {{ option.description }}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div v-for="n in 6" :key="n" class="h-64 rounded-card border border-border bg-white animate-pulse" />
     </div>
 
     <div v-else>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <PersonCard v-for="u in list" :key="u.uid" :person="u" type="umpire" />
+      <div v-if="displayList.length" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <article
+          v-for="umpire in displayList"
+          :key="umpire.uid"
+          class="group overflow-hidden rounded-card border border-border bg-white shadow-card transition-all duration-smooth hover:-translate-y-1 hover:shadow-cardHover"
+        >
+          <NuxtLink :to="`/umpires/${umpire.uid}`" class="flex h-full flex-col">
+            <div class="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-surfaceSoft">
+              <div class="absolute inset-0 bg-gradient-to-br from-brand-primary/10 via-white to-surfaceSoft"></div>
+              <span class="absolute left-3 top-3 z-10 inline-flex items-center rounded-sm bg-[#39b54a] px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
+                {{ formatLevel(umpire.level) }}
+              </span>
+              <ImgFallback
+                :src="umpire.image || umpire.portrait"
+                :alt="umpire.realname || '裁判头像'"
+                class="relative z-10 h-24 w-24 rounded-full border-4 border-white object-cover shadow-card transition-transform duration-700 ease-out group-hover:scale-105"
+              />
+              <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/10 to-transparent"></div>
+            </div>
+
+            <div class="flex flex-1 flex-col p-5">
+              <h3 class="line-clamp-1 flex-1 text-lg font-semibold leading-snug text-text-main transition-colors group-hover:text-brand-primary">
+                {{ umpire.realname || '未命名裁判' }}
+              </h3>
+              <p class="mt-1 text-sm text-text-muted">编号：{{ umpire.uid }}</p>
+
+              <div class="mt-4 space-y-2">
+                <div class="flex items-center gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  <span class="truncate">{{ formatLocation(umpire) }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A3 3 0 016 17h12a3 3 0 01.879.804M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  <span class="truncate">{{ formatSex(umpire.sex) }} / {{ formatAge(umpire.birthyear) }}</span>
+                </div>
+              </div>
+
+              <div class="mt-5 flex items-center justify-between border-t border-surfaceSoft pt-4">
+                <span class="rounded-md bg-brand-secondary/10 px-2.5 py-1 text-xs font-semibold text-brand-secondary">
+                  {{ formatSex(umpire.sex) }}
+                </span>
+                <span class="inline-flex items-center rounded-md border border-[#39b54a] bg-white px-2.5 py-1 text-xs font-semibold text-[#39b54a]">
+                  {{ formatAge(umpire.birthyear) }}
+                </span>
+              </div>
+            </div>
+          </NuxtLink>
+        </article>
+      </div>
+
+      <div v-if="!displayList.length" class="flex flex-col items-center justify-center rounded-card border border-border bg-white py-20 shadow-sm">
+        <div class="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-surfaceSoft">
+          <svg class="h-10 w-10 text-text-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <p class="text-lg font-medium text-text-muted">{{ emptyTitle }}</p>
+        <p class="mt-2 text-sm text-text-light">{{ emptyDescription }}</p>
       </div>
 
       <div
         v-if="hasMore"
         ref="loadMoreSentinel"
-        class="h-px w-full opacity-0 pointer-events-none"
+        class="h-px w-full pointer-events-none opacity-0"
         aria-hidden="true"
       ></div>
-      <div v-if="!list.length && !loading" class="text-center text-gray-500 py-10">暂无数据</div>
     </div>
   </div>
 </template>
@@ -32,22 +120,66 @@
 useHead({
   title: '裁判列表'
 })
-const { city, switchVersion, tryGeolocation } = useCity()
+
+const levelOptions = [
+  { value: '', label: '全部', description: '查看全部执裁等级' },
+  { value: '2', label: '国家一级', description: '高级执裁资格' },
+  { value: '1', label: '国家二级', description: '常见区域赛事级别' },
+  { value: '0', label: '国家三级', description: '基础执裁信息' }
+]
+
+const levelTextMap = {
+  2: '国家一级',
+  1: '国家二级',
+  0: '国家三级'
+}
+
+const { $api } = useNuxtApp()
+
+const selectedLevel = ref('')
 const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
 const loading = ref(true)
 const loadingMore = ref(false)
 
-const { $api } = useNuxtApp()
+const activeLevelLabel = computed(() => levelTextMap[selectedLevel.value] || '全部')
+const currentViewLabel = computed(() => selectedLevel.value ? `${activeLevelLabel.value}裁判` : '全部裁判')
+const emptyTitle = computed(() => selectedLevel.value ? `暂无${activeLevelLabel.value}裁判` : '暂无裁判数据')
+const emptyDescription = computed(() => '当前筛选条件下暂未查询到裁判信息，可切换其他等级后再试。')
+
+const displayList = computed(() => {
+  if (!selectedLevel.value) return list.value
+  return list.value.filter((item) => String(item.level) === selectedLevel.value)
+})
+
 const canAutoLoadMore = computed(() => hasMore.value && !loading.value && !loadingMore.value)
 const { loadMoreSentinel } = useAutoLoadMore({
   canLoadMore: canAutoLoadMore,
   onLoadMore: () => load(page.value + 1)
 })
 
-const load = async (p = 1) => {
-  const isFirstPage = p === 1
+const formatLevel = (level) => levelTextMap[String(level)] || '未定级'
+
+const formatSex = (sex) => {
+  if (String(sex) === '1') return '男'
+  if (String(sex) === '2') return '女'
+  return '性别待完善'
+}
+
+const formatAge = (birthyear) => {
+  const year = Number(birthyear)
+  if (!year) return '年龄待完善'
+  return `${new Date().getFullYear() - year}岁`
+}
+
+const formatLocation = (umpire) => {
+  const text = `${umpire.province || ''}${umpire.city || ''}`
+  return text || '地区待完善'
+}
+
+const load = async (nextPage = 1) => {
+  const isFirstPage = nextPage === 1
 
   if (isFirstPage) {
     loading.value = true
@@ -57,21 +189,22 @@ const load = async (p = 1) => {
   }
 
   try {
-    const res = await $api('/umpire/lists', { method: 'POST', body: { city: city.value, page: p } })
-    const rows = Array.isArray(res?.data?.data) ? res.data.data : []
+    const response = await $api('/umpire/lists', {
+      method: 'POST',
+      body: {
+        city: '',
+        level: selectedLevel.value,
+        page: nextPage
+      }
+    })
+    const rows = response.data.data
+    const currentPage = Number(response.data.current_page || nextPage)
+    const lastPage = Number(response.data.last_page || currentPage)
 
-    if (isFirstPage) {
-      list.value = rows
-    } else {
-      list.value = list.value.concat(rows)
-    }
-
-    const currentPage = Number(res?.data?.current_page ?? p)
-    const lastPage = Number(res?.data?.last_page ?? currentPage)
-
+    list.value = isFirstPage ? rows : list.value.concat(rows)
     page.value = currentPage
-    hasMore.value = rows.length > 0 && Number.isFinite(currentPage) && Number.isFinite(lastPage) && currentPage < lastPage
-  } catch (e) {
+    hasMore.value = currentPage < lastPage
+  } catch {
     if (isFirstPage) list.value = []
     hasMore.value = false
   } finally {
@@ -83,11 +216,17 @@ const load = async (p = 1) => {
   }
 }
 
-watch(switchVersion, async () => {
+const changeLevel = async (level) => {
+  if (selectedLevel.value === level) return
+
+  selectedLevel.value = level
   page.value = 1
+  list.value = []
   hasMore.value = false
   await load(1)
-})
+}
 
-onMounted(async () => { await load(1) })
+onMounted(async () => {
+  await load(1)
+})
 </script>

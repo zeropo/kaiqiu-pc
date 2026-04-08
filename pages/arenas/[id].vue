@@ -1,5 +1,5 @@
 <template>
-  <div class="container py-8">
+  <div class="container pt-6 pb-8">
     <div v-if="loading">
       <div class="h-48 bg-surfaceMuted rounded-card animate-pulse" />
       <div class="grid md:grid-cols-3 gap-6 mt-6">
