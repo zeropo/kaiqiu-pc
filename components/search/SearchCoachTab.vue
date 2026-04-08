@@ -16,15 +16,11 @@
 
         <button
           type="submit"
-          class="h-12 rounded-2xl bg-[#39b54a] px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#2fa444]"
+          class="h-12 rounded-2xl bg-brand-primary px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-primaryHover"
         >
           搜索
         </button>
       </div>
-
-      <p class="mt-3 text-xs text-text-light">
-        搜索时自动携带当前位置经纬度，用于计算“距您”距离。
-      </p>
     </form>
 
     <div v-if="loading" class="space-y-4">
@@ -59,29 +55,35 @@
           />
 
           <div class="min-w-0">
-            <div>
-              <h3 class="text-2xl font-semibold text-text-main">
-                {{ coach.realname || coach.username || '未命名教练' }}
-              </h3>
-              <p class="mt-2 text-sm text-text-muted">
-                积分: {{ coach.score || '0' }}
-              </p>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div class="min-w-0 shrink-0">
+                <h3 class="text-2xl font-semibold text-text-main">
+                  {{ coach.realname || coach.username || '未命名教练' }}
+                </h3>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+                <span class="text-base text-text-main">
+                  积分: {{ coach.score || '0' }}
+                </span>
+                <span class="font-medium text-text-main">
+                  {{ formatLocation(coach) }}
+                </span>
+                <span class="text-text-main">
+                  距您 {{ coach.distance || '--' }}
+                </span>
+                <span class="text-text-muted">
+                  {{ coach.viewnum || '0' }}人浏览
+                </span>
+                <span class="rounded-xl border border-[#80d67e] px-3 py-1 font-medium text-[#39b54a]">
+                  {{ coach.commentnum || '0' }}人推荐
+                </span>
+              </div>
             </div>
 
-            <div class="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-              <span class="font-medium text-text-main">
-                {{ formatLocation(coach) }}
-              </span>
-              <span class="text-text-main">
-                距您 {{ coach.distance || '--' }}
-              </span>
-              <span class="text-text-muted">
-                {{ coach.viewnum || '0' }}人浏览
-              </span>
-              <span class="rounded-xl border border-[#80d67e] px-3 py-1 font-medium text-[#39b54a]">
-                {{ coach.commentnum || '0' }}人推荐
-              </span>
-            </div>
+            <p class="mt-4 text-sm leading-7 text-text-muted">
+              简介：{{ coach.description || '暂无简介' }}
+            </p>
           </div>
         </NuxtLink>
       </article>

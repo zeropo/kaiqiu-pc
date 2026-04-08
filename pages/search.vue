@@ -1,9 +1,9 @@
 <template>
-  <div class="container py-10 md:py-16">
+  <div class="container pt-8 pb-10 md:pt-12 md:pb-16">
     <div class="mb-8 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div>
         <h1 class="font-display text-3xl font-bold text-text-main">搜索查询</h1>
-        <p class="mt-2 text-text-muted">在同一页面快速查询比赛、教练、球馆、积分和裁判信息</p>
+        <p class="mt-2 text-text-muted">快速查询比赛、教练、球馆、积分和裁判信息</p>
       </div>
 
     </div>
@@ -18,17 +18,6 @@
           @update:model-value="activeTab = $event"
         />
 
-        <div class="flex flex-col gap-3 rounded-2xl bg-surfaceSoft/50 px-4 py-3 md:flex-row md:items-center md:justify-between">
-          <div class="space-y-1">
-            <p class="text-sm font-semibold text-text-main">{{ activeTabMeta.label }}搜索</p>
-            <p class="text-sm text-text-muted">{{ activeTabMeta.description }}</p>
-          </div>
-
-          <div class="inline-flex items-center gap-2 self-start rounded-full bg-white px-3 py-1.5 text-xs font-medium text-brand-primary">
-            <span class="h-2 w-2 rounded-full bg-[#39b54a]"></span>
-            结果支持继续翻页加载
-          </div>
-        </div>
       </div>
     </section>
 
@@ -50,11 +39,11 @@ useHead({
 })
 
 const tabs = [
-  { value: 'match', label: '比赛', description: '按标题、日期、城市、距离和标签组合筛选赛事。' },
-  { value: 'coach', label: '教练', description: '支持教练姓名或证书编号搜索，并保留距离、浏览和推荐信息。' },
-  { value: 'arena', label: '球馆', description: '按球馆名称搜索附近结果，展示地址、浏览量和评论数。' },
-  { value: 'score', label: '积分', description: '按姓名搜索用户积分，结果直接沿用积分列表字段。' },
-  { value: 'umpire', label: '裁判', description: '按当前城市搜索裁判，保留姓名、性别、年龄与级别信息。' }
+  { value: 'match', label: '比赛' },
+  { value: 'coach', label: '教练' },
+  { value: 'arena', label: '球馆' },
+  { value: 'score', label: '积分' },
+  { value: 'umpire', label: '裁判' }
 ]
 
 const tabComponents = {
@@ -67,8 +56,5 @@ const tabComponents = {
 
 const activeTab = ref('match')
 
-const activeTabMeta = computed(() => {
-  return tabs.find((tab) => tab.value === activeTab.value) || tabs[0]
-})
 const activeComponent = computed(() => tabComponents[activeTab.value] || SearchMatchTab)
 </script>

@@ -26,6 +26,10 @@ html, body, #__nuxt {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 ::selection {
   background-color: theme('colors.brand.primary');
   color: white;

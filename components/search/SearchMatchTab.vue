@@ -13,23 +13,22 @@
         </div>
 
         <div class="grid gap-3 lg:grid-cols-[120px_minmax(0,1fr)] lg:items-center">
-          <label class="text-sm font-semibold text-text-main md:text-base">起始日期</label>
-          <input
-            v-model="startDate"
-            type="date"
-            class="h-12 rounded-2xl border border-border bg-white px-4 text-sm text-text-main outline-none transition-colors focus:border-brand-primary"
-            @change="selectedPreset = ''"
-          />
-        </div>
-
-        <div class="grid gap-3 lg:grid-cols-[120px_minmax(0,1fr)] lg:items-center">
-          <label class="text-sm font-semibold text-text-main md:text-base">截止日期</label>
-          <input
-            v-model="endDate"
-            type="date"
-            class="h-12 rounded-2xl border border-border bg-white px-4 text-sm text-text-main outline-none transition-colors focus:border-brand-primary"
-            @change="selectedPreset = ''"
-          />
+          <label class="text-sm font-semibold text-text-main md:text-base">比赛日期</label>
+          <div class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+            <SearchCalendarPicker
+              :model-value="startDate"
+              panel-align="left"
+              placeholder="起始日期"
+              @update:model-value="handleStartDateChange"
+            />
+            <span class="text-sm text-text-light">至</span>
+            <SearchCalendarPicker
+              :model-value="endDate"
+              panel-align="right"
+              placeholder="截止日期"
+              @update:model-value="handleEndDateChange"
+            />
+          </div>
         </div>
 
         <div class="grid gap-3 lg:grid-cols-[120px_minmax(0,1fr)] lg:items-start">
@@ -49,29 +48,25 @@
 
         <div class="grid gap-3 lg:grid-cols-[120px_minmax(0,1fr)] lg:items-start">
           <span class="pt-1 text-sm font-semibold text-text-main md:text-base">举办城市</span>
-          <div class="flex flex-wrap gap-2">
-            <button
-              type="button"
-              :class="cityScope === 'current' ? activeLocationClass : inactiveLocationClass"
-              @click="cityScope = 'current'"
-            >
+          <div class="flex flex-wrap items-center gap-2">
+            <div :class="cityDisplayClass">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657 13.414 20.9a1.998 1.998 0 0 1-2.827 0L6.343 16.657a8 8 0 1 1 11.314 0Z"></path>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
               </svg>
-              <span>{{ cityLabel }}</span>
-            </button>
+              <span>{{ cityDisplayText }}</span>
+            </div>
             <button
               type="button"
               :class="chipClass(cityScope === 'unlimitedCity')"
-              @click="cityScope = 'unlimitedCity'"
+              @click="toggleCityScope('unlimitedCity')"
             >
               全国范围
             </button>
             <button
               type="button"
               :class="chipClass(cityScope === 'overseas')"
-              @click="cityScope = 'overseas'"
+              @click="toggleCityScope('overseas')"
             >
               海外城市
             </button>
@@ -80,21 +75,16 @@
 
         <div class="grid gap-3 lg:grid-cols-[120px_minmax(0,1fr)] lg:items-start">
           <span class="pt-1 text-sm font-semibold text-text-main md:text-base">距离区间</span>
-          <div class="space-y-3">
-            <div class="inline-flex items-center rounded-2xl border border-border bg-white px-4 py-3 text-sm text-text-muted">
-              与我的位置
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="option in distanceOptions"
-                :key="option.value"
-                type="button"
-                :class="chipClass(distance === option.value)"
-                @click="distance = option.value"
-              >
-                {{ option.label }}
-              </button>
-            </div>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="option in distanceOptions"
+              :key="option.value"
+              type="button"
+              :class="chipClass(distance === option.value)"
+              @click="distance = option.value"
+            >
+              {{ option.label }}
+            </button>
           </div>
         </div>
 
@@ -139,7 +129,7 @@
         </button>
         <button
           type="submit"
-          class="h-12 rounded-2xl bg-[#39b54a] px-8 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#2fa444]"
+          class="h-12 rounded-2xl bg-brand-primary px-8 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-primaryHover"
         >
           搜索
         </button>
@@ -160,7 +150,7 @@
     >
       <p class="text-lg font-semibold text-text-main">从比赛开始搜索</p>
       <p class="mt-2 text-sm text-text-muted">
-        标题、日期、城市、距离、标签和排序都可以自由组合，结果会自动带上当前位置经纬度。
+        标题、日期、距离、标签和排序都可以自由组合，结果会自动带上当前城市和当前位置。
       </p>
     </div>
 
@@ -199,13 +189,208 @@
     >
       <p class="text-lg font-semibold text-text-main">未找到符合条件的比赛</p>
       <p class="mt-2 text-sm text-text-muted">
-        可以尝试放宽日期或距离范围，或者切换到全国范围重新搜索。
+        可以尝试放宽日期或距离范围后重新搜索。
       </p>
     </div>
   </div>
 </template>
 
 <script setup>
+const SearchCalendarPicker = defineComponent({
+  name: 'SearchCalendarPicker',
+  props: {
+    modelValue: {
+      type: String,
+      default: ''
+    },
+    placeholder: {
+      type: String,
+      default: '请选择日期'
+    },
+    panelAlign: {
+      type: String,
+      default: 'left'
+    }
+  },
+  emits: ['update:modelValue'],
+  setup(props, { emit }) {
+    const weekLabels = ['日', '一', '二', '三', '四', '五', '六']
+    const calendarRef = ref(null)
+    const panelOpen = ref(false)
+    const panelMonth = ref(new Date())
+
+    const syncPanelMonth = (value) => {
+      const current = parseDateInput(value) || new Date()
+      panelMonth.value = new Date(current.getFullYear(), current.getMonth(), 1)
+    }
+
+    const calendarTitle = computed(() => `${panelMonth.value.getFullYear()}年${panelMonth.value.getMonth() + 1}月`)
+
+    const calendarDays = computed(() => {
+      const firstDay = new Date(panelMonth.value.getFullYear(), panelMonth.value.getMonth(), 1)
+      const startDate = new Date(firstDay)
+      startDate.setDate(1 - firstDay.getDay())
+      const today = formatDateInput(new Date())
+
+      return Array.from({ length: 42 }, (_, index) => {
+        const current = new Date(startDate)
+        current.setDate(startDate.getDate() + index)
+        const value = formatDateInput(current)
+
+        return {
+          key: `${value}-${index}`,
+          value,
+          label: current.getDate(),
+          isCurrentMonth: current.getFullYear() === panelMonth.value.getFullYear() && current.getMonth() === panelMonth.value.getMonth(),
+          isToday: value === today,
+          isSelected: value === props.modelValue
+        }
+      })
+    })
+
+    const getDayClass = (day) => {
+      if (day.isSelected) {
+        return 'h-10 rounded-xl bg-brand-primary text-sm font-semibold text-white shadow-sm transition-colors'
+      }
+
+      const monthClass = day.isCurrentMonth
+        ? 'bg-surfaceSoft/60 text-text-main hover:bg-brand-primary/5 hover:text-brand-primary'
+        : 'bg-transparent text-text-light hover:bg-surfaceSoft/60 hover:text-text-main'
+
+      const todayClass = day.isToday ? ' border border-brand-primary/30' : ''
+      return `h-10 rounded-xl text-sm transition-colors ${monthClass}${todayClass}`
+    }
+
+    const closePanel = () => {
+      panelOpen.value = false
+    }
+
+    const togglePanel = () => {
+      if (panelOpen.value) {
+        closePanel()
+        return
+      }
+
+      syncPanelMonth(props.modelValue)
+      panelOpen.value = true
+    }
+
+    const changeMonth = (offset) => {
+      panelMonth.value = new Date(panelMonth.value.getFullYear(), panelMonth.value.getMonth() + offset, 1)
+    }
+
+    const selectDate = (value) => {
+      emit('update:modelValue', value)
+      closePanel()
+    }
+
+    const handleClickOutside = (event) => {
+      if (calendarRef.value && !calendarRef.value.contains(event.target)) {
+        closePanel()
+      }
+    }
+
+    watch(
+      () => props.modelValue,
+      (value) => {
+        if (!panelOpen.value) {
+          syncPanelMonth(value)
+        }
+      },
+      { immediate: true }
+    )
+
+    onMounted(() => {
+      document.addEventListener('click', handleClickOutside)
+    })
+
+    onBeforeUnmount(() => {
+      document.removeEventListener('click', handleClickOutside)
+    })
+
+    return () => h('div', { ref: calendarRef, class: 'relative w-full' }, [
+      h(
+        'button',
+        {
+          type: 'button',
+          class: 'flex h-12 w-full items-center justify-between gap-3 rounded-2xl border border-border bg-white px-4 text-left text-sm transition-colors hover:border-brand-primary/40',
+          onClick: togglePanel
+        },
+        [
+          h(
+            'span',
+            {
+              class: `truncate ${props.modelValue ? 'text-text-main' : 'text-text-light'}`
+            },
+            props.modelValue || props.placeholder
+          ),
+          h(
+            'svg',
+            {
+              class: `h-4 w-4 shrink-0 transition-transform ${panelOpen.value ? 'rotate-180 text-brand-primary' : 'text-text-light'}`,
+              fill: 'none',
+              stroke: 'currentColor',
+              viewBox: '0 0 24 24'
+            },
+            [
+              h('path', {
+                'stroke-linecap': 'round',
+                'stroke-linejoin': 'round',
+                'stroke-width': '2',
+                d: 'm6 9 6 6 6-6'
+              })
+            ]
+          )
+        ]
+      ),
+      panelOpen.value
+        ? h('div', { class: `absolute ${props.panelAlign === 'right' ? 'right-0' : 'left-0'} top-full z-30 mt-2 w-[320px] max-w-[calc(100vw-2rem)] rounded-card border border-border bg-white p-4 shadow-xl` }, [
+            h('div', { class: 'flex items-center justify-between gap-2' }, [
+              h(
+                'button',
+                {
+                  type: 'button',
+                  class: 'flex h-9 items-center rounded-xl bg-surfaceMuted px-3 text-sm text-text-main transition-colors hover:bg-surfaceSoft',
+                  onClick: () => changeMonth(-1)
+                },
+                '上月'
+              ),
+              h('div', { class: 'text-sm font-semibold text-text-main' }, calendarTitle.value),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  class: 'flex h-9 items-center rounded-xl bg-surfaceMuted px-3 text-sm text-text-main transition-colors hover:bg-surfaceSoft',
+                  onClick: () => changeMonth(1)
+                },
+                '下月'
+              )
+            ]),
+            h(
+              'div',
+              { class: 'mt-3 grid grid-cols-7 gap-1 text-center text-xs text-text-light' },
+              weekLabels.map((label) => h('div', { key: label, class: 'h-7 leading-7' }, label))
+            ),
+            h(
+              'div',
+              { class: 'mt-1 grid grid-cols-7 gap-1' },
+              calendarDays.value.map((day) => h(
+                'button',
+                {
+                  key: day.key,
+                  type: 'button',
+                  class: getDayClass(day),
+                  onClick: () => selectDate(day.value)
+                },
+                String(day.label)
+              ))
+            )
+          ])
+        : null
+    ])
+  }
+})
+
 const datePresets = [
   { value: 'thisWeekend', label: '本周末' },
   { value: 'thisWeek', label: '本周' },
@@ -244,7 +429,7 @@ const eventTitle = ref('')
 const startDate = ref('')
 const endDate = ref('')
 const selectedPreset = ref('')
-const cityScope = ref('current')
+const cityScope = ref('')
 const distance = ref('gt0')
 const selectedTags = ref([])
 const sortType = ref(0)
@@ -257,23 +442,26 @@ const loading = ref(false)
 const loadingMore = ref(false)
 
 const cityLabel = computed(() => city.value || '杭州市')
+const cityDisplayText = computed(() => (cityScope.value ? '不限' : cityLabel.value))
+const cityDisplayClass = computed(() => (
+  cityScope.value
+    ? 'inline-flex items-center gap-2 rounded-2xl border border-border bg-surfaceSoft px-4 py-3 text-sm font-semibold text-text-light'
+    : 'inline-flex items-center gap-2 rounded-2xl border border-brand-primary/20 bg-brand-primary/5 px-4 py-3 text-sm font-semibold text-brand-primary'
+))
 const citySummary = computed(() => {
   if (!submittedFilters.value) return cityLabel.value
   if (submittedFilters.value.city === 'unlimitedCity') return '全国范围'
   if (submittedFilters.value.city === 'overseas') return '海外城市'
-  return submittedFilters.value.city || cityLabel.value
+  return submittedFilters.value.city
 })
 const sortSummary = computed(() => (
   submittedFilters.value?.searchResultSortType === 1 ? '距离近到远' : '时间近到远'
 ))
 
-const activeLocationClass = 'inline-flex items-center gap-2 rounded-2xl border border-[#39b54a]/25 bg-[#39b54a]/10 px-4 py-3 text-sm font-semibold text-[#2fa444]'
-const inactiveLocationClass = 'inline-flex items-center gap-2 rounded-2xl border border-border bg-white px-4 py-3 text-sm font-semibold text-text-muted transition-colors hover:border-brand-primary hover:text-brand-primary'
-
 const chipClass = (active) => {
   return active
-    ? 'rounded-2xl border border-[#ff9f0a] bg-[#ff9f0a] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_-24px_rgba(255,159,10,0.95)] transition-colors'
-    : 'rounded-2xl border border-border bg-white px-4 py-3 text-sm font-semibold text-text-muted transition-colors hover:border-[#ff9f0a] hover:text-[#a06100]'
+    ? 'rounded-2xl border border-brand-primary bg-brand-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors'
+    : 'rounded-2xl border border-border bg-white px-4 py-3 text-sm font-semibold text-text-muted transition-colors hover:border-brand-primary hover:bg-brand-primary/5 hover:text-brand-primary'
 }
 
 const canLoadMore = computed(() => hasMore.value && !loading.value && !loadingMore.value)
@@ -381,6 +569,22 @@ const applyDatePreset = (preset) => {
   endDate.value = formatDateInput(range.end)
 }
 
+applyDatePreset('thisWeekend')
+
+const handleStartDateChange = (value) => {
+  startDate.value = value
+  selectedPreset.value = ''
+}
+
+const handleEndDateChange = (value) => {
+  endDate.value = value
+  selectedPreset.value = ''
+}
+
+const toggleCityScope = (value) => {
+  cityScope.value = cityScope.value === value ? '' : value
+}
+
 const toggleTag = (value) => {
   if (selectedTags.value.includes(value)) {
     selectedTags.value = selectedTags.value.filter((item) => item !== value)
@@ -416,7 +620,7 @@ const buildSubmittedFilters = () => {
   }
 
   return {
-    city: cityScope.value === 'current' ? cityLabel.value : cityScope.value,
+    city: cityScope.value || cityLabel.value,
     eventTitle: eventTitle.value.trim(),
     startMatchTimestamp: normalizedStart ? toTimestampSeconds(normalizedStart) : undefined,
     endMatchTimestamp: normalizedEnd ? toTimestampSeconds(addDays(normalizedEnd, 1)) : undefined,
@@ -480,14 +684,16 @@ const handleSearch = async () => {
   await load(1)
 }
 
-const resetFilters = () => {
+const resetFilters = async () => {
   eventTitle.value = ''
   startDate.value = ''
   endDate.value = ''
   selectedPreset.value = ''
-  cityScope.value = 'current'
+  cityScope.value = ''
   distance.value = 'gt0'
   selectedTags.value = []
   sortType.value = 0
+  applyDatePreset('thisWeekend')
+  await handleSearch()
 }
 </script>

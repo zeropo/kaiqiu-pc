@@ -16,15 +16,11 @@
 
         <button
           type="submit"
-          class="h-12 rounded-2xl bg-[#39b54a] px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#2fa444]"
+          class="h-12 rounded-2xl bg-brand-primary px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-primaryHover"
         >
           搜索
         </button>
       </div>
-
-      <p class="mt-3 text-xs text-text-light">
-        搜索时自动携带当前位置经纬度，用于计算球馆距离。
-      </p>
     </form>
 
     <div v-if="loading" class="space-y-4">

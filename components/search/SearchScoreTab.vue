@@ -16,7 +16,7 @@
 
         <button
           type="submit"
-          class="h-12 rounded-2xl bg-[#39b54a] px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#2fa444]"
+          class="h-12 rounded-2xl bg-brand-primary px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-primaryHover"
         >
           搜索
         </button>
@@ -46,37 +46,41 @@
       class="overflow-hidden rounded-3xl border border-border bg-white shadow-sm"
     >
       <div class="overflow-x-auto">
-        <table class="min-w-full whitespace-nowrap text-left text-sm">
+        <table class="min-w-full whitespace-nowrap text-left">
           <thead class="border-b border-border bg-surfaceSoft text-text-muted">
             <tr>
-              <th class="px-5 py-4 font-semibold">排名</th>
+              <th class="px-5 py-4 font-semibold">序号</th>
               <th class="px-5 py-4 font-semibold">姓名</th>
               <th class="px-5 py-4 font-semibold">当前积分</th>
               <th class="px-5 py-4 font-semibold">性别</th>
+              <th class="px-5 py-4 font-semibold">地区</th>
               <th class="px-5 py-4 font-semibold">详情</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-border">
+          <tbody class="divide-y divide-border text-base">
             <tr
               v-for="(user, index) in list"
               :key="user.uid"
               class="transition-colors hover:bg-surfaceSoft/40"
             >
-              <td class="px-5 py-4 font-display text-lg font-semibold text-text-main">
-                {{ getRank(index) }}
+              <td class="px-5 py-4 font-display font-semibold text-text-main">
+                {{ index + 1 }}
               </td>
-              <td class="px-5 py-4 text-lg font-semibold text-text-main">
+              <td class="px-5 py-4 font-semibold text-text-main">
                 {{ user.realname || user.username2 || '-' }}
               </td>
-              <td class="px-5 py-4 text-lg font-semibold text-text-main">
+              <td class="px-5 py-4 font-semibold text-text-main">
                 {{ user.score || '-' }}
               </td>
               <td class="px-5 py-4 text-text-muted">
                 {{ formatSex(user.sex) }}
               </td>
+              <td class="px-5 py-4 text-text-muted">
+                {{ formatLocation(user) }}
+              </td>
               <td class="px-5 py-4">
-                <NuxtLink :to="`/scores/${user.uid}`" class="font-medium text-brand-primary hover:text-brand-primaryHover">
-                  {{ formatLocation(user) }}
+                <NuxtLink :to="`/scores/${user.uid}`" target="_blank" rel="noopener noreferrer" class="font-medium text-brand-primary hover:text-brand-primaryHover">
+                  详情
                 </NuxtLink>
               </td>
             </tr>
@@ -130,10 +134,9 @@ const formatSex = (sex) => {
 }
 
 const formatLocation = (user) => {
-  return user?.residecity || user?.resideprovince || '查看详情'
+  return user?.residecity || user?.resideprovince || '-'
 }
 
-const getRank = (index) => ((page.value - 1) * perPage.value) + index + 1
 
 const load = async (nextPage = 1) => {
   const isFirstPage = nextPage === 1
