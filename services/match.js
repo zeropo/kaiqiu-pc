@@ -52,3 +52,24 @@ export async function fetchMatchScoreChange($api, { eventid }) {
     params: { eventid }
   })
 }
+
+export async function fetchMatchGameIdByPlayers($api, { eventId, itemId, uid1, uid2 }) {
+  return await $api('/match/getGameidByUIDAndMatchItem', {
+    method: 'GET',
+    params: {
+      eventid: eventId,
+      itemid: itemId,
+      uid1,
+      uid2
+    }
+  })
+}
+
+export async function fetchMatchGameDetail($api, { gameId }) {
+  return await $api('/match/getGameDetail', {
+    method: 'GET',
+    params: {
+      gameid: gameId
+    }
+  })
+}

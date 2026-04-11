@@ -33,13 +33,13 @@
               rel="noopener noreferrer"
               class="inline-flex max-w-[132px] cursor-pointer items-center text-brand-primary transition-colors hover:text-brand-primaryHover"
             >
-              <span class="truncate">{{ player.name || '-' }}</span>
+              <span class="truncate">{{ rowIndex + 1 }} {{ player.name || '-' }}</span>
             </a>
             <span
               v-else
               class="inline-flex max-w-[132px] items-center text-text-main"
             >
-              <span class="truncate">{{ player.name || '-' }}</span>
+              <span class="truncate">{{ rowIndex + 1 }} {{ player.name || '-' }}</span>
             </span>
           </th>
 
@@ -49,8 +49,17 @@
             class="border-b border-r border-border px-2 py-3"
             :class="rowIndex === columnIndex ? 'bg-surfaceSoft/80' : ''"
           >
+            <button
+              v-if="rowIndex !== columnIndex && canOpenMatchDetail(player, columnPlayer)"
+              type="button"
+              class="font-semibold underline decoration-current underline-offset-4 transition-opacity hover:opacity-70"
+              :class="getResultClass(player, columnPlayer)"
+              @click="openMatchDetail(player, columnPlayer)"
+            >
+              {{ getResultText(player, columnPlayer) }}
+            </button>
             <span
-              v-if="rowIndex !== columnIndex"
+              v-else-if="rowIndex !== columnIndex"
               class="font-semibold"
               :class="getResultClass(player, columnPlayer)"
             >
@@ -82,6 +91,7 @@ const props = defineProps({
     default: () => ({})
   }
 })
+const emit = defineEmits(['open-game-detail'])
 
 const players = computed(() => Array.isArray(props.group?.players) ? props.group.players : [])
 const resultMap = computed(() => (props.group?.games && typeof props.group.games === 'object' ? props.group.games : {}))
@@ -145,6 +155,37 @@ const getMatchMeta = (rowPlayer, columnPlayer) => {
 }
 
 const getResultText = (rowPlayer, columnPlayer) => getMatchMeta(rowPlayer, columnPlayer).text
+
+const canOpenMatchDetail = (rowPlayer, columnPlayer) => {
+  const meta = getMatchMeta(rowPlayer, columnPlayer)
+
+  return meta.text !== '-'
+    && !!props.group?.eventId
+    && !!props.group?.itemId
+    && !!rowPlayer?.uid
+    && !!columnPlayer?.uid
+}
+
+const openMatchDetail = (rowPlayer, columnPlayer) => {
+  if (!canOpenMatchDetail(rowPlayer, columnPlayer)) return
+
+  emit('open-game-detail', {
+    source: 'group',
+    eventId: props.group.eventId,
+    itemId: props.group.itemId,
+    groupId: props.group.id,
+    groupTitle: props.group.title,
+    leftPlayer: {
+      uid: rowPlayer.uid,
+      name: rowPlayer.name || '-'
+    },
+    rightPlayer: {
+      uid: columnPlayer.uid,
+      name: columnPlayer.name || '-'
+    },
+    scoreText: getResultText(rowPlayer, columnPlayer)
+  })
+}
 
 const getResultClass = (rowPlayer, columnPlayer) => {
   const meta = getMatchMeta(rowPlayer, columnPlayer)

@@ -47,6 +47,8 @@
                 <a
                   v-if="detail.shopid"
                   :href="`/arenas/${detail.shopid}`"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   class="inline-flex items-center gap-1 font-medium text-brand-primary transition-colors hover:text-brand-primaryHover"
                 >
                   查看球馆主页
@@ -199,14 +201,41 @@
                           <tr>
                             <th class="p-4 font-medium">排名</th>
                             <th class="p-4 font-medium">选手</th>
-                            <th class="p-4 font-medium">赛前积分</th>
-                            <th class="p-4 font-medium">积分变动</th>
-                            <th class="p-4 font-medium">赛后积分</th>
+                            <th class="p-4 font-medium">
+                              <button
+                                type="button"
+                                class="inline-flex items-center gap-1.5 transition-colors hover:text-text-main"
+                                @click="togglePointsSort('pre')"
+                              >
+                                <span>赛前积分</span>
+                                <span class="text-xs" :class="getScoreSortIndicatorClass('pre')">{{ getScoreSortIndicator('pre') }}</span>
+                              </button>
+                            </th>
+                            <th class="p-4 font-medium">
+                              <button
+                                type="button"
+                                class="inline-flex items-center gap-1.5 transition-colors hover:text-text-main"
+                                @click="togglePointsSort('change')"
+                              >
+                                <span>积分变动</span>
+                                <span class="text-xs" :class="getScoreSortIndicatorClass('change')">{{ getScoreSortIndicator('change') }}</span>
+                              </button>
+                            </th>
+                            <th class="p-4 font-medium">
+                              <button
+                                type="button"
+                                class="inline-flex items-center gap-1.5 transition-colors hover:text-text-main"
+                                @click="togglePointsSort('post')"
+                              >
+                                <span>赛后积分</span>
+                                <span class="text-xs" :class="getScoreSortIndicatorClass('post')">{{ getScoreSortIndicator('post') }}</span>
+                              </button>
+                            </th>
                           </tr>
                         </thead>
                         <tbody class="divide-y divide-border">
                           <tr
-                            v-for="row in selectedScoreChangeGroup.rows"
+                            v-for="row in sortedScoreChangeRows"
                             :key="row.sid || `${selectedScoreChangeGroup.id}-${row.uid}-${row.rank}`"
                             class="hover:bg-surfaceMuted transition-colors"
                           >
@@ -391,6 +420,8 @@ const pointsLoaded = ref(false)
 const pointsError = ref('')
 const pointsNotice = ref('')
 const scoreChangeData = ref(null)
+const pointsSortKey = ref('')
+const pointsSortOrder = ref('asc')
 const { decode } = useHtmlDecode()
 const { lat, lng } = useCity()
 const loading = ref(true)
@@ -661,6 +692,60 @@ const selectedScoreChangeGroup = computed(() => {
   return scoreChangeGroups.value.find((group) => group.id === activePointsItemId.value) || scoreChangeGroups.value[0]
 })
 
+const getScoreSortNumber = (row, key) => {
+  const raw = key === 'pre' ? row.prescore : key === 'post' ? row.postscore : row.change
+  const n = Number(normalizeText(raw))
+  return Number.isNaN(n) ? 0 : n
+}
+
+const sortedScoreChangeRows = computed(() => {
+  const group = selectedScoreChangeGroup.value
+  if (!group) return []
+  const rows = group.rows
+  const key = pointsSortKey.value
+  if (!key) return rows
+  const copy = [...rows]
+  copy.sort((a, b) => {
+    const cmp = getScoreSortNumber(a, key) - getScoreSortNumber(b, key)
+    return pointsSortOrder.value === 'asc' ? cmp : -cmp
+  })
+  return copy
+})
+
+const togglePointsSort = (key) => {
+  if (pointsSortKey.value !== key) {
+    pointsSortKey.value = key
+    pointsSortOrder.value = 'desc'
+    return
+  }
+
+  if (pointsSortOrder.value === 'desc') {
+    pointsSortOrder.value = 'asc'
+    return
+  }
+
+  pointsSortKey.value = ''
+  pointsSortOrder.value = 'asc'
+}
+
+const getScoreSortIndicator = (key) => {
+  if (pointsSortKey.value !== key) return '↕'
+  return pointsSortOrder.value === 'asc' ? '↑' : '↓'
+}
+
+const getScoreSortIndicatorClass = (key) => {
+  return pointsSortKey.value === key ? 'text-brand-primary' : 'text-text-light'
+}
+
+const resetPointsSort = () => {
+  pointsSortKey.value = ''
+  pointsSortOrder.value = 'asc'
+}
+
+watch(activePointsItemId, () => {
+  resetPointsSort()
+})
+
 const resetScoreChangeState = () => {
   pointsLoading.value = false
   pointsLoaded.value = false
@@ -668,6 +753,7 @@ const resetScoreChangeState = () => {
   pointsNotice.value = ''
   scoreChangeData.value = null
   activePointsItemId.value = ''
+  resetPointsSort()
 }
 
 const getCompetitionItemIds = (itemsList, groupsPayload, honorsPayload) => {
@@ -787,7 +873,7 @@ const buildNameLookup = (groupsPayload, honorsPayload) => {
   return lookup
 }
 
-const normalizeKnockoutRounds = (rounds, nameLookup = {}) => {
+const normalizeKnockoutRounds = (rounds, nameLookup = {}, context = {}) => {
   if (!Array.isArray(rounds)) return []
 
   return rounds
@@ -802,6 +888,12 @@ const normalizeKnockoutRounds = (rounds, nameLookup = {}) => {
 
             return {
               id: `${roundIndex}-${gameIndex}-${uid1}-${uid2}`,
+              gameId: normalizeText(game?.gameid),
+              eventId: normalizeText(game?.eventid) || normalizeText(context.eventId),
+              itemId: normalizeText(context.itemId),
+              uid1,
+              uid2,
+              stageLabel: normalizeText(game?.groupid) === '-1' ? '淘汰赛' : '小组赛',
               player1: {
                 uid: uid1,
                 name: normalizePlayerName(nameLookup[uid1], game?.username1),
@@ -826,7 +918,7 @@ const normalizeKnockoutRounds = (rounds, nameLookup = {}) => {
     .filter((round) => round.matches.length)
 }
 
-const normalizeCompetitionData = ({ itemsList, groupsPayload, honorsPayload, resultPayloads }) => {
+const normalizeCompetitionData = ({ eventId, itemsList, groupsPayload, honorsPayload, resultPayloads }) => {
   const itemMap = Object.fromEntries((itemsList || []).map((item) => [normalizeText(item.id), item]))
   const itemIds = getCompetitionItemIds(itemsList, groupsPayload, honorsPayload)
   const resultMap = Object.fromEntries((resultPayloads || []).map((entry) => [normalizeText(entry.itemId), entry.data || {}]))
@@ -875,6 +967,8 @@ const normalizeCompetitionData = ({ itemsList, groupsPayload, honorsPayload, res
           return {
             id: groupId || `${itemId}-${groupIndex}`,
             title: `第${groupIndex + 1}组`,
+            eventId: normalizeText(eventId),
+            itemId,
             startTimeText: formatGroupStartTime(members[0]?.starttime, groupMeta?.starttimes?.[groupIndex] || ''),
             tableText: tableNumber ? `${tableNumber}号台` : '待公布',
             qualifyCount,
@@ -899,10 +993,14 @@ const normalizeCompetitionData = ({ itemsList, groupsPayload, honorsPayload, res
 
       return {
         id: itemId,
+        eventId: normalizeText(eventId),
         label: itemMap[itemId]?.name || `积分组别 ${itemIndex + 1}`,
         groups: normalizedGroups,
         honors,
-        knockoutRounds: normalizeKnockoutRounds(knockoutRounds, nameLookup)
+        knockoutRounds: normalizeKnockoutRounds(knockoutRounds, nameLookup, {
+          eventId,
+          itemId
+        })
       }
     })
     .filter((item) => item.groups.length || item.honors.length || item.knockoutRounds.length || item.label)
@@ -1039,6 +1137,7 @@ const fetchCompetitionData = async (itemsList = items.value) => {
     )
 
     const normalizedItems = normalizeCompetitionData({
+      eventId: id.value,
       itemsList,
       groupsPayload,
       honorsPayload,
