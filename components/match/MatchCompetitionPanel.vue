@@ -73,26 +73,26 @@
               <MatchGroupMatrix :group="group" />
             </div>
           </section>
-
-          <section
-            v-if="selectedItem.knockoutRounds.length"
-            class="rounded-[28px] border border-border bg-white p-5 shadow-sm"
-          >
-            <div class="border-b border-border pb-4">
-              <h3 class="font-display text-lg font-bold text-text-main">{{ selectedItem.label }}</h3>
-              <p class="mt-1 text-sm text-text-muted">淘汰赛树状对阵图，点击姓名查看详情</p>
-            </div>
-
-            <div class="mt-5">
-              <MatchKnockoutBracket :rounds="selectedItem.knockoutRounds" />
-            </div>
-          </section>
         </div>
 
         <aside class="xl:sticky xl:top-6">
           <MatchHonorRanking :honors="selectedItem.honors" />
         </aside>
       </div>
+
+      <section
+        v-if="selectedItem.knockoutRounds.length"
+        class="rounded-[28px] border border-border bg-white p-5 shadow-sm"
+      >
+        <div class="border-b border-border pb-4">
+          <h3 class="font-display text-lg font-bold text-text-main">{{ selectedItem.label }}</h3>
+          <p class="mt-1 text-sm text-text-muted">淘汰赛树状对阵图，点击姓名查看详情</p>
+        </div>
+
+        <div class="mt-5">
+          <MatchKnockoutBracket :rounds="selectedItem.knockoutRounds" />
+        </div>
+      </section>
     </div>
   </section>
 </template>

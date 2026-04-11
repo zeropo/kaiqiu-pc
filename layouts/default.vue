@@ -4,9 +4,11 @@
       <div class="container flex items-center justify-between h-16 md:h-20">
         <!-- Logo -->
         <a href="/" class="flex items-center gap-3 group">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-primaryHover flex items-center justify-center text-white font-bold text-xl shadow-card group-hover:scale-105 transition-transform duration-smooth">
-            K
-          </div>
+          <img
+            src="/apple-touch-icon.png"
+            alt=""
+            class="w-10 h-10 rounded-full object-cover bg-white shadow-card group-hover:scale-105 transition-transform duration-smooth"
+          >
           <span class="font-display font-semibold tracking-wide text-xl text-text-main group-hover:text-brand-primary transition-colors">开球网</span>
         </a>
         
@@ -86,12 +88,16 @@
 
     <footer class="bg-white border-t border-border py-10 md:py-12 text-sm text-text-muted mt-auto">
       <div class="container flex flex-col md:flex-row items-center justify-between gap-6">
-        <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white font-bold text-xs">K</div>
+        <div class="flex items-center gap-2.5">
+          <img
+            src="/favicon-32x32.png"
+            alt=""
+            class="w-7 h-7 rounded-full object-cover bg-white"
+          >
           <span class="font-display font-medium text-text-main">开球网网页版</span>
         </div>
         <div class="text-xs text-text-light text-center md:text-right">
-          © 2026 Kaiqiu PC
+          © 2026 Kaiqiu Web
         </div>
       </div>
     </footer>

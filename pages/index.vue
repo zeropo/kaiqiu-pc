@@ -5,13 +5,14 @@
       <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-brand-primaryHover/10 via-white to-white"></div>
       <div class="absolute -top-24 -right-24 w-96 h-96 bg-brand-primary/5 rounded-full blur-3xl"></div>
       
-      <div class="container relative pt-20 pb-24 md:pt-32 md:pb-36 flex flex-col items-center md:items-start text-center md:text-left">
+      <div class="container relative pt-10 pb-12 md:pt-20 md:pb-24 flex flex-col items-center md:items-start text-center md:text-left">
         <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-semibold mb-6">
           <span class="w-2 h-2 rounded-full bg-brand-primary animate-pulse"></span>
           网页版全新上线
         </div>
         <h1 class="font-display text-4xl md:text-6xl font-bold tracking-tight text-text-main mb-6 leading-tight max-w-2xl">
-          精准连接赛事 <br/> <span class="bg-clip-text text-transparent bg-gradient-to-r from-brand-primary to-brand-primaryHover">随时掌控积分</span>
+          精准连接赛事
+          <span class="mt-2 block bg-clip-text text-transparent bg-gradient-to-r from-brand-primary to-brand-primaryHover md:mt-3">随时掌控积分</span>
         </h1>
         <p class="text-text-muted text-lg md:text-xl max-w-xl mb-10 leading-relaxed">
           全网最快最全查询系统，覆盖全国比赛、优选球馆、教练与裁判，致力于为您提供最高效的体验。
@@ -29,8 +30,8 @@
     </section>
 
     <!-- Content Sections -->
-    <div class="bg-surfaceMuted py-16 md:py-24 space-y-20">
-      <div class="container space-y-16">
+    <div class="bg-surfaceMuted py-12 md:py-16 space-y-16">
+      <div class="container space-y-12">
         
         <!-- Recent Matches -->
         <section>
@@ -53,15 +54,15 @@
           </div>
         </section>
 
-        <!-- Popular Players -->
+        <!-- Featured Players -->
         <section>
           <div class="flex items-end justify-between mb-8">
             <div>
-              <h2 class="font-display text-2xl md:text-3xl font-bold text-text-main">风云榜</h2>
-              <p class="text-text-muted mt-2 hidden sm:block">展示近期活跃的热门选手</p>
+              <h2 class="font-display text-2xl md:text-3xl font-bold text-text-main">风云选手</h2>
+              <p class="text-text-muted mt-2 hidden sm:block">发现并了解您身边的积分强者</p>
             </div>
             <a href="/scores" class="group inline-flex items-center text-brand-primary font-medium hover:text-brand-primaryHover transition-colors">
-              查看全部
+              查看更多
               <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
             </a>
           </div>
@@ -94,7 +95,7 @@
                   <span class="font-medium text-text-main">{{ u.maxscore }}</span>
                 </div>
               </div>
-              <NuxtLink :to="`/scores/${u.uid}`" target="_blank" rel="noopener noreferrer" class="absolute inset-0 z-10">
+              <NuxtLink :to="`/scores/${u.uid}`" class="absolute inset-0 z-10">
                 <span class="sr-only">选手详情</span>
               </NuxtLink>
             </article>
@@ -119,6 +120,9 @@ const matches = ref([])
 const users = ref([])
 const loadingMatches = ref(true)
 const loadingUsers = ref(true)
+
+const FEATURED_PLAYERS_CITY = '-1'
+const FEATURED_PLAYERS_INDEX = 11111
 
 const loadMatches = async () => {
   loadingMatches.value = true
@@ -146,8 +150,22 @@ const loadMatches = async () => {
 const loadUsers = async () => {
   loadingUsers.value = true
   try {
-    const res = await $api('/user/lists', { method: 'POST', body: { city: city.value, sort: 2, page: 1, index: 0 } })
-    users.value = res?.data?.data?.slice(0, 4) || []
+    const res = await $api('/user/lists', {
+      method: 'POST',
+      body: {
+        city: FEATURED_PLAYERS_CITY,
+        now: city.value,
+        sort: 2,
+        page: 1,
+        index: FEATURED_PLAYERS_INDEX
+      }
+    })
+    const userList = Array.isArray(res?.data?.data) ? res.data.data : []
+
+    users.value = userList
+      .slice()
+      .sort((a, b) => (Number(b?.score) || 0) - (Number(a?.score) || 0))
+      .slice(0, 4)
   } catch (e) {
     users.value = []
   } finally {
