@@ -405,6 +405,8 @@
             <NuxtLink
               v-if="honor.eventid"
               :to="`/matches/${honor.eventid}`"
+              target="_blank"
+              rel="noopener noreferrer"
               class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-primary transition-colors hover:text-brand-primaryHover"
             >
               查看赛事
@@ -492,6 +494,8 @@
                     <NuxtLink
                       v-if="row.eventHref"
                       :to="row.eventHref"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       class="block whitespace-normal break-words font-medium text-text-main transition-colors hover:text-brand-primary"
                     >
                       {{ row.eventTitle }}

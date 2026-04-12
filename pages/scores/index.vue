@@ -43,19 +43,24 @@
                 {{ index + 1 }}
               </td>
               <td class="px-6 py-4 font-medium text-text-main">
-                {{ u.realname || '-' }}
+                <NuxtLink
+                  :to="{ path: `/scores/${u.uid}`, query: route.query }"
+                  class="transition-colors hover:text-brand-primary"
+                >
+                  {{ u.realname || '-' }}
+                </NuxtLink>
               </td>
               <td class="px-6 py-4 font-display font-bold text-brand-primary text-base">{{ u.score || '-' }}</td>
               <td class="px-6 py-4 text-text-muted">{{ u.maxscore || '-' }}</td>
               <td class="px-6 py-4 text-text-muted">{{ formatSex(u.sex) }}</td>
               <td class="px-6 py-4 text-text-muted">{{ u.residecity || '-' }}</td>
               <td class="px-6 py-4 text-center">
-                <a :href="`/scores/${u.uid}`" target="_blank" rel="noopener noreferrer" class="inline-block text-brand-primary font-medium hover:text-brand-primaryHover">
+                <NuxtLink :to="{ path: `/scores/${u.uid}`, query: route.query }" class="inline-block text-brand-primary font-medium hover:text-brand-primaryHover">
                   <span class="relative inline-block">
                     详情
                     <svg class="absolute left-full top-1/2 ml-1 w-4 h-4 -translate-y-1/2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                   </span>
-                </a>
+                </NuxtLink>
               </td>
             </tr>
             <tr v-if="!list.length">
@@ -76,7 +81,7 @@
 
 <script setup>
 useHead({
-  title: '积分列表'
+  title: '积分排行'
 })
 
 const SCORE_TAB_INDEX_MAP = {
@@ -90,8 +95,11 @@ const SCORE_TAB_CITY_MAP = {
   province: '-2'
 }
 
+const route = useRoute()
+const router = useRouter()
 const { city, switchVersion } = useCity()
-const activeTab = ref('city')
+const normalizeActiveTab = (value) => ['city', 'province', 'global'].includes(value) ? value : 'city'
+const activeTab = ref(normalizeActiveTab(route.query.tab))
 const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
@@ -105,6 +113,12 @@ const { loadMoreSentinel } = useAutoLoadMore({
   canLoadMore: canAutoLoadMore,
   onLoadMore: () => load(page.value + 1)
 })
+
+const syncQuery = async () => {
+  const nextQuery = { ...route.query, tab: activeTab.value }
+  if (route.query.tab === nextQuery.tab) return
+  await router.replace({ query: nextQuery })
+}
 
 const normalizeLocationLabel = (value) => {
   if (!value) return ''
@@ -188,6 +202,7 @@ const changeTab = async (tab) => {
   if (tab === activeTab.value) return
 
   activeTab.value = tab
+  await syncQuery()
   page.value = 1
   hasMore.value = false
   await load(1)
@@ -199,5 +214,8 @@ watch(switchVersion, async () => {
   await load(1)
 })
 
-onMounted(async () => { await load(1) })
+onMounted(async () => {
+  await syncQuery()
+  await load(1)
+})
 </script>

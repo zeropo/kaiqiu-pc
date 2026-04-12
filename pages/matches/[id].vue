@@ -152,7 +152,7 @@
 
                 <div class="mt-6 space-y-6">
                   <MatchItemTabs
-                    v-if="pointTabItems.length > 1"
+                    v-if="pointTabItems.length"
                     :model-value="activePointsItemId"
                     :tabs="pointTabItems"
                     @update:model-value="activePointsItemId = $event"
@@ -380,9 +380,9 @@
         <svg class="w-10 h-10 text-text-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
       </div>
       <p class="text-text-muted text-lg font-medium">未找到该赛事信息</p>
-      <a href="/matches" class="mt-6 px-6 py-2 rounded-btn bg-brand-primary text-white font-medium hover:bg-brand-primaryHover transition-colors">
+      <NuxtLink :to="{ path: '/matches', query: route.query }" class="mt-6 px-6 py-2 rounded-btn bg-brand-primary text-white font-medium hover:bg-brand-primaryHover transition-colors">
         返回比赛列表
-      </a>
+      </NuxtLink>
     </div>
   </div>
 </template>
@@ -393,6 +393,7 @@ import {
   fetchMatchMemberDetail,
   fetchMatchGroups,
   fetchMatchAllHonors,
+  fetchMatchResult,
   fetchMatchIncrementResult,
   fetchMatchScoreChange
 } from '~/services/match'
@@ -818,6 +819,29 @@ const normalizePlayerName = (...candidates) => {
   return '-'
 }
 
+const normalizeNameToken = (value) => normalizeText(value).replace(/\s+/g, '')
+
+const createParticipantNameCandidates = (primaryText, secondaryText = '') => {
+  const primary = normalizeText(primaryText)
+  const secondary = normalizeText(secondaryText)
+  const segments = primary
+    .split(/[\/／]/)
+    .map((segment) => normalizeText(segment))
+    .filter(Boolean)
+
+  const candidates = []
+
+  if (segments[0]) candidates.push(segments[0])
+  if (segments[1]) {
+    candidates.push(segments[1])
+  } else if (secondary) {
+    candidates.push(secondary)
+  }
+  if (!candidates.length && primary) candidates.push(primary)
+
+  return candidates
+}
+
 const formatGroupStartTime = (rawTime, fallbackTime = '') => {
   const dateText = formatDateTime(rawTime)
 
@@ -847,30 +871,255 @@ const compareMatchScoreSegment = (left, right) => {
   return 0
 }
 
-const buildNameLookup = (groupsPayload, honorsPayload) => {
+const getResultGroupsByItem = (resultData, itemId) => {
+  const groupList = resultData?.groups?.[normalizeText(itemId)]
+  return Array.isArray(groupList) ? groupList : []
+}
+
+const buildTeamBattleKey = (leftTeamId, rightTeamId) => {
+  const ids = [normalizeText(leftTeamId), normalizeText(rightTeamId)].filter(Boolean).sort()
+  return ids.length === 2 ? ids.join(':') : ''
+}
+
+const extractScorePair = (value) => {
+  const [left = '', right = ''] = normalizeText(value).split(':')
+  return {
+    left: left || '0',
+    right: right || '0'
+  }
+}
+
+const extractPrimaryPlayerName = (primaryText) => {
+  const firstSegment = normalizeText(primaryText)
+    .split(/[\/／]/)
+    .map((segment) => normalizeText(segment))
+    .find(Boolean)
+
+  return firstSegment || normalizeText(primaryText) || '-'
+}
+
+const buildTeamIdentityLookup = (members = []) => {
   const lookup = {}
+
+  members.forEach((member) => {
+    const teamId = normalizeText(member?.teamid)
+    const teamName = normalizeText(member?.teamname || member?.username || member?.realname)
+
+    if (!teamId || !teamName) return
+
+    lookup[teamName] = {
+      teamId,
+      name: teamName,
+      captainUid: normalizeText(member?.uid),
+      captainName: normalizePlayerName(member?.teamname, member?.realname, member?.username)
+    }
+  })
+
+  return lookup
+}
+
+const parseTeamBattleRoundName = (roundname, teamLookup = {}) => {
+  const normalized = normalizeText(roundname)
+  const matched = normalized.match(/^(.+?)\s+([0-9woWO]+:[0-9woWO]+)\s+(.+)$/)
+
+  if (!matched) return null
+
+  const [, leftNameRaw, scoreText, rightNameRaw] = matched
+  const leftName = normalizeText(leftNameRaw)
+  const rightName = normalizeText(rightNameRaw)
+  const leftTeam = teamLookup[leftName]
+  const rightTeam = teamLookup[rightName]
+  const battleKey = buildTeamBattleKey(leftTeam?.teamId, rightTeam?.teamId)
+
+  if (!leftTeam?.teamId || !rightTeam?.teamId || !battleKey) return null
+
+  return {
+    battleKey,
+    scoreText,
+    leftTeam,
+    rightTeam
+  }
+}
+
+const normalizeTeamBattleRows = (games = []) => {
+  return (Array.isArray(games) ? games : []).map((game, index) => {
+    const result1 = normalizeScoreValue(game?.result1) || '0'
+    const result2 = normalizeScoreValue(game?.result2) || '0'
+
+    return {
+      id: normalizeText(game?.gameid) || `team-row-${index + 1}`,
+      sequence: index + 1,
+      gameId: normalizeText(game?.gameid),
+      flag: normalizeText(game?.flag),
+      player1Name: normalizePlayerName(game?.username1),
+      player2Name: normalizePlayerName(game?.username2),
+      leftPlayer: {
+        uid: normalizeText(game?.uid1),
+        name: extractPrimaryPlayerName(game?.username1)
+      },
+      rightPlayer: {
+        uid: normalizeText(game?.uid2),
+        name: extractPrimaryPlayerName(game?.username2)
+      },
+      score: `${result1}:${result2}`
+    }
+  })
+}
+
+const normalizeTeamBattleDetailGames = (members = []) => {
+  const teamLookup = buildTeamIdentityLookup(members)
+  const battleMap = {}
+
+  members.forEach((member) => {
+    const detailGames = Array.isArray(member?.detail_games) ? member.detail_games : []
+
+    detailGames.forEach((battle) => {
+      const parsed = parseTeamBattleRoundName(battle?.roundname, teamLookup)
+      if (!parsed || battleMap[parsed.battleKey]) return
+
+      battleMap[parsed.battleKey] = {
+        id: normalizeText(battle?.tgameid) || parsed.battleKey,
+        tgameid: normalizeText(battle?.tgameid),
+        battleKey: parsed.battleKey,
+        scoreText: parsed.scoreText,
+        stageLabel: '',
+        teamLeft: parsed.leftTeam,
+        teamRight: parsed.rightTeam,
+        rows: normalizeTeamBattleRows(battle?.games)
+      }
+    })
+  })
+
+  return battleMap
+}
+
+const buildNameLookup = (groupsPayload, honorsPayload, resultPayloads = []) => {
+  const lookup = {}
+
+  const chooseBetterName = (currentValue, candidates = []) => {
+    const current = normalizeText(currentValue)
+    const normalizedCandidates = candidates.map((candidate) => normalizeText(candidate)).filter(Boolean)
+    const currentLooksLikeTeam = /队$/.test(current)
+    const betterCandidate = normalizedCandidates.find((candidate) => {
+      if (!current) return true
+      if (candidate === current) return false
+      if (currentLooksLikeTeam && !/队$/.test(candidate)) return true
+      return false
+    })
+
+    return betterCandidate || normalizePlayerName(current, ...normalizedCandidates)
+  }
+
+  const assignName = (uid, ...candidates) => {
+    const normalizedUid = normalizeText(uid)
+    if (!normalizedUid) return
+
+    lookup[normalizedUid] = chooseBetterName(lookup[normalizedUid], candidates)
+  }
 
   Object.values(groupsPayload || {}).forEach((itemGroups) => {
     const groups = Array.isArray(itemGroups?.groups) ? itemGroups.groups : []
 
     groups.forEach((group) => {
       ;(group || []).forEach((player) => {
-        const uid = normalizeText(player?.uid)
-        if (!uid) return
-        lookup[uid] = normalizePlayerName(player?.realname, player?.username, lookup[uid])
+        assignName(player?.uid, player?.realname, player?.username)
       })
     })
   })
 
   Object.values(honorsPayload || {}).forEach((honors) => {
     ;(honors || []).forEach((honor) => {
-      const uid = normalizeText(honor?.uid)
-      if (!uid) return
-      lookup[uid] = normalizePlayerName(lookup[uid], honor?.name, honor?.username)
+      assignName(honor?.uid, honor?.name, honor?.username)
+    })
+  })
+
+  ;(resultPayloads || []).forEach((entry) => {
+    const groups = getResultGroupsByItem(entry?.data, entry?.itemId)
+
+    groups.forEach((group) => {
+      ;(group || []).forEach((player) => {
+        assignName(player?.uid, player?.realname, player?.username, player?.teamname)
+
+        const detailGames = Array.isArray(player?.detail_games) ? player.detail_games : []
+        detailGames.forEach((detailGame) => {
+          ;(Array.isArray(detailGame?.games) ? detailGame.games : []).forEach((game) => {
+            const leftNames = createParticipantNameCandidates(game?.username1, game?.username11)
+            const rightNames = createParticipantNameCandidates(game?.username2, game?.username22)
+
+            assignName(game?.uid1, ...leftNames)
+            assignName(game?.uid11, leftNames[1], leftNames[0])
+            assignName(game?.uid2, ...rightNames)
+            assignName(game?.uid22, rightNames[1], rightNames[0])
+          })
+        })
+      })
     })
   })
 
   return lookup
+}
+
+const buildUidNameLookup = (nameLookup = {}) => {
+  const reverseLookup = {}
+
+  Object.entries(nameLookup).forEach(([uid, name]) => {
+    const key = normalizeNameToken(name)
+    if (!key || reverseLookup[key]) return
+    reverseLookup[key] = uid
+  })
+
+  return reverseLookup
+}
+
+const parseHonorDisplay = (honor, nameLookup = {}, uidNameLookup = {}) => {
+  const rawName = normalizeText(honor?.name) || normalizeText(honor?.username)
+  const match = rawName.match(/^([^()（）]+)[(（]([^()（）]+)[)）]$/)
+
+  if (!match) {
+    return {
+      name: rawName || '-',
+      teamLabel: '',
+      memberItems: []
+    }
+  }
+
+  const teamLabel = normalizeText(match[1])
+  const memberItems = match[2]
+    .split(/[\/／]/)
+    .map((memberName) => normalizeText(memberName))
+    .filter(Boolean)
+    .map((memberName) => {
+      const key = normalizeNameToken(memberName)
+      const uid = uidNameLookup[key] || ''
+
+      return {
+        name: memberName,
+        uid: normalizeText(uid),
+        isCaptain: normalizeText(uid) && normalizeText(uid) === normalizeText(honor?.uid)
+      }
+    })
+
+  if (!memberItems.some((member) => member.uid === normalizeText(honor?.uid))) {
+    const honorUid = normalizeText(honor?.uid)
+    const honorName = nameLookup[honorUid]
+
+    if (honorUid && honorName) {
+      const existingIndex = memberItems.findIndex((member) => member.name === honorName)
+      if (existingIndex >= 0) {
+        memberItems[existingIndex] = {
+          ...memberItems[existingIndex],
+          uid: honorUid,
+          isCaptain: true
+        }
+      }
+    }
+  }
+
+  return {
+    name: rawName || '-',
+    teamLabel: teamLabel || '',
+    memberItems
+  }
 }
 
 const normalizeKnockoutRounds = (rounds, nameLookup = {}, context = {}) => {
@@ -922,7 +1171,8 @@ const normalizeCompetitionData = ({ eventId, itemsList, groupsPayload, honorsPay
   const itemMap = Object.fromEntries((itemsList || []).map((item) => [normalizeText(item.id), item]))
   const itemIds = getCompetitionItemIds(itemsList, groupsPayload, honorsPayload)
   const resultMap = Object.fromEntries((resultPayloads || []).map((entry) => [normalizeText(entry.itemId), entry.data || {}]))
-  const nameLookup = buildNameLookup(groupsPayload, honorsPayload)
+  const nameLookup = buildNameLookup(groupsPayload, honorsPayload, resultPayloads)
+  const uidNameLookup = buildUidNameLookup(nameLookup)
 
   return itemIds
     .map((itemId, itemIndex) => {
@@ -932,12 +1182,15 @@ const normalizeCompetitionData = ({ eventId, itemsList, groupsPayload, honorsPay
       const resultMeta = resultMap[itemId] && typeof resultMap[itemId] === 'object'
         ? resultMap[itemId]
         : {}
-      const groups = Array.isArray(groupMeta?.groups) ? groupMeta.groups : []
-      const scoreMap = resultMeta?.scores && typeof resultMeta.scores === 'object' && !Array.isArray(resultMeta.scores)
-        ? resultMeta.scores
+      const resultGroups = getResultGroupsByItem(resultMeta, itemId)
+      const groups = resultGroups.length
+        ? resultGroups
+        : (Array.isArray(groupMeta?.groups) ? groupMeta.groups : [])
+      const scoreMap = resultMeta?.incrementScores && typeof resultMeta.incrementScores === 'object' && !Array.isArray(resultMeta.incrementScores)
+        ? resultMeta.incrementScores
         : {}
-      const resultGameMap = resultMeta?.games && typeof resultMeta.games === 'object' && !Array.isArray(resultMeta.games)
-        ? resultMeta.games
+      const resultGameMap = resultMeta?.incrementGames && typeof resultMeta.incrementGames === 'object' && !Array.isArray(resultMeta.incrementGames)
+        ? resultMeta.incrementGames
         : {}
       const knockoutRounds = resultMeta?.ttgames && typeof resultMeta.ttgames === 'object'
         ? resultMeta.ttgames[itemId]
@@ -947,7 +1200,7 @@ const normalizeCompetitionData = ({ eventId, itemsList, groupsPayload, honorsPay
             id: honor?.hid || `${itemId}-${honorIndex}`,
             uid: normalizeText(honor?.uid),
             honor: honor?.honor || `名次 ${honorIndex + 1}`,
-            name: normalizePlayerName(nameLookup[normalizeText(honor?.uid)], honor?.name, honor?.username),
+            ...parseHonorDisplay(honor, nameLookup, uidNameLookup),
             subject: honor?.subject || ''
           }))
         : []
@@ -963,26 +1216,45 @@ const normalizeCompetitionData = ({ eventId, itemsList, groupsPayload, honorsPay
             : {}
           const scoreLookup = Object.fromEntries(groupScoreRows.map((row) => [normalizeText(row?.uid), row]))
           const tableNumber = normalizeText(members[0]?.tablenum || groupMeta?.groups_tablenum?.[groupIndex])
+          const hasTeamMeta = members.some((member) => {
+            const teamId = normalizeText(member?.teamid)
+            return (teamId && teamId !== '0')
+              || !!normalizeText(member?.teamname)
+              || (Array.isArray(member?.detail_games) && member.detail_games.length > 0)
+          })
+          const groupTeamGames = hasTeamMeta
+            ? (members.find((member) => member?.games && typeof member.games === 'object' && !Array.isArray(member.games))?.games || {})
+            : {}
+          const groupTeamBattleMap = hasTeamMeta ? normalizeTeamBattleDetailGames(members) : {}
+          const groupTitle = `第${groupIndex + 1}组`
+
+          Object.values(groupTeamBattleMap).forEach((battle) => {
+            battle.stageLabel = groupTitle
+          })
 
           return {
             id: groupId || `${itemId}-${groupIndex}`,
-            title: `第${groupIndex + 1}组`,
+            title: groupTitle,
             eventId: normalizeText(eventId),
             itemId,
+            isTeamEvent: hasTeamMeta,
             startTimeText: formatGroupStartTime(members[0]?.starttime, groupMeta?.starttimes?.[groupIndex] || ''),
             tableText: tableNumber ? `${tableNumber}号台` : '待公布',
             qualifyCount,
             games: groupResults,
+            teamGames: groupTeamGames,
+            teamBattleMap: groupTeamBattleMap,
             players: members.map((member) => {
               const uid = normalizeText(member?.uid)
               const scoreMeta = uid ? scoreLookup[uid] || {} : {}
-              const processMeta = parseProcessMeta(scoreMeta?.process)
+              const processMeta = parseProcessMeta(scoreMeta?.process || member?.process)
 
               return {
                 uid,
-                name: normalizePlayerName(member?.realname, member?.username, nameLookup[uid]),
-                score: normalizeScoreValue(scoreMeta?.score),
-                rank: normalizeScoreValue(scoreMeta?.rank),
+                teamId: normalizeText(member?.teamid),
+                name: normalizePlayerName(member?.teamname, member?.realname, member?.username, nameLookup[uid]),
+                score: normalizeScoreValue(scoreMeta?.score ?? member?.score),
+                rank: normalizeScoreValue(scoreMeta?.rank ?? member?.rank),
                 calcValue: processMeta.value,
                 calcTone: processMeta.tone
               }
@@ -1117,15 +1389,25 @@ const fetchCompetitionData = async (itemsList = items.value) => {
     const resultPayloads = await Promise.all(
       itemIds.map(async (itemId) => {
         try {
-          const resultRes = await fetchMatchIncrementResult($api, {
-            eventId: id.value,
-            itemId,
-            posttime: 0
-          })
+          const [resultRes, incrementRes] = await Promise.all([
+            fetchMatchResult($api, {
+              eventId: id.value,
+              itemId
+            }),
+            fetchMatchIncrementResult($api, {
+              eventId: id.value,
+              itemId,
+              posttime: 0
+            })
+          ])
 
           return {
             itemId,
-            data: resultRes?.data || {}
+            data: {
+              ...(resultRes?.data || {}),
+              incrementGames: incrementRes?.data?.games || {},
+              incrementScores: incrementRes?.data?.scores || {}
+            }
           }
         } catch (error) {
           return {

@@ -1,5 +1,5 @@
 <template>
-  <Modal :open="open" panel-class="max-w-6xl" @close="emit('close')">
+  <Modal :open="open" panel-class="max-w-[50rem]" @close="emit('close')">
     <div class="flex max-h-[82vh] flex-col">
       <div class="flex items-start justify-between gap-4 border-b border-border pb-4">
         <div>
@@ -262,6 +262,13 @@ const props = defineProps({
   activeGameId: {
     type: String,
     default: ''
+  },
+  preferredPrimary: {
+    type: Object,
+    default: () => ({
+      uid: '',
+      name: ''
+    })
   }
 })
 
@@ -340,11 +347,76 @@ const payload = computed(() => {
   return {}
 })
 
+const preferredPrimaryUid = computed(() => normalizeText(props.preferredPrimary?.uid))
+const preferredPrimaryName = computed(() => normalizeText(props.preferredPrimary?.name))
+
+const getRowPlayerName = (row, side) => {
+  return formatDisplayValue(row?.[`username${side}`] || row?.[`realname${side}`])
+}
+
+const shouldSwapPerspective = (row) => {
+  if (!row || typeof row !== 'object') return false
+
+  const uid1 = normalizeText(row?.uid1)
+  const uid2 = normalizeText(row?.uid2)
+
+  if (preferredPrimaryUid.value) {
+    if (preferredPrimaryUid.value === uid1) return false
+    if (preferredPrimaryUid.value === uid2) return true
+  }
+
+  if (preferredPrimaryName.value) {
+    const name1 = normalizeText(getRowPlayerName(row, 1))
+    const name2 = normalizeText(getRowPlayerName(row, 2))
+
+    if (preferredPrimaryName.value === name1) return false
+    if (preferredPrimaryName.value === name2) return true
+  }
+
+  return false
+}
+
+const getOrientedGameMeta = (row) => {
+  if (!row || typeof row !== 'object') return null
+
+  const isSwapped = shouldSwapPerspective(row)
+  const leftSide = isSwapped ? '2' : '1'
+  const rightSide = isSwapped ? '1' : '2'
+
+  return {
+    isSwapped,
+    left: {
+      uid: normalizeText(row?.[`uid${leftSide}`]),
+      heading: formatPlayerHeading(row?.[`realname${leftSide}`], row?.[`username${leftSide}`]),
+      name: getRowPlayerName(row, leftSide),
+      currentScore: formatDisplayValue(row?.[`score${leftSide}`] || row?.[`after_score${leftSide}`]),
+      avatar: row?.[`headImg${leftSide}`] || '',
+      result: formatDisplayValue(row?.[`result${leftSide}`], '0'),
+      beforeScore: formatDisplayValue(row?.[`before_score${leftSide}`]),
+      changeScore: formatSignedValue(row?.[`change_score${leftSide}`]),
+      afterScore: formatDisplayValue(row?.[`after_score${leftSide}`])
+    },
+    right: {
+      uid: normalizeText(row?.[`uid${rightSide}`]),
+      heading: formatPlayerHeading(row?.[`realname${rightSide}`], row?.[`username${rightSide}`]),
+      name: getRowPlayerName(row, rightSide),
+      currentScore: formatDisplayValue(row?.[`score${rightSide}`] || row?.[`after_score${rightSide}`]),
+      avatar: row?.[`headImg${rightSide}`] || '',
+      result: formatDisplayValue(row?.[`result${rightSide}`], '0'),
+      beforeScore: formatDisplayValue(row?.[`before_score${rightSide}`]),
+      changeScore: formatSignedValue(row?.[`change_score${rightSide}`]),
+      afterScore: formatDisplayValue(row?.[`after_score${rightSide}`])
+    }
+  }
+}
+
 const currentGame = computed(() => {
   return payload.value?.current_game && typeof payload.value.current_game === 'object'
     ? payload.value.current_game
     : null
 })
+
+const currentGameMeta = computed(() => getOrientedGameMeta(currentGame.value))
 
 const historyGames = computed(() => {
   return Array.isArray(payload.value?.history_game) ? payload.value.history_game : []
@@ -353,15 +425,15 @@ const historyGames = computed(() => {
 const selectedGameId = computed(() => normalizeText(props.activeGameId) || normalizeText(currentGame.value?.gameid))
 
 const currentPlayer1 = computed(() => ({
-  heading: formatPlayerHeading(currentGame.value?.realname1, currentGame.value?.username1),
-  currentScore: formatDisplayValue(currentGame.value?.score1 || currentGame.value?.after_score1),
-  avatar: currentGame.value?.headImg1 || ''
+  heading: currentGameMeta.value?.left?.heading || '-',
+  currentScore: currentGameMeta.value?.left?.currentScore || '-',
+  avatar: currentGameMeta.value?.left?.avatar || ''
 }))
 
 const currentPlayer2 = computed(() => ({
-  heading: formatPlayerHeading(currentGame.value?.realname2, currentGame.value?.username2),
-  currentScore: formatDisplayValue(currentGame.value?.score2 || currentGame.value?.after_score2),
-  avatar: currentGame.value?.headImg2 || ''
+  heading: currentGameMeta.value?.right?.heading || '-',
+  currentScore: currentGameMeta.value?.right?.currentScore || '-',
+  avatar: currentGameMeta.value?.right?.avatar || ''
 }))
 
 const currentDateText = computed(() => formatDateText(currentGame.value?.start_time))
@@ -374,27 +446,27 @@ const currentEventHref = computed(() => {
 const currentStageText = computed(() => formatStageText(currentGame.value?.groupid))
 
 const currentResult = computed(() => ({
-  left: formatDisplayValue(currentGame.value?.result1),
-  right: formatDisplayValue(currentGame.value?.result2)
+  left: currentGameMeta.value?.left?.result || '-',
+  right: currentGameMeta.value?.right?.result || '-'
 }))
 
 const currentBeforeScores = computed(() => ({
-  left: formatDisplayValue(currentGame.value?.before_score1),
-  right: formatDisplayValue(currentGame.value?.before_score2)
+  left: currentGameMeta.value?.left?.beforeScore || '-',
+  right: currentGameMeta.value?.right?.beforeScore || '-'
 }))
 
 const currentChanges = computed(() => ({
-  left: formatSignedValue(currentGame.value?.change_score1),
-  right: formatSignedValue(currentGame.value?.change_score2)
+  left: currentGameMeta.value?.left?.changeScore || '0',
+  right: currentGameMeta.value?.right?.changeScore || '0'
 }))
 
 const currentAfterScores = computed(() => ({
-  left: formatDisplayValue(currentGame.value?.after_score1),
-  right: formatDisplayValue(currentGame.value?.after_score2)
+  left: currentGameMeta.value?.left?.afterScore || '-',
+  right: currentGameMeta.value?.right?.afterScore || '-'
 }))
 
 const showAfterScores = computed(() => {
-  return normalizeText(currentGame.value?.after_score1) || normalizeText(currentGame.value?.after_score2)
+  return normalizeText(currentGameMeta.value?.left?.afterScore) || normalizeText(currentGameMeta.value?.right?.afterScore)
 })
 
 const historyPlayer1 = computed(() => ({
@@ -406,8 +478,8 @@ const historyPlayer2 = computed(() => ({
 }))
 
 const historySummary = computed(() => ({
-  left: formatDisplayValue(payload.value?.winCount1, '0'),
-  right: formatDisplayValue(payload.value?.winCount2, '0')
+  left: formatDisplayValue(currentGameMeta.value?.isSwapped ? payload.value?.winCount2 : payload.value?.winCount1, '0'),
+  right: formatDisplayValue(currentGameMeta.value?.isSwapped ? payload.value?.winCount1 : payload.value?.winCount2, '0')
 }))
 
 const historyWinsText = computed(() => `${historySummary.value.left} - ${historySummary.value.right}`)
@@ -435,21 +507,25 @@ const historyRows = computed(() => {
     return normalizeText(rightRow?.gameid).localeCompare(normalizeText(leftRow?.gameid), undefined, { numeric: true })
   })
 
-  return sortedRows.map((row, index) => ({
-    gameId: normalizeText(row?.gameid),
-    sequence: index + 1,
-    player1: {
-      uid: normalizeText(row?.uid1),
-      name: formatDisplayValue(row?.realname1 || row?.username1)
-    },
-    player2: {
-      uid: normalizeText(row?.uid2),
-      name: formatDisplayValue(row?.realname2 || row?.username2)
-    },
-    scoreline: `${formatDisplayValue(row?.result1, '0')}:${formatDisplayValue(row?.result2, '0')}`,
-    changeText: formatSignedValue(row?.change_score1),
-    dateText: formatDisplayValue(row?.start_time)
-  }))
+  return sortedRows.map((row, index) => {
+    const meta = getOrientedGameMeta(row)
+
+    return {
+      gameId: normalizeText(row?.gameid),
+      sequence: index + 1,
+      player1: {
+        uid: meta?.left?.uid || '',
+        name: meta?.left?.name || '-'
+      },
+      player2: {
+        uid: meta?.right?.uid || '',
+        name: meta?.right?.name || '-'
+      },
+      scoreline: `${meta?.left?.result || '0'}:${meta?.right?.result || '0'}`,
+      changeText: meta?.left?.changeScore || '0',
+      dateText: formatDisplayValue(row?.start_time)
+    }
+  })
 })
 
 const historyRowTdClass = (row) => {

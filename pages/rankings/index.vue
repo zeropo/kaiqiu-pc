@@ -45,7 +45,7 @@
 
 <script setup>
 useHead({
-  title: '排行榜'
+  title: '风云榜单'
 })
 const loading = ref(true)
 const list = ref([])
@@ -65,4 +65,3 @@ const load = async () => {
 
 onMounted(load)
 </script>
-

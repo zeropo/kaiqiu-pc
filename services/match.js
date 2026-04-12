@@ -46,6 +46,16 @@ export async function fetchMatchIncrementResult($api, { eventId, itemId, posttim
   })
 }
 
+export async function fetchMatchResult($api, { eventId, itemId }) {
+  return await $api('/match/getResult', {
+    method: 'GET',
+    params: {
+      eventid: eventId,
+      itemid: itemId
+    }
+  })
+}
+
 export async function fetchMatchScoreChange($api, { eventid }) {
   return await $api('/match/getScoreChange2', {
     method: 'GET',

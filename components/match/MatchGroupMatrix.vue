@@ -95,6 +95,8 @@ const emit = defineEmits(['open-game-detail'])
 
 const players = computed(() => Array.isArray(props.group?.players) ? props.group.players : [])
 const resultMap = computed(() => (props.group?.games && typeof props.group.games === 'object' ? props.group.games : {}))
+const teamResultMap = computed(() => (props.group?.teamGames && typeof props.group.teamGames === 'object' ? props.group.teamGames : {}))
+const teamBattleMap = computed(() => (props.group?.teamBattleMap && typeof props.group.teamBattleMap === 'object' ? props.group.teamBattleMap : {}))
 
 const formatNumber = (value) => {
   if (value === undefined || value === null || value === '') return ''
@@ -127,8 +129,36 @@ const compareScoreSegment = (left, right) => {
 }
 
 const getMatchMeta = (rowPlayer, columnPlayer) => {
-  const rowKey = `${rowPlayer?.uid}:${columnPlayer?.uid}`
-  const reverseKey = `${columnPlayer?.uid}:${rowPlayer?.uid}`
+  const rowTeamId = String(rowPlayer?.teamId || '').trim()
+  const columnTeamId = String(columnPlayer?.teamId || '').trim()
+  const rowUid = String(rowPlayer?.uid || '').trim()
+  const columnUid = String(columnPlayer?.uid || '').trim()
+
+  if (rowTeamId && columnTeamId) {
+    const teamKey = `${rowTeamId}:${columnTeamId}`
+    const reverseTeamKey = `${columnTeamId}:${rowTeamId}`
+    const directTeam = teamResultMap.value[teamKey]
+    const reverseTeam = teamResultMap.value[reverseTeamKey]
+
+    if (directTeam) {
+      const [left, right] = splitScoreText(directTeam)
+      return {
+        text: `${left}:${right}`,
+        isWin: compareScoreSegment(left, right) > 0
+      }
+    }
+
+    if (reverseTeam) {
+      const [left, right] = splitScoreText(reverseTeam)
+      return {
+        text: `${right}:${left}`,
+        isWin: compareScoreSegment(right, left) > 0
+      }
+    }
+  }
+
+  const rowKey = `${rowUid}:${columnUid}`
+  const reverseKey = `${columnUid}:${rowUid}`
   const direct = resultMap.value[rowKey]
   const reverse = resultMap.value[reverseKey]
 
@@ -154,10 +184,26 @@ const getMatchMeta = (rowPlayer, columnPlayer) => {
   }
 }
 
+const getTeamBattleKey = (rowPlayer, columnPlayer) => {
+  const rowTeamId = String(rowPlayer?.teamId || '').trim()
+  const columnTeamId = String(columnPlayer?.teamId || '').trim()
+  const ids = [rowTeamId, columnTeamId].filter(Boolean).sort()
+  return ids.length === 2 ? ids.join(':') : ''
+}
+
+const getTeamBattleDetail = (rowPlayer, columnPlayer) => {
+  const battleKey = getTeamBattleKey(rowPlayer, columnPlayer)
+  return battleKey ? teamBattleMap.value[battleKey] || null : null
+}
+
 const getResultText = (rowPlayer, columnPlayer) => getMatchMeta(rowPlayer, columnPlayer).text
 
 const canOpenMatchDetail = (rowPlayer, columnPlayer) => {
   const meta = getMatchMeta(rowPlayer, columnPlayer)
+
+  if (props.group?.isTeamEvent) {
+    return meta.text !== '-' && !!getTeamBattleDetail(rowPlayer, columnPlayer)
+  }
 
   return meta.text !== '-'
     && !!props.group?.eventId
@@ -168,6 +214,29 @@ const canOpenMatchDetail = (rowPlayer, columnPlayer) => {
 
 const openMatchDetail = (rowPlayer, columnPlayer) => {
   if (!canOpenMatchDetail(rowPlayer, columnPlayer)) return
+
+  if (props.group?.isTeamEvent) {
+    emit('open-game-detail', {
+      source: 'group-team',
+      eventId: props.group.eventId,
+      itemId: props.group.itemId,
+      groupId: props.group.id,
+      groupTitle: props.group.title,
+      leftPlayer: {
+        uid: rowPlayer.uid,
+        name: rowPlayer.name || '-',
+        teamId: rowPlayer.teamId || ''
+      },
+      rightPlayer: {
+        uid: columnPlayer.uid,
+        name: columnPlayer.name || '-',
+        teamId: columnPlayer.teamId || ''
+      },
+      scoreText: getResultText(rowPlayer, columnPlayer),
+      detail: getTeamBattleDetail(rowPlayer, columnPlayer)
+    })
+    return
+  }
 
   emit('open-game-detail', {
     source: 'group',

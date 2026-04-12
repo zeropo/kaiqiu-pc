@@ -59,7 +59,7 @@
           <div class="flex items-end justify-between mb-8">
             <div>
               <h2 class="font-display text-2xl md:text-3xl font-bold text-text-main">风云选手</h2>
-              <p class="text-text-muted mt-2 hidden sm:block">发现并了解您身边的积分强者</p>
+          <p class="text-text-muted mt-2 hidden sm:block">发现并了解您当地的顶尖强者</p>
             </div>
             <a href="/scores" class="group inline-flex items-center text-brand-primary font-medium hover:text-brand-primaryHover transition-colors">
               查看更多

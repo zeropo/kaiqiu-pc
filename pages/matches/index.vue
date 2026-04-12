@@ -83,7 +83,7 @@
 
 <script setup>
 useHead({
-  title: '比赛列表'
+  title: '比赛大厅'
 })
 
 const tabs = [
@@ -98,9 +98,15 @@ const sortOptions = [
   { value: 'distance_desc', label: '距离最远', description: '按距离由远到近' }
 ]
 
+const route = useRoute()
+const router = useRouter()
 const { city, lat, lng } = useCity()
-const activeTab = ref('local')
-const sortOption = ref('time_asc')
+const normalizeActiveTab = (value) => (value === 'history' ? 'history' : 'local')
+const getDefaultSortForTab = (tab) => (tab === 'history' ? 'time_desc' : 'time_asc')
+const normalizeSortOption = (value, tab) => sortOptions.some((option) => option.value === value) ? value : getDefaultSortForTab(tab)
+
+const activeTab = ref(normalizeActiveTab(route.query.tab))
+const sortOption = ref(normalizeSortOption(route.query.sort, activeTab.value))
 const page = ref(1)
 const rawList = ref([])
 const hasMore = ref(false)
@@ -114,6 +120,12 @@ const { loadMoreSentinel } = useAutoLoadMore({
   canLoadMore: canAutoLoadMore,
   onLoadMore: () => load(page.value + 1)
 })
+
+const syncQuery = async () => {
+  const nextQuery = { ...route.query, tab: activeTab.value, sort: sortOption.value }
+  if (route.query.tab === nextQuery.tab && route.query.sort === nextQuery.sort) return
+  await router.replace({ query: nextQuery })
+}
 
 const cityLabel = computed(() => city.value || '杭州市')
 const requestCityName = computed(() => cityLabel.value)
@@ -290,12 +302,18 @@ const changeTab = async (tab) => {
   if (tab === activeTab.value) return
 
   activeTab.value = tab
-  sortOption.value = tab === 'history' ? 'time_desc' : 'time_asc'
+  sortOption.value = getDefaultSortForTab(tab)
+  await syncQuery()
   page.value = 1
   rawList.value = []
   hasMore.value = false
   await load(1)
 }
+
+watch(sortOption, async (nextValue, prevValue) => {
+  if (!initialized.value || nextValue === prevValue) return
+  await syncQuery()
+})
 
 watch([city, lat, lng], async ([nextCity, nextLat, nextLng], [prevCity, prevLat, prevLng]) => {
   if (!initialized.value || activeTab.value !== 'local') return
@@ -309,6 +327,7 @@ watch([city, lat, lng], async ([nextCity, nextLat, nextLng], [prevCity, prevLat,
 })
 
 onMounted(async () => {
+  await syncQuery()
   await load(1)
   initialized.value = true
 })

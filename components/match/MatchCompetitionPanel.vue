@@ -43,13 +43,13 @@
 
     <div v-else class="mt-6 space-y-6">
       <MatchItemTabs
-        v-if="tabItems.length > 1"
+        v-if="tabItems.length"
         :model-value="modelValue"
         :tabs="tabItems"
         @update:model-value="emit('update:modelValue', $event)"
       />
 
-      <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+      <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start">
         <div class="space-y-6">
           <section
             v-for="group in selectedItem.groups"
@@ -94,12 +94,22 @@
         </div>
       </section>
 
+      <MatchTeamBattleDetailModal
+        :open="teamBattleModalOpen"
+        :loading="teamBattleLoading"
+        :error="teamBattleError"
+        :detail="teamBattleDetail"
+        @close="closeTeamBattleModal"
+        @select-game="openTeamBattleGameDetail"
+      />
+
       <MatchGameDetailModal
         :open="gameDetailModalOpen"
         :loading="gameDetailLoading"
         :error="gameDetailError"
         :detail="gameDetailData"
         :active-game-id="activeGameId"
+        :preferred-primary="gameDetailPerspective"
         @close="closeGameDetailModal"
         @select-game="openGameDetailById"
       />
@@ -157,6 +167,14 @@ const gameDetailLoading = ref(false)
 const gameDetailError = ref('')
 const gameDetailData = ref(null)
 const activeGameId = ref('')
+const teamBattleModalOpen = ref(false)
+const teamBattleLoading = ref(false)
+const teamBattleError = ref('')
+const teamBattleDetail = ref(null)
+const gameDetailPerspective = ref({
+  uid: '',
+  name: ''
+})
 let latestGameDetailRequestId = 0
 
 const tabItems = computed(() => {
@@ -198,6 +216,53 @@ const extractGameId = (response) => {
 
 const closeGameDetailModal = () => {
   gameDetailModalOpen.value = false
+}
+
+const closeTeamBattleModal = () => {
+  teamBattleModalOpen.value = false
+}
+
+const splitScoreText = (scoreText) => {
+  const [left = '0', right = '0'] = normalizeText(scoreText).split(':')
+  return {
+    left: left || '0',
+    right: right || '0'
+  }
+}
+
+const reverseScoreText = (scoreText) => {
+  const score = splitScoreText(scoreText)
+  return `${score.right}:${score.left}`
+}
+
+const orientTeamBattleRow = (row, shouldSwap) => {
+  if (!shouldSwap) return row
+
+  return {
+    ...row,
+    player1Name: row?.player2Name || row?.player2 || '-',
+    player2Name: row?.player1Name || row?.player1 || '-',
+    leftPlayer: row?.rightPlayer || { uid: '', name: row?.player2Name || row?.player2 || '-' },
+    rightPlayer: row?.leftPlayer || { uid: '', name: row?.player1Name || row?.player1 || '-' },
+    score: reverseScoreText(row?.score)
+  }
+}
+
+const buildTeamBattleDetailForView = (payload) => {
+  const sourceDetail = payload?.detail && typeof payload.detail === 'object' ? payload.detail : null
+  if (!sourceDetail) return null
+
+  const clickedLeftTeamId = normalizeText(payload?.leftPlayer?.teamId)
+  const sourceLeftTeamId = normalizeText(sourceDetail?.teamLeft?.teamId)
+  const shouldSwap = !!clickedLeftTeamId && !!sourceLeftTeamId && clickedLeftTeamId !== sourceLeftTeamId
+
+  return {
+    teamLeft: shouldSwap ? sourceDetail.teamRight : sourceDetail.teamLeft,
+    teamRight: shouldSwap ? sourceDetail.teamLeft : sourceDetail.teamRight,
+    scoreText: normalizeText(payload?.scoreText) || (shouldSwap ? reverseScoreText(sourceDetail?.scoreText) : normalizeText(sourceDetail?.scoreText)),
+    stageLabel: payload?.groupTitle || sourceDetail?.stageLabel || '',
+    rows: (Array.isArray(sourceDetail?.rows) ? sourceDetail.rows : []).map((row) => orientTeamBattleRow(row, shouldSwap))
+  }
 }
 
 const loadGameDetail = async (gameId) => {
@@ -315,6 +380,10 @@ const openGameDetailFromPayload = async (payload) => {
   gameDetailData.value = null
   activeGameId.value = ''
   gameDetailError.value = ''
+  gameDetailPerspective.value = {
+    uid: normalizeText(payload?.leftPlayer?.uid || payload?.uid1),
+    name: normalizeText(payload?.leftPlayer?.name || payload?.player1?.name)
+  }
 
   const directGameId = normalizeText(payload?.gameId)
 
@@ -337,6 +406,24 @@ const openGameDetailFromPayload = async (payload) => {
 }
 
 const openGroupGameDetail = async (payload) => {
+  if (payload?.source === 'group-team') {
+    gameDetailModalOpen.value = false
+    activeGameId.value = ''
+    gameDetailData.value = null
+    gameDetailError.value = ''
+
+    teamBattleLoading.value = false
+    teamBattleError.value = ''
+    teamBattleDetail.value = buildTeamBattleDetailForView(payload)
+    teamBattleModalOpen.value = true
+
+    if (!teamBattleDetail.value) {
+      teamBattleError.value = '当前未找到该场团队详细对阵'
+    }
+
+    return
+  }
+
   await openGameDetailFromPayload(payload)
 }
 
@@ -347,5 +434,13 @@ const openKnockoutGameDetail = async (payload) => {
 const openGameDetailById = async (gameId) => {
   gameDetailModalOpen.value = true
   await loadGameDetail(gameId)
+}
+
+const openTeamBattleGameDetail = async (payload) => {
+  await openGameDetailFromPayload({
+    gameId: payload?.gameId,
+    leftPlayer: payload?.leftPlayer,
+    rightPlayer: payload?.rightPlayer
+  })
 }
 </script>

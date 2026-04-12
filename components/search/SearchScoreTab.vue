@@ -67,7 +67,12 @@
                 {{ index + 1 }}
               </td>
               <td class="px-5 py-4 font-semibold text-text-main">
-                {{ user.realname || user.username2 || '-' }}
+                <NuxtLink
+                  :to="`/scores/${user.uid}`"
+                  class="transition-colors hover:text-brand-primary"
+                >
+                  {{ user.realname || user.username2 || '-' }}
+                </NuxtLink>
               </td>
               <td class="px-5 py-4 font-semibold text-text-main">
                 {{ user.score || '-' }}
@@ -79,7 +84,7 @@
                 {{ formatLocation(user) }}
               </td>
               <td class="px-5 py-4">
-                <NuxtLink :to="`/scores/${user.uid}`" target="_blank" rel="noopener noreferrer" class="font-medium text-brand-primary hover:text-brand-primaryHover">
+                <NuxtLink :to="`/scores/${user.uid}`" class="font-medium text-brand-primary hover:text-brand-primaryHover">
                   详情
                 </NuxtLink>
               </td>

@@ -47,22 +47,32 @@
               </span>
             </div>
 
-            <div class="mt-6 flex flex-wrap gap-3">
-              <div v-if="detail.price" class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-2.5">
+            <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div v-if="detail.price" class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-3">
                 <p class="text-xs text-text-muted">课时价格</p>
                 <p class="mt-1 text-lg font-bold text-brand-primary">¥{{ detail.price }}<span class="text-xs font-normal text-text-muted">/小时</span></p>
               </div>
-              <div v-if="detail.schedule" class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-2.5">
+              <div v-if="detail.schedule" class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-3">
                 <p class="text-xs text-text-muted">授课时间</p>
                 <p class="mt-1 text-base font-semibold text-text-main">{{ detail.schedule }}</p>
               </div>
-              <div v-if="detail.score" class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-2.5">
+              <div v-if="detail.score" class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-3">
                 <p class="text-xs text-text-muted">积分</p>
                 <p class="mt-1 text-base font-semibold text-text-main">{{ detail.score }}</p>
               </div>
+              <div v-if="detail.mobile" class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-3">
+                <p class="text-xs text-text-muted">手机号</p>
+                <a
+                  :href="`tel:${detail.mobile}`"
+                  class="mt-1 inline-flex items-center gap-2 text-base font-semibold text-text-main transition-colors hover:text-brand-primary"
+                >
+                  <svg class="h-4 w-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.128a11.042 11.042 0 005.516 5.516l1.128-2.257a1 1 0 011.21-.502l4.493 1.498A1 1 0 0121 15.72V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                  <span>{{ detail.mobile }}</span>
+                </a>
+              </div>
             </div>
 
-            <div class="mt-5 flex flex-wrap gap-4 text-sm text-text-muted">
+            <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-text-muted">
               <span>{{ detail.viewnum || 0 }}人浏览</span>
               <span class="font-medium text-[#39b54a]">{{ detail.commentnum || 0 }}人推荐</span>
             </div>

@@ -9,6 +9,14 @@
 
     <div class="mb-10 rounded-card border border-border bg-white p-5 shadow-sm">
       <div class="flex flex-col gap-5">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center">
+          <SegmentTabs
+            :model-value="activeTab"
+            :tabs="tabs"
+            @update:model-value="changeTab"
+          />
+        </div>
+
         <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div class="space-y-1">
             <p class="text-sm font-semibold text-text-main">{{ currentViewLabel }}</p>
@@ -54,18 +62,17 @@
           :key="umpire.uid"
           class="group overflow-hidden rounded-card border border-border bg-white shadow-card transition-all duration-smooth hover:-translate-y-1 hover:shadow-cardHover"
         >
-          <NuxtLink :to="`/umpires/${umpire.uid}`" class="flex h-full flex-col">
-            <div class="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-surfaceSoft">
-              <div class="absolute inset-0 bg-gradient-to-br from-brand-primary/10 via-white to-surfaceSoft"></div>
+          <NuxtLink :to="{ path: `/umpires/${umpire.uid}`, query: route.query }" class="flex h-full flex-col">
+            <div class="relative aspect-[4/3] overflow-hidden bg-surfaceSoft">
               <span class="absolute left-3 top-3 z-10 inline-flex items-center rounded-sm bg-[#39b54a] px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
                 {{ formatLevel(umpire.level) }}
               </span>
               <ImgFallback
                 :src="umpire.image || umpire.portrait"
                 :alt="umpire.realname || '裁判头像'"
-                class="relative z-10 h-24 w-24 rounded-full border-4 border-white object-cover shadow-card transition-transform duration-700 ease-out group-hover:scale-105"
+                class="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
               />
-              <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/10 to-transparent"></div>
+              <div class="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent"></div>
             </div>
 
             <div class="flex flex-1 flex-col p-5">
@@ -118,40 +125,74 @@
 
 <script setup>
 useHead({
-  title: '裁判列表'
+  title: '裁判大厅'
 })
+
+const tabs = [
+  { value: 'local', label: '同城裁判' },
+  { value: 'all', label: '全部裁判' }
+]
 
 const levelOptions = [
   { value: '', label: '全部', description: '查看全部执裁等级' },
-  { value: '2', label: '国家一级', description: '高级执裁资格' },
-  { value: '1', label: '国家二级', description: '常见区域赛事级别' },
-  { value: '0', label: '国家三级', description: '基础执裁信息' }
+  { value: '3', label: '国家一级', description: '高级执裁资格' },
+  { value: '4', label: '国家二级', description: '常见区域赛事级别' },
+  { value: '5', label: '国家三级', description: '基础执裁信息' }
 ]
 
 const levelTextMap = {
+  3: '国家一级',
+  4: '国家二级',
+  5: '国家三级'
+}
+
+const legacyLevelTextMap = {
   2: '国家一级',
   1: '国家二级',
   0: '国家三级'
 }
 
+const route = useRoute()
+const router = useRouter()
+const { city } = useCity()
 const { $api } = useNuxtApp()
 
-const selectedLevel = ref('')
+const normalizeActiveTab = (value) => (value === 'all' ? 'all' : 'local')
+const normalizeSelectedLevel = (value) => {
+  const normalized = String(value ?? '')
+
+  if (['3', '4', '5', ''].includes(normalized)) return normalized
+  if (normalized === '2') return '3'
+  if (normalized === '1') return '4'
+  if (normalized === '0') return '5'
+
+  return ''
+}
+const activeTab = ref(normalizeActiveTab(route.query.tab))
+const selectedLevel = ref(normalizeSelectedLevel(route.query.level))
 const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
 const loading = ref(true)
 const loadingMore = ref(false)
+const initialized = ref(false)
 
+const cityLabel = computed(() => city.value || '杭州市')
+const requestCity = computed(() => activeTab.value === 'all' ? '' : city.value)
 const activeLevelLabel = computed(() => levelTextMap[selectedLevel.value] || '全部')
-const currentViewLabel = computed(() => selectedLevel.value ? `${activeLevelLabel.value}裁判` : '全部裁判')
-const emptyTitle = computed(() => selectedLevel.value ? `暂无${activeLevelLabel.value}裁判` : '暂无裁判数据')
-const emptyDescription = computed(() => '当前筛选条件下暂未查询到裁判信息，可切换其他等级后再试。')
-
-const displayList = computed(() => {
-  if (!selectedLevel.value) return list.value
-  return list.value.filter((item) => String(item.level) === selectedLevel.value)
+const currentViewLabel = computed(() => {
+  const scopeLabel = activeTab.value === 'all' ? '全部裁判' : '同城裁判'
+  return selectedLevel.value ? `${scopeLabel} · ${activeLevelLabel.value}` : scopeLabel
 })
+const emptyTitle = computed(() => {
+  const prefix = activeTab.value === 'all' ? '' : `${cityLabel.value}`
+  return selectedLevel.value ? `${prefix}暂无${activeLevelLabel.value}裁判` : `${prefix}暂无裁判数据`
+})
+const emptyDescription = computed(() => activeTab.value === 'all'
+  ? '当前筛选条件下暂未查询到裁判信息，可切换其他等级后再试。'
+  : '当前城市下暂未查询到裁判信息，可切换到全部裁判或调整等级后再试。')
+
+const displayList = computed(() => list.value)
 
 const canAutoLoadMore = computed(() => hasMore.value && !loading.value && !loadingMore.value)
 const { loadMoreSentinel } = useAutoLoadMore({
@@ -159,7 +200,19 @@ const { loadMoreSentinel } = useAutoLoadMore({
   onLoadMore: () => load(page.value + 1)
 })
 
-const formatLevel = (level) => levelTextMap[String(level)] || '未定级'
+const syncQuery = async () => {
+  const nextQuery = { ...route.query, tab: activeTab.value }
+  if (selectedLevel.value) {
+    nextQuery.level = selectedLevel.value
+  } else {
+    delete nextQuery.level
+  }
+
+  if ((route.query.tab || 'local') === nextQuery.tab && (route.query.level || '') === (nextQuery.level || '')) return
+  await router.replace({ query: nextQuery })
+}
+
+const formatLevel = (level) => levelTextMap[String(level)] || legacyLevelTextMap[String(level)] || '未定级'
 
 const formatSex = (sex) => {
   if (String(sex) === '1') return '男'
@@ -178,6 +231,12 @@ const formatLocation = (umpire) => {
   return text || '地区待完善'
 }
 
+const resetList = () => {
+  page.value = 1
+  list.value = []
+  hasMore.value = false
+}
+
 const load = async (nextPage = 1) => {
   const isFirstPage = nextPage === 1
 
@@ -192,7 +251,7 @@ const load = async (nextPage = 1) => {
     const response = await $api('/umpire/lists', {
       method: 'POST',
       body: {
-        city: '',
+        city: requestCity.value,
         level: selectedLevel.value,
         page: nextPage
       }
@@ -216,17 +275,37 @@ const load = async (nextPage = 1) => {
   }
 }
 
+const refreshList = async () => {
+  resetList()
+  await load(1)
+}
+
+const changeTab = async (tab) => {
+  if (activeTab.value === tab) return
+
+  activeTab.value = tab
+  await syncQuery()
+  await refreshList()
+}
+
 const changeLevel = async (level) => {
   if (selectedLevel.value === level) return
 
   selectedLevel.value = level
-  page.value = 1
-  list.value = []
-  hasMore.value = false
-  await load(1)
+  await syncQuery()
+  await refreshList()
 }
 
+watch(city, async (nextCity, prevCity) => {
+  if (!initialized.value || nextCity === prevCity) return
+  if (activeTab.value !== 'local') return
+
+  await refreshList()
+})
+
 onMounted(async () => {
+  await syncQuery()
   await load(1)
+  initialized.value = true
 })
 </script>

@@ -64,7 +64,7 @@
           :key="arena.id"
           class="group relative flex h-full flex-col overflow-hidden rounded-card border border-border bg-white shadow-card transition-all duration-smooth hover:-translate-y-1 hover:shadow-cardHover"
         >
-          <NuxtLink :to="`/arenas/${arena.id}`" class="flex h-full flex-col">
+          <NuxtLink :to="{ path: `/arenas/${arena.id}`, query: route.query }" class="flex h-full flex-col">
             <div class="relative aspect-[4/3] overflow-hidden">
               <div class="absolute inset-0 bg-surfaceSoft animate-pulse"></div>
               <ImgFallback
@@ -87,7 +87,7 @@
             </div>
 
             <div class="flex flex-1 flex-col p-5">
-              <h2 class="line-clamp-2 flex-1 text-lg font-semibold leading-snug text-text-main transition-colors group-hover:text-brand-primary">
+              <h2 class="line-clamp-2 text-lg font-semibold leading-snug text-text-main transition-colors group-hover:text-brand-primary">
                 {{ arena.name || '未命名球馆' }}
               </h2>
 
@@ -97,21 +97,22 @@
                   <span class="line-clamp-2">{{ arena.address || '暂无地址信息' }}</span>
                 </div>
                 <div class="flex items-center gap-2 text-sm text-text-muted">
-                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a2 2 0 011.9 1.368l.764 2.291a2 2 0 01-.464 2.11l-1.27 1.27a16.042 16.042 0 006.586 6.586l1.27-1.27a2 2 0 012.11-.464l2.291.764A2 2 0 0121 18.72V22a2 2 0 01-2 2h-1C9.163 24 0 14.837 0 4V3a2 2 0 012-2h1z"></path></svg>
-                  <span class="truncate">{{ getArenaMeta(arena) }}</span>
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.128a11.042 11.042 0 005.516 5.516l1.128-2.257a1 1 0 011.21-.502l4.493 1.498A1 1 0 0121 15.72V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                  <span class="truncate">{{ getArenaPhone(arena) }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                  <span class="truncate">{{ arena.view || 0 }}人浏览</span>
                 </div>
               </div>
 
-              <div class="mt-5 flex flex-wrap items-center gap-2 border-t border-surfaceSoft pt-4">
+              <div class="mt-auto pt-4">
+                <div class="flex items-end justify-between gap-3 border-t border-surfaceSoft pt-4">
                 <span class="rounded-md bg-brand-secondary/10 px-2.5 py-1 text-xs font-semibold text-brand-secondary">
                   距您 {{ formatDistance(arena) }}
                 </span>
-                <span class="inline-flex items-center rounded-md border border-[#39b54a] bg-white px-2.5 py-1 text-xs font-semibold text-[#39b54a]">
-                  {{ arena.reviews || arena.sumreview || 0 }} 条评论
-                </span>
-                <span class="rounded-md bg-surfaceSoft px-2.5 py-1 text-xs font-semibold text-text-main">
-                  {{ arena.view || 0 }} 人浏览
-                </span>
+                <span></span>
+                </div>
               </div>
             </div>
           </NuxtLink>
@@ -138,7 +139,7 @@
 
 <script setup>
 useHead({
-  title: '球馆列表'
+  title: '球馆大厅'
 })
 
 const tabs = [
@@ -147,15 +148,20 @@ const tabs = [
 ]
 
 const sortOptions = [
-  { value: 'default', label: '默认排序', description: '保持接口返回顺序' },
+  { value: 'default', label: '默认排序', description: '按收录时间由早到晚' },
   { value: 'distance', label: '距离排序', description: '按球馆距离由近到远' }
 ]
 
+const route = useRoute()
+const router = useRouter()
 const { city, lat, lng } = useCity()
 const { $api } = useNuxtApp()
 
-const activeTab = ref('local')
-const sortOption = ref('default')
+const normalizeActiveTab = (value) => (value === 'all' ? 'all' : 'local')
+const normalizeSortOption = (value) => (value === 'distance' ? 'distance' : 'default')
+
+const activeTab = ref(normalizeActiveTab(route.query.tab))
+const sortOption = ref(normalizeSortOption(route.query.sort))
 const page = ref(1)
 const rawList = ref([])
 const hasMore = ref(false)
@@ -165,9 +171,9 @@ const initialized = ref(false)
 
 let requestVersion = 0
 
-const requestCity = computed(() => activeTab.value === 'local' ? city.value : '')
+const requestCity = computed(() => activeTab.value === 'local' ? city.value : '-1')
 const cityLabel = computed(() => city.value || '当前城市')
-const currentViewLabel = computed(() => activeTab.value === 'local' ? `${cityLabel.value}同城球馆` : '全部球馆')
+const currentViewLabel = computed(() => activeTab.value === 'local' ? '同城球馆' : '全部球馆')
 const emptyTitle = computed(() => activeTab.value === 'local' ? `${cityLabel.value}暂无球馆数据` : '暂无球馆数据')
 const emptyDescription = computed(() => activeTab.value === 'local'
   ? '当前城市暂未查询到可展示的球馆，可稍后再试或切换到全部球馆查看。'
@@ -193,20 +199,63 @@ const formatDistance = (arena) => {
   return `${distance.toFixed(1)}km`
 }
 
-const getArenaMeta = (arena) => {
-  return arena.mobile || arena.phone || arena.message || [arena.city || arena.province, arena.district].filter(Boolean).join(' · ') || '查看球馆详情'
+const getArenaPhone = (arena) => {
+  const mobile = String(arena.mobile || '').trim()
+  if (mobile) return mobile
+
+  const phone = String(arena.phone || '').trim()
+  if (phone) return phone
+
+  return '无'
 }
 
-const displayList = computed(() => {
-  if (sortOption.value === 'default') return rawList.value
-  return rawList.value.slice().sort((a, b) => parseDistance(a) - parseDistance(b))
-})
+const requestSort = computed(() => (sortOption.value === 'distance' ? 1 : 2))
+
+const hasDisplayValue = (value) => value !== null && value !== undefined && String(value).trim() !== ''
+
+const mergeArena = (currentArena, nextArena) => {
+  const merged = { ...currentArena }
+
+  Object.entries(nextArena || {}).forEach(([key, value]) => {
+    if (hasDisplayValue(value) && !hasDisplayValue(merged[key])) {
+      merged[key] = value
+    }
+  })
+
+  return merged
+}
+
+const dedupeArenas = (rows) => {
+  const mapped = new Map()
+
+  rows.forEach((arena, index) => {
+    const name = String(arena?.name || '').trim()
+    const key = name ? `name:${name}` : `id:${arena?.id || index}`
+
+    if (!mapped.has(key)) {
+      mapped.set(key, arena)
+      return
+    }
+
+    mapped.set(key, mergeArena(mapped.get(key), arena))
+  })
+
+  return Array.from(mapped.values())
+}
+
+const displayList = computed(() => rawList.value)
 
 const canLoadMore = computed(() => hasMore.value && !loading.value && !loadingMore.value)
 const { loadMoreSentinel } = useAutoLoadMore({
   canLoadMore,
   onLoadMore: () => load(page.value + 1)
 })
+
+const syncQuery = async () => {
+  const nextQuery = { ...route.query, tab: activeTab.value, sort: sortOption.value }
+  if (route.query.tab === nextQuery.tab && route.query.sort === nextQuery.sort) return
+  await router.replace({ query: nextQuery })
+}
 
 const resetState = () => {
   page.value = 1
@@ -235,7 +284,8 @@ const load = async (nextPage = 1) => {
         city: requestCity.value,
         lat: lat.value,
         lng: lng.value,
-        page: nextPage
+        page: nextPage,
+        sort: requestSort.value
       }
     })
 
@@ -245,7 +295,7 @@ const load = async (nextPage = 1) => {
     const currentPage = Number(response.data.current_page || nextPage)
     const lastPage = Number(response.data.last_page || currentPage)
 
-    rawList.value = isFirstPage ? rows : rawList.value.concat(rows)
+    rawList.value = isFirstPage ? dedupeArenas(rows) : dedupeArenas(rawList.value.concat(rows))
     page.value = currentPage
     hasMore.value = rows.length > 0 && currentPage < lastPage
   } catch {
@@ -265,7 +315,6 @@ const load = async (nextPage = 1) => {
 }
 
 const reload = async () => {
-  sortOption.value = 'default'
   resetState()
   await load(1)
 }
@@ -276,18 +325,28 @@ const changeTab = async (tab) => {
   activeTab.value = tab
 
   if (!initialized.value) return
+  await syncQuery()
   await reload()
 }
+
+watch(sortOption, async (nextValue, prevValue) => {
+  if (!initialized.value || nextValue === prevValue) return
+  await syncQuery()
+})
 
 watch([city, lat, lng], async () => {
   if (!initialized.value) return
   await reload()
 })
 
+watch(sortOption, async (nextValue, prevValue) => {
+  if (!initialized.value || nextValue === prevValue) return
+  await reload()
+})
+
 onMounted(async () => {
+  await syncQuery()
   await load(1)
   initialized.value = true
 })
 </script>
-
-

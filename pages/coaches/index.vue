@@ -62,7 +62,7 @@
         <article
           v-for="coach in displayList"
           :key="getCoachKey(coach)"
-          class="group relative flex h-full flex-col overflow-hidden rounded-card border border-border bg-white shadow-card transition-all duration-smooth hover:-translate-y-1 hover:shadow-cardHover"
+          class="group relative z-0 flex h-full flex-col overflow-visible rounded-card border border-border bg-white shadow-card transition-all duration-smooth hover:z-20 hover:-translate-y-1 hover:shadow-cardHover"
         >
                     <NuxtLink :to="{ path: `/coaches/${coach.uid}`, query: route.query }" class="flex h-full flex-col">
             <div class="aspect-[4/3] overflow-hidden bg-surfaceSoft">
@@ -82,12 +82,9 @@
                   {{ coach.realname || coach.username || '未命名教练' }}
                 </h3>
 
-                <div class="flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 pl-2 text-sm">
-                  <span v-if="hasScore(coach)" class="font-semibold text-text-main">
+                <div class="flex shrink-0 items-start justify-end pl-2 text-sm text-right">
+                  <span v-if="hasScore(coach)" class="font-semibold whitespace-nowrap text-text-main">
                     积分：{{ coach.score }}
-                  </span>
-                  <span class="font-medium text-[#39b54a]">
-                    {{ coach.commentnum || 0 }}人推荐
                   </span>
                 </div>
               </div>
@@ -98,21 +95,37 @@
                   <span class="truncate">{{ formatLocation(coach) }}</span>
                 </div>
                 <div class="flex items-center gap-2 text-sm text-text-muted">
-                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5" stroke-width="2"></circle><circle cx="18" cy="5" r="2.5" stroke-width="2"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.5 19H17a3 3 0 000-6H7a3 3 0 010-6h8.5"></path></svg>
-                  <span class="truncate">{{ formatDistance(coach.distance) }}</span>
-                </div>
-                <div class="flex items-center gap-2 text-sm text-text-muted">
                   <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                   <span class="truncate">{{ coach.viewnum || 0 }}人浏览</span>
                 </div>
               </div>
 
-              <p
-                class="mt-4 flex-1 line-clamp-4 text-sm leading-6 text-text-muted"
-                :title="coach.description || coach.arena_name || '暂无教练简介'"
+              <div
+                class="relative mt-3 flex-1"
+                @mouseenter="showCoachTooltip(getCoachKey(coach))"
+                @mouseleave="closeCoachTooltip"
               >
-                {{ coach.description || coach.arena_name || '暂无教练简介' }}
-              </p>
+                <p class="line-clamp-3 text-sm leading-6 text-text-muted">
+                  {{ coach.description || coach.arena_name || '暂无教练简介' }}
+                </p>
+
+                <div
+                  v-if="activeCoachTooltip === getCoachKey(coach)"
+                  class="absolute inset-x-0 bottom-full z-40 mb-2 rounded-2xl border border-border bg-white px-4 py-3 text-sm leading-6 text-text-main shadow-[0_24px_60px_-32px_rgba(15,23,42,0.35)]"
+                >
+                  <p class="text-base font-semibold text-brand-primary">教练简介</p>
+                  <p class="mt-2 whitespace-pre-line text-black/75">{{ coach.description || coach.arena_name || '暂无教练简介' }}</p>
+                </div>
+              </div>
+
+              <div class="mt-4 flex items-end justify-between gap-3 border-t border-surfaceSoft pt-4">
+                <span class="rounded-md bg-brand-secondary/10 px-2.5 py-1 text-xs font-semibold text-brand-secondary">
+                  {{ formatDistance(coach.distance) }}
+                </span>
+                <span class="inline-flex items-center rounded-md border border-[#39b54a] bg-white px-2.5 py-1 text-xs font-semibold text-[#39b54a]">
+                  {{ coach.commentnum || 0 }}人推荐
+                </span>
+              </div>
             </div>
           </NuxtLink>
         </article>
@@ -138,7 +151,7 @@
 
 <script setup>
 useHead({
-  title: '教练列表'
+  title: '教练大厅'
 })
 
 const tabs = [
@@ -147,9 +160,9 @@ const tabs = [
 ]
 
 const sortOptions = [
-  { value: 'commentnum', label: '好评降序', description: '按好评数由高到低' },
-  { value: 'distance', label: '距离升序', description: '按与您的距离由近到远' },
-  { value: 'score', label: '积分降序', description: '按积分由高到低' }
+  { value: 1, label: '距离升序', description: '按距离由近到远' },
+  { value: 2, label: '好评降序', description: '按好评数由高到低' },
+  { value: 3, label: '积分降序', description: '按积分由高到低' }
 ]
 
 const route = useRoute()
@@ -157,8 +170,16 @@ const router = useRouter()
 const { city, lat, lng } = useCity()
 const { $api } = useNuxtApp()
 
+const normalizeSortOption = (value) => {
+  if (value === 'distance' || value === '1' || value === 1) return 1
+  if (value === 'commentnum' || value === '2' || value === 2) return 2
+  if (value === 'score' || value === '3' || value === 3) return 3
+  return 1
+}
+
 const activeTab = ref(route.query.tab === 'all' ? 'all' : 'local')
-const sortOption = ref(['commentnum', 'distance', 'score'].includes(route.query.sort) ? route.query.sort : 'commentnum')
+const sortOption = ref(normalizeSortOption(route.query.sort))
+const activeCoachTooltip = ref('')
 const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
@@ -180,42 +201,7 @@ const emptyDescription = computed(() => activeTab.value === 'all'
   ? '当前未查询到可展示的教练，可稍后再来看看。'
   : '当前城市暂无可展示的教练资源。')
 
-const getCommentValue = (coach) => Number(coach.commentnum || 0)
-const getDistanceValue = (coach) => {
-  const value = parseFloat(coach.distance)
-  return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER
-}
-const getScoreValue = (coach) => Number(coach.score || 0)
-
-const compareBySelectedSort = (a, b) => {
-  if (sortOption.value === 'commentnum') {
-    return getCommentValue(b) - getCommentValue(a)
-  }
-
-  if (sortOption.value === 'distance') {
-    return getDistanceValue(a) - getDistanceValue(b)
-  }
-
-  return getScoreValue(b) - getScoreValue(a)
-}
-
-const compareCoaches = (a, b) => {
-  const selectedDiff = compareBySelectedSort(a, b)
-  if (selectedDiff !== 0) return selectedDiff
-
-  const commentDiff = getCommentValue(b) - getCommentValue(a)
-  if (commentDiff !== 0) return commentDiff
-
-  const distanceDiff = getDistanceValue(a) - getDistanceValue(b)
-  if (distanceDiff !== 0) return distanceDiff
-
-  const scoreDiff = getScoreValue(b) - getScoreValue(a)
-  if (scoreDiff !== 0) return scoreDiff
-
-  return String(a.uid || '').localeCompare(String(b.uid || ''))
-}
-
-const displayList = computed(() => list.value.slice().sort(compareCoaches))
+const displayList = computed(() => list.value)
 
 const getCoachKey = (coach) => coach.uid || `${coach.realname || 'coach'}-${coach.city || ''}`
 
@@ -233,9 +219,15 @@ const dedupeCoaches = (rows) => {
 const formatLocation = (coach) => `${coach.province || ''}${coach.city || ''}` || '未知地区'
 const formatDistance = (distance) => distance ? `距您${distance}` : '距离未知'
 const hasScore = (coach) => Number(coach.score) > 0
+const showCoachTooltip = (key) => {
+  activeCoachTooltip.value = key
+}
+const closeCoachTooltip = () => {
+  activeCoachTooltip.value = ''
+}
 
 const syncQuery = async () => {
-  const nextQuery = { ...route.query, tab: activeTab.value, sort: sortOption.value }
+  const nextQuery = { ...route.query, tab: activeTab.value, sort: String(sortOption.value) }
   if (route.query.tab === nextQuery.tab && route.query.sort === nextQuery.sort) return
   await router.replace({ query: nextQuery })
 }
@@ -263,7 +255,8 @@ const load = async (nextPage = 1) => {
         city: requestCity.value,
         lat: lat.value,
         lng: lng.value,
-        page: nextPage
+        page: nextPage,
+        sort: sortOption.value
       }
     })
 
@@ -305,6 +298,7 @@ watch(sortOption, async (nextValue, prevValue) => {
   if (!initialized.value || nextValue === prevValue) return
 
   await syncQuery()
+  await refreshList()
 })
 
 watch([city, lat, lng], async ([nextCity, nextLat, nextLng], [prevCity, prevLat, prevLng]) => {

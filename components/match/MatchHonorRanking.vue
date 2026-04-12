@@ -26,33 +26,62 @@
         </div>
 
         <div class="space-y-2.5">
-          <template v-for="honor in group.items" :key="honor.id">
-            <a
-              v-if="honor.uid"
-              :href="`/scores/${honor.uid}`"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="group flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-white/90 bg-white px-4 py-3 text-sm text-brand-primary shadow-[0_12px_24px_-24px_rgba(15,23,42,0.45)] transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-primary/20 hover:bg-brand-primary/5 hover:shadow-md"
-            >
-              <span class="min-w-0 flex-1 truncate text-[15px] font-semibold transition-colors group-hover:text-brand-primaryHover">
-                {{ honor.name || '-' }}
-              </span>
-              <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surfaceSoft text-text-light transition-all duration-200 group-hover:bg-brand-primary/10 group-hover:text-brand-primary">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </span>
-            </a>
+          <article
+            v-for="honor in group.items"
+            :key="honor.id"
+            class="rounded-2xl border border-white/90 bg-white px-4 py-3 text-sm shadow-[0_12px_24px_-24px_rgba(15,23,42,0.45)]"
+            :class="honor.memberItems.length ? 'border-white/90' : 'border-border/80'"
+          >
+            <div class="space-y-3">
+              <div v-if="honor.teamLabel" class="text-[15px] font-semibold leading-6 text-text-main break-words">
+                {{ honor.teamLabel }}
+              </div>
 
-            <div
-              v-else
-              class="flex cursor-default items-center justify-between gap-3 rounded-2xl border border-border/80 bg-white px-4 py-3 text-sm text-text-main shadow-[0_12px_24px_-24px_rgba(15,23,42,0.45)]"
-            >
-              <span class="min-w-0 flex-1 truncate text-[15px] font-semibold text-text-main">
+              <div v-if="honor.memberItems.length" class="grid grid-cols-3 gap-2">
+                <template v-for="(member, memberIndex) in honor.memberItems" :key="`${honor.id}-member-${memberIndex}`">
+                  <a
+                    v-if="member.uid"
+                    :href="`/scores/${member.uid}`"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex min-w-0 items-center justify-center rounded-full border border-brand-primary/15 bg-brand-primary/5 px-2.5 py-1.5 text-center text-[14px] font-semibold leading-5 text-brand-primary transition-colors hover:border-brand-primary/30 hover:bg-brand-primary/10 hover:text-brand-primaryHover"
+                  >
+                    <span class="truncate">{{ member.name }}</span>
+                  </a>
+                  <span
+                    v-else
+                    class="inline-flex min-w-0 items-center justify-center rounded-full border border-brand-primary/15 bg-brand-primary/5 px-2.5 py-1.5 text-center text-[14px] font-semibold leading-5 text-brand-primary"
+                  >
+                    <span class="truncate">{{ member.name }}</span>
+                  </span>
+                </template>
+              </div>
+
+              <a
+                v-else-if="honor.uid && honor.name && honor.name !== '-'"
+                :href="`/scores/${honor.uid}`"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="group flex cursor-pointer items-center justify-between gap-3 text-brand-primary transition-all duration-200 hover:text-brand-primaryHover"
+              >
+                <span class="min-w-0 flex-1 break-words text-[15px] font-semibold leading-6">
+                  {{ honor.name || '-' }}
+                </span>
+                <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surfaceSoft text-text-light transition-all duration-200 group-hover:bg-brand-primary/10 group-hover:text-brand-primary">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </a>
+
+              <div
+                v-else
+                class="text-[15px] font-semibold leading-6 text-text-main break-words"
+              >
                 {{ honor.name || '-' }}
-              </span>
+              </div>
             </div>
-          </template>
+          </article>
         </div>
       </section>
     </div>
@@ -93,7 +122,9 @@ const groups = computed(() => {
       id: honor?.id || `${label}-${index}`,
       uid: honor?.uid ? String(honor.uid) : '',
       name: honor?.name || honor?.username || '-',
-      honor: label
+      honor: label,
+      teamLabel: honor?.teamLabel || '',
+      memberItems: Array.isArray(honor?.memberItems) ? honor.memberItems : []
     })
   })
 

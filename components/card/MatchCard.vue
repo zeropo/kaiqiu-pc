@@ -14,6 +14,11 @@
           {{ match.status }}
         </span>
       </div>
+      <div v-if="isWanghong" class="absolute right-3 bottom-3 z-20 pointer-events-none">
+        <span class="inline-flex items-center rounded-md bg-white/85 px-2.5 py-1 text-xs font-semibold text-orange-500 backdrop-blur-md shadow-sm">
+          网红
+        </span>
+      </div>
     </div>
     <div class="relative p-5 flex flex-col flex-1">
       <h3 class="font-semibold text-text-main line-clamp-2 leading-snug group-hover:text-brand-primary transition-colors text-lg flex-1">
@@ -29,6 +34,10 @@
           <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
           <span class="truncate">{{ match.arena_name }}</span>
         </div>
+        <div class="flex items-center text-sm text-text-muted gap-2">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+          <span class="truncate">{{ match.viewnum || 0 }}人浏览</span>
+        </div>
       </div>
 
       <img
@@ -38,7 +47,7 @@
         class="pointer-events-none absolute right-2 bottom-6 z-10 h-48 w-auto object-contain"
       >
       
-      <div class="mt-5 flex items-end justify-between gap-3 border-t border-surfaceSoft pt-4">
+      <div class="mt-4 flex items-end justify-between gap-3 border-t border-surfaceSoft pt-4">
         <span v-if="match.distance !== undefined" class="rounded-md bg-brand-secondary/10 px-2.5 py-1 text-xs font-semibold text-brand-secondary">
           距您 {{ formatDistance(match.distance) }}
         </span>
@@ -57,10 +66,11 @@
       </div>
     </div>
     <!-- Overlay link applied to entire card -->
-    <a :href="`/matches/${match.eventid}`" class="absolute inset-0 z-30"><span class="sr-only">比赛详情</span></a>
+    <NuxtLink :to="{ path: `/matches/${match.eventid}`, query: route.query }" class="absolute inset-0 z-30"><span class="sr-only">比赛详情</span></NuxtLink>
   </article>
 </template>
 <script setup>
+const route = useRoute()
 const props = defineProps({ match: { type: Object, required: true } })
 
 const cityLabel = computed(() => {
@@ -78,6 +88,10 @@ const joinCountLabel = computed(() => {
 const isRecommended = computed(() => {
   const grade = Number(props.match?.grade)
   return Number.isFinite(grade) && grade > 0
+})
+
+const isWanghong = computed(() => {
+  return String(props.match?.wanghong ?? '').trim() === '1'
 })
 
 // 格式化距离显示
