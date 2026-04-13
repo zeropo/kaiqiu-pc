@@ -1,5 +1,5 @@
 <template>
-  <Modal :open="open" panel-class="max-w-[50rem]" @close="emit('close')">
+  <Modal :open="open" panel-class="max-w-[50rem]" overlay-class="z-[70]" @close="emit('close')">
     <div class="flex max-h-[82vh] flex-col">
       <div class="flex items-start justify-between gap-4 border-b border-border pb-4">
         <div>
@@ -52,8 +52,8 @@
             </div>
           </section>
 
-          <section class="space-y-5">
-            <h4 class="text-center font-display text-xl font-bold text-text-main md:text-[1.625rem]">本场数据</h4>
+          <section class="space-y-4">
+            <h4 class="text-center font-display text-lg font-bold text-text-main md:text-[1.375rem]">本场数据</h4>
 
             <div class="rounded-[28px] border border-border bg-white p-5 shadow-sm">
               <div class="grid gap-4 md:grid-cols-[132px_minmax(0,1fr)] md:items-center">
@@ -61,34 +61,34 @@
                   <p class="font-display text-base font-bold leading-none whitespace-nowrap md:text-lg">{{ currentDateText }}</p>
                 </div>
 
-                <div class="space-y-3">
+                <div class="space-y-2">
                   <a
                     v-if="currentEventHref"
                     :href="currentEventHref"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="inline-flex items-center gap-2 text-lg font-display font-bold leading-snug text-brand-primary transition-colors hover:text-brand-primaryHover md:text-xl"
+                    class="inline-flex items-center gap-2 text-lg font-display font-bold leading-snug text-text-main transition-colors hover:text-brand-primary md:text-xl"
                   >
                     <span>{{ currentEventTitle }}</span>
                     <svg class="mt-1 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5h5m0 0v5m0-5L10 14"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 9v10h10"></path></svg>
                   </a>
-                  <p v-else class="text-lg font-display font-bold leading-snug text-brand-primary md:text-xl">{{ currentEventTitle }}</p>
+                  <p v-else class="text-lg font-display font-bold leading-snug text-text-main md:text-xl">{{ currentEventTitle }}</p>
                 </div>
               </div>
 
-              <div class="mt-8 text-center">
-                <h5 class="font-display text-xl font-bold text-text-main md:text-2xl">
+              <div class="mt-6 text-center">
+                <h5 class="font-display text-lg font-bold text-text-main md:text-xl">
                   本场比分<span v-if="currentStageText">（{{ currentStageText }}）</span>
                 </h5>
 
-                <div class="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+                <div class="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                   <p class="text-3xl font-display font-bold text-brand-primary md:text-4xl">{{ currentResult.left }}</p>
                   <p class="text-xl font-display font-bold text-text-main md:text-2xl">:</p>
                   <p class="text-3xl font-display font-bold text-brand-primary md:text-4xl">{{ currentResult.right }}</p>
                 </div>
 
-                <div class="mt-8 space-y-6">
-                  <div class="space-y-3">
+                <div class="mt-6 space-y-4">
+                  <div class="space-y-2">
                     <p class="text-base font-display font-bold text-text-main md:text-lg">报名积分</p>
                     <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-4 text-xl font-medium text-text-main md:text-2xl">
                       <p>{{ currentBeforeScores.left }}</p>
@@ -97,7 +97,7 @@
                     </div>
                   </div>
 
-                  <div class="space-y-3">
+                  <div class="space-y-2">
                     <p class="text-base font-display font-bold text-text-main md:text-lg">积分变化</p>
                     <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-4 text-xl font-medium md:text-2xl">
                       <p :class="getDeltaTextClass(currentChanges.left)">{{ currentChanges.left }}</p>
@@ -119,24 +119,24 @@
             </div>
           </section>
 
-          <section class="space-y-5">
-            <h4 class="text-center font-display text-xl font-bold text-text-main md:text-[1.625rem]">历史交战全记录</h4>
+          <section class="space-y-4">
+            <h4 class="text-center font-display text-lg font-bold text-text-main md:text-[1.375rem]">历史交战全记录</h4>
 
             <div class="rounded-[28px] border border-border bg-white p-5 shadow-sm">
-              <div class="grid gap-4 text-center md:grid-cols-[1fr_auto_1fr] md:items-center">
-                <div>
+              <div class="grid gap-4 text-center md:grid-cols-[1fr_auto_1fr] md:items-stretch">
+                <div class="flex min-h-[88px] w-full flex-col items-center justify-between text-center">
                   <p class="text-base font-display font-bold text-text-main md:text-lg">{{ historyPlayer1.heading }}</p>
-                  <p class="mt-2 text-2xl font-display font-bold text-brand-primary md:text-3xl">{{ historySummary.left }}</p>
+                  <p class="text-2xl font-display font-bold text-brand-primary md:text-3xl">{{ historySummary.left }}</p>
                 </div>
 
-                <div class="text-center">
-                  <p class="text-sm font-semibold uppercase tracking-[0.28em] text-text-light md:text-base">VS</p>
-                  <p class="mt-2 text-xl font-display font-bold text-text-main md:text-2xl">{{ historyWinsText }}</p>
+                <div class="flex min-h-[88px] w-full flex-col items-center justify-between text-center">
+                  <p class="text-sm font-semibold text-text-light md:text-base">VS</p>
+                  <p class="text-xl font-display font-bold text-text-main md:text-2xl">-</p>
                 </div>
 
-                <div>
+                <div class="flex min-h-[88px] w-full flex-col items-center justify-between text-center">
                   <p class="text-base font-display font-bold text-text-main md:text-lg">{{ historyPlayer2.heading }}</p>
-                  <p class="mt-2 text-2xl font-display font-bold text-brand-primary md:text-3xl">{{ historySummary.right }}</p>
+                  <p class="text-2xl font-display font-bold text-brand-primary md:text-3xl">{{ historySummary.right }}</p>
                 </div>
               </div>
 
@@ -292,9 +292,9 @@ const formatDisplayValue = (value, fallback = '-') => {
   return text || fallback
 }
 
-const formatPlayerHeading = (realname, username) => {
-  const primary = normalizeText(realname)
-  const secondary = normalizeText(username)
+const formatPlayerName = (username, realname) => {
+  const primary = normalizeText(username)
+  const secondary = normalizeText(realname)
 
   if (primary && secondary && primary !== secondary) {
     return `${primary} (${secondary})`
@@ -387,7 +387,7 @@ const getOrientedGameMeta = (row) => {
     isSwapped,
     left: {
       uid: normalizeText(row?.[`uid${leftSide}`]),
-      heading: formatPlayerHeading(row?.[`realname${leftSide}`], row?.[`username${leftSide}`]),
+      heading: formatPlayerName(row?.[`username${leftSide}`], row?.[`realname${leftSide}`]),
       name: getRowPlayerName(row, leftSide),
       currentScore: formatDisplayValue(row?.[`score${leftSide}`] || row?.[`after_score${leftSide}`]),
       avatar: row?.[`headImg${leftSide}`] || '',
@@ -398,7 +398,7 @@ const getOrientedGameMeta = (row) => {
     },
     right: {
       uid: normalizeText(row?.[`uid${rightSide}`]),
-      heading: formatPlayerHeading(row?.[`realname${rightSide}`], row?.[`username${rightSide}`]),
+      heading: formatPlayerName(row?.[`username${rightSide}`], row?.[`realname${rightSide}`]),
       name: getRowPlayerName(row, rightSide),
       currentScore: formatDisplayValue(row?.[`score${rightSide}`] || row?.[`after_score${rightSide}`]),
       avatar: row?.[`headImg${rightSide}`] || '',
@@ -482,7 +482,6 @@ const historySummary = computed(() => ({
   right: formatDisplayValue(currentGameMeta.value?.isSwapped ? payload.value?.winCount1 : payload.value?.winCount2, '0')
 }))
 
-const historyWinsText = computed(() => `${historySummary.value.left} - ${historySummary.value.right}`)
 
 const historyRows = computed(() => {
   const rawRows = [
@@ -549,3 +548,17 @@ const getHistoryButtonClass = (row, type) => {
   return `${deltaClass} hover:opacity-80`
 }
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

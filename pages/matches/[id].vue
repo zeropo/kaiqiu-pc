@@ -851,14 +851,19 @@ const formatGroupStartTime = (rawTime, fallbackTime = '') => {
   return '待公布'
 }
 
+const isWalkoverToken = (value) => {
+  const text = normalizeText(value).toLowerCase()
+  return text === 'wo' || text === 'bye' || text === '轮空'
+}
+
 const compareMatchScoreSegment = (left, right) => {
   const normalizedLeft = normalizeText(left).toLowerCase()
   const normalizedRight = normalizeText(right).toLowerCase()
 
   if (!normalizedLeft && !normalizedRight) return 0
-  if (normalizedLeft === 'wo' && normalizedRight === 'wo') return 0
-  if (normalizedLeft === 'wo') return -1
-  if (normalizedRight === 'wo') return 1
+  if (isWalkoverToken(normalizedLeft) && isWalkoverToken(normalizedRight)) return 0
+  if (isWalkoverToken(normalizedLeft)) return -1
+  if (isWalkoverToken(normalizedRight)) return 1
 
   const leftNumber = Number(normalizedLeft)
   const rightNumber = Number(normalizedRight)
@@ -866,6 +871,24 @@ const compareMatchScoreSegment = (left, right) => {
   if (!Number.isNaN(leftNumber) && !Number.isNaN(rightNumber)) {
     if (leftNumber === rightNumber) return 0
     return leftNumber > rightNumber ? 1 : -1
+  }
+
+  return 0
+}
+
+const resolveByeWinner = ({ uid1, uid2, name1, name2, result1, result2 }) => {
+  const hasLeft = !!normalizeText(uid1 || name1)
+  const hasRight = !!normalizeText(uid2 || name2)
+
+  if (hasLeft && !hasRight) return 1
+  if (hasRight && !hasLeft) return -1
+
+  if (isWalkoverToken(result1) && !isWalkoverToken(result2)) return -1
+  if (!isWalkoverToken(result1) && isWalkoverToken(result2)) return 1
+
+  if (normalizeText(result1) === '0' && normalizeText(result2) === '0') {
+    if (hasLeft && !hasRight) return 1
+    if (hasRight && !hasLeft) return -1
   }
 
   return 0
@@ -1131,9 +1154,14 @@ const normalizeKnockoutRounds = (rounds, nameLookup = {}, context = {}) => {
         ? round.games.map((game, gameIndex) => {
             const uid1 = normalizeText(game?.uid1)
             const uid2 = normalizeText(game?.uid2)
+            const name1 = normalizePlayerName(nameLookup[uid1], game?.username1)
+            const name2 = normalizePlayerName(nameLookup[uid2], game?.username2)
             const result1 = normalizeScoreValue(game?.result1) || '0'
             const result2 = normalizeScoreValue(game?.result2) || '0'
             const compareResult = compareMatchScoreSegment(result1, result2)
+            const byeWinner = compareResult === 0
+              ? resolveByeWinner({ uid1, uid2, name1, name2, result1, result2 })
+              : 0
 
             return {
               id: `${roundIndex}-${gameIndex}-${uid1}-${uid2}`,
@@ -1145,15 +1173,15 @@ const normalizeKnockoutRounds = (rounds, nameLookup = {}, context = {}) => {
               stageLabel: normalizeText(game?.groupid) === '-1' ? '淘汰赛' : '小组赛',
               player1: {
                 uid: uid1,
-                name: normalizePlayerName(nameLookup[uid1], game?.username1),
+                name: name1,
                 score: result1,
-                isWinner: compareResult > 0
+                isWinner: compareResult > 0 || byeWinner > 0
               },
               player2: {
                 uid: uid2,
-                name: normalizePlayerName(nameLookup[uid2], game?.username2),
+                name: name2,
                 score: result2,
-                isWinner: compareResult < 0
+                isWinner: compareResult < 0 || byeWinner < 0
               }
             }
           })
@@ -1368,6 +1396,8 @@ const fetchCompetitionData = async (itemsList = items.value) => {
     return
   }
 
+  resetCompetitionState()
+
   competitionLoading.value = true
   competitionError.value = ''
 
@@ -1512,3 +1542,7 @@ watch(id, (nextId, prevId) => {
   transform: translate3d(-28px, 0, 0);
 }
 </style>
+
+
+
+

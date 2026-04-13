@@ -198,11 +198,27 @@ const getPlayerCardClass = (player) => {
 }
 
 const canOpenMatchDetail = (match) => {
+  if (match?.isTeamEvent) return !!match?.detail
   return !!(match?.gameId || (match?.eventId && match?.itemId && match?.uid1 && match?.uid2))
 }
 
 const openMatchDetail = (match) => {
   if (!canOpenMatchDetail(match)) return
+
+  if (match?.isTeamEvent && match?.detail) {
+    emit('open-game-detail', {
+      source: 'knockout-team',
+      eventId: match.eventId,
+      itemId: match.itemId,
+      gameId: match.gameId,
+      leftPlayer: match.leftPlayer,
+      rightPlayer: match.rightPlayer,
+      scoreText: match.scoreText,
+      detail: match.detail,
+      stageLabel: match.stageLabel || '淘汰赛'
+    })
+    return
+  }
 
   emit('open-game-detail', {
     source: 'knockout',

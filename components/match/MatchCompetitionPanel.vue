@@ -428,6 +428,24 @@ const openGroupGameDetail = async (payload) => {
 }
 
 const openKnockoutGameDetail = async (payload) => {
+  if (payload?.source === 'knockout-team') {
+    gameDetailModalOpen.value = false
+    activeGameId.value = ''
+    gameDetailData.value = null
+    gameDetailError.value = ''
+
+    teamBattleLoading.value = false
+    teamBattleError.value = ''
+    teamBattleDetail.value = buildTeamBattleDetailForView(payload)
+    teamBattleModalOpen.value = true
+
+    if (!teamBattleDetail.value) {
+      teamBattleError.value = '当前未找到该场团队详细对阵'
+    }
+
+    return
+  }
+
   await openGameDetailFromPayload(payload)
 }
 
@@ -444,3 +462,6 @@ const openTeamBattleGameDetail = async (payload) => {
   })
 }
 </script>
+
+
+

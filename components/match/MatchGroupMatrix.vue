@@ -271,12 +271,14 @@ const getCalcClass = (tone) => {
 
 const getRankClass = (rank) => {
   const rankNumber = Number(rank)
-  const qualifyCount = Number(props.group?.qualifyCount || 0)
+  const highlightCount = Math.floor(players.value.length / 2)
 
-  if (!Number.isNaN(rankNumber) && qualifyCount > 0 && rankNumber <= qualifyCount) {
+  if (!Number.isNaN(rankNumber) && highlightCount > 0 && rankNumber <= highlightCount) {
     return 'text-brand-primary'
   }
 
   return 'text-text-main'
 }
 </script>
+
+

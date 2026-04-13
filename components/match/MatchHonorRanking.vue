@@ -124,7 +124,12 @@ const groups = computed(() => {
       name: honor?.name || honor?.username || '-',
       honor: label,
       teamLabel: honor?.teamLabel || '',
-      memberItems: Array.isArray(honor?.memberItems) ? honor.memberItems : []
+      memberItems: Array.isArray(honor?.memberItems)
+        ? honor.memberItems.map((member) => ({
+            ...member,
+            uid: member?.uid ? String(member.uid) : ''
+          }))
+        : []
     })
   })
 
@@ -153,3 +158,4 @@ const getGroupCardClass = (label) => {
   return 'border-border bg-gradient-to-br from-slate-50 via-white to-white'
 }
 </script>
+

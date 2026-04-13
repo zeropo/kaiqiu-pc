@@ -15,7 +15,7 @@
           <span class="mt-2 block bg-clip-text text-transparent bg-gradient-to-r from-brand-primary to-brand-primaryHover md:mt-3">随时掌控积分</span>
         </h1>
         <p class="text-text-muted text-lg md:text-xl max-w-xl mb-10 leading-relaxed">
-          全网最快最全查询系统，覆盖全国比赛、优选球馆、教练与裁判，致力于为您提供最高效的体验。
+          覆盖全国比赛、优选球馆、选手积分、教练与裁判，致力于为您提供最高效的体验。
         </p>
         <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
           <a href="/search" class="inline-flex items-center justify-center h-14 px-8 rounded-btn bg-brand-primary text-white font-medium shadow-card hover:shadow-cardHover hover:-translate-y-0.5 transition-all text-lg w-full sm:w-auto">
@@ -180,3 +180,5 @@ watch(switchVersion, async () => {
 
 onMounted(async () => { await Promise.all([loadMatches(), loadUsers()]) })
 </script>
+
+

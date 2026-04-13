@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div v-if="open" :class="overlayClasses" class="fixed inset-0 flex items-center justify-center">
       <div class="absolute inset-0 bg-black/40" @click="$emit('close')"></div>
       <div :class="panelClasses" class="relative bg-white rounded-card shadow-card w-[90vw] p-4">
         <slot />
@@ -15,9 +15,14 @@ const props = defineProps({
   panelClass: {
     type: String,
     default: 'max-w-xl'
+  },
+  overlayClass: {
+    type: String,
+    default: 'z-50'
   }
 })
 defineEmits(['close'])
 
 const panelClasses = computed(() => props.panelClass || 'max-w-xl')
+const overlayClasses = computed(() => props.overlayClass || 'z-50')
 </script>
