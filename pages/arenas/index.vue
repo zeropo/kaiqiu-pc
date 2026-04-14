@@ -148,7 +148,7 @@ const tabs = [
 ]
 
 const sortOptions = [
-  { value: 'default', label: '默认排序', description: '按收录时间由早到晚' },
+  { value: 'default', label: '默认排序', description: '按收录时间由晚到早' },
   { value: 'distance', label: '距离排序', description: '按球馆距离由近到远' }
 ]
 

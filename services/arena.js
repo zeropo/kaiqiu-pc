@@ -14,3 +14,7 @@ export async function fetchArenaMatches($api, { id, page } = {}) {
   return await $api('/arena/match_list', { method: 'POST', body: { id, page } })
 }
 
+export async function fetchArenaAuthorizedUsers($api, { shopid } = {}) {
+  return await $api('/arena/authorized_users', { method: 'GET', params: { shopid } })
+}
+

@@ -3,6 +3,6 @@ export async function fetchTrainerList($api, { type, city, lat, lng, page, sort 
 }
 
 export async function fetchTrainerDetail($api, { id }) {
-  return await $api('/Trainer/detail', { method: 'GET', params: { id, ump: 0 } })
+  return await $api('/trainer/detail', { method: 'GET', params: { id, ump: 0 } })
 }
 

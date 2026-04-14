@@ -66,12 +66,21 @@
       </div>
     </div>
     <!-- Overlay link applied to entire card -->
-    <NuxtLink :to="{ path: `/matches/${match.eventid}`, query: route.query }" class="absolute inset-0 z-30"><span class="sr-only">比赛详情</span></NuxtLink>
+    <NuxtLink
+      :to="{ path: `/matches/${match.eventid}`, query: route.query }"
+      class="absolute inset-0 z-30"
+      v-bind="openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {}"
+    >
+      <span class="sr-only">比赛详情</span>
+    </NuxtLink>
   </article>
 </template>
 <script setup>
 const route = useRoute()
-const props = defineProps({ match: { type: Object, required: true } })
+const props = defineProps({
+  match: { type: Object, required: true },
+  openInNewTab: { type: Boolean, default: false }
+})
 
 const cityLabel = computed(() => {
   const city = props.match?.city?.trim?.()

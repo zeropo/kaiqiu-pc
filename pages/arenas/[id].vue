@@ -3,10 +3,7 @@
     <div v-if="loading" class="space-y-6">
       <div class="h-72 animate-pulse rounded-card border border-border bg-white" />
       <div class="h-52 animate-pulse rounded-card border border-border bg-white" />
-      <div class="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <div class="h-80 animate-pulse rounded-card border border-border bg-white" />
-        <div class="h-[28rem] animate-pulse rounded-card border border-border bg-white" />
-      </div>
+      <div class="h-48 animate-pulse rounded-card border border-border bg-white" />
     </div>
 
     <div v-else-if="detail">
@@ -19,43 +16,28 @@
           />
 
           <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-center gap-3">
-              <h1 class="font-display text-3xl font-bold text-text-main">{{ arenaName }}</h1>
-              <span
-                v-if="detail.district"
-                class="rounded-full border border-brand-primary/20 bg-brand-primary/5 px-3 py-1 text-xs font-medium text-brand-primary"
-              >
-                {{ detail.district }}
-              </span>
-              <span
-                v-if="arenaGradeLabel"
-                class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700"
-              >
-                {{ arenaGradeLabel }}
-              </span>
-            </div>
+            <h1 class="font-display text-3xl font-bold text-text-main">{{ arenaName }}</h1>
 
             <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-text-muted">
               <span class="inline-flex items-center gap-1.5">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                {{ arenaLocation }}
+                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="whitespace-pre-line">{{ arenaAddress }}</span>
               </span>
-              <span v-if="distanceText" class="inline-flex items-center gap-1.5">
+            </div>
+
+            <div v-if="distanceText" class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-text-muted">
+              <span class="inline-flex items-center gap-1.5">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5" stroke-width="2"></circle><circle cx="18" cy="5" r="2.5" stroke-width="2"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.5 19H17a3 3 0 000-6H7a3 3 0 010-6h8.5"></path></svg>
                 距您{{ distanceText }}
               </span>
-              <span v-if="hasDisplayValue(detail.contact)" class="inline-flex items-center gap-1.5">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22a10 10 0 100-20 10 10 0 000 20z"></path></svg>
-                联系人 {{ detail.contact }}
-              </span>
-            </div>
-
-            <div class="mt-4 flex items-start gap-2 text-sm leading-6 text-text-muted">
-              <svg class="mt-0.5 h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 1.657-1.343 3-3 3S6 12.657 6 11s1.343-3 3-3 3 1.343 3 3z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 11c0 7-7.5 11-7.5 11S4.5 18 4.5 11a7.5 7.5 0 1115 0z"></path></svg>
-              <span class="whitespace-pre-line">{{ arenaAddress }}</span>
             </div>
 
             <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-3">
+                <p class="text-xs text-text-muted">联系人</p>
+                <p class="mt-1 text-base font-semibold text-text-main">{{ arenaContact }}</p>
+              </div>
+
               <div class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-3">
                 <p class="text-xs text-text-muted">手机号</p>
                 <a
@@ -73,22 +55,10 @@
                 <p class="text-xs text-text-muted">微信号</p>
                 <p class="mt-1 text-base font-semibold text-text-main">{{ arenaWechat }}</p>
               </div>
-
-              <div class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-3">
-                <p class="text-xs text-text-muted">联系人</p>
-                <p class="mt-1 text-base font-semibold text-text-main">{{ arenaContact }}</p>
-              </div>
-
-              <div class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-3">
-                <p class="text-xs text-text-muted">浏览量</p>
-                <p class="mt-1 text-base font-semibold text-text-main">{{ arenaViewCount }}</p>
-              </div>
             </div>
 
             <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-text-muted">
-              <span>{{ arenaReviewCount }}条评论</span>
-              <span>{{ arenaWantgoCount }}人想去</span>
-              <span>{{ arenaGoesCount }}人去过</span>
+              <span>{{ arenaViewCount }}人浏览</span>
             </div>
           </div>
         </div>
@@ -102,77 +72,97 @@
         <p class="whitespace-pre-line text-sm leading-7 text-text-muted">{{ arenaIntro }}</p>
       </section>
 
-      <div class="mt-8 grid gap-8 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <section class="rounded-card border border-border bg-white p-6 shadow-sm">
-          <h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-text-main">
-            <svg class="h-5 w-5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0v-4a3 3 0 00-3-3H10a3 3 0 00-3 3v4m10 0H7m10-11a2 2 0 11-4 0 2 2 0 014 0zm-6 0a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-            驻场教练
+      <section class="mt-8 rounded-card border border-border bg-white p-6 shadow-sm">
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <h2 class="flex items-center gap-2 text-lg font-semibold text-text-main">
+            <svg class="h-5 w-5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            近期比赛
           </h2>
+          <span class="text-sm text-text-muted">共 {{ relatedMatches.length }} 场</span>
+        </div>
 
-          <div v-if="relatedTrainers.length" class="space-y-3">
-            <article
-              v-for="trainer in relatedTrainers"
-              :key="getTrainerKey(trainer)"
-              class="group rounded-2xl border border-border bg-surfaceSoft/20 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-primary/30 hover:bg-white"
+        <div v-if="relatedMatches.length" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <MatchCard
+            v-for="match in relatedMatches"
+            :key="getMatchKey(match)"
+            :match="match"
+            :open-in-new-tab="true"
+          />
+        </div>
+
+        <div v-else class="rounded-2xl border border-border bg-surfaceSoft/60 px-4 py-12 text-center text-sm text-text-muted">
+          当前暂无相关比赛
+        </div>
+      </section>
+
+      <section class="mt-8 rounded-card border border-border bg-white p-6 shadow-sm">
+        <h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-text-main">
+          <svg class="h-5 w-5 shrink-0 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          管理者
+        </h2>
+
+        <div v-if="managers.length" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <article
+            v-for="m in managers"
+            :key="getManagerKey(m)"
+            :class="[
+              'flex flex-col items-center rounded-2xl border border-border bg-surfaceSoft/20 p-4 text-center shadow-card',
+              isCoachNavigable(m)
+                ? 'group cursor-pointer transition-shadow duration-300 hover:shadow-cardHover'
+                : ''
+            ]"
+          >
+            <NuxtLink
+              v-if="isCoachNavigable(m)"
+              :to="`/coaches/${m.uid}`"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="shrink-0 cursor-pointer"
             >
-              <NuxtLink :to="`/coaches/${trainer.uid}`" class="flex items-start gap-3">
-                <ImgFallback
-                  :src="trainer.image || trainer.portrait"
-                  :alt="trainer.realname || trainer.username || '教练头像'"
-                  class="h-16 w-16 shrink-0 rounded-2xl object-cover"
-                />
+              <ImgFallback
+                :src="managerAvatarCoach(m)"
+                :alt="formatManagerDisplayName(m)"
+                class="h-16 w-16 rounded-full object-cover"
+              />
+            </NuxtLink>
+            <div v-else class="shrink-0 cursor-default">
+              <ImgFallback
+                :src="managerFaceOnly(m)"
+                :alt="formatManagerDisplayName(m)"
+                class="h-16 w-16 rounded-full object-cover"
+              />
+            </div>
+            <NuxtLink
+              v-if="isCoachNavigable(m)"
+              :to="`/coaches/${m.uid}`"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="mt-3 line-clamp-2 min-h-[2.75rem] cursor-pointer text-sm font-semibold text-text-main group-hover:text-brand-primary"
+            >
+              {{ formatManagerDisplayName(m) }}
+            </NuxtLink>
+            <p
+              v-else
+              class="mt-3 line-clamp-2 min-h-[2.75rem] cursor-default text-sm font-semibold text-text-main"
+            >
+              {{ formatManagerDisplayName(m) }}
+            </p>
+            <span
+              v-if="managerGradeLabel(m.grade)"
+              class="mt-2 inline-block rounded-full border border-brand-primary/20 bg-brand-primary/5 px-2.5 py-0.5 text-xs font-medium text-brand-primary"
+            >
+              {{ managerGradeLabel(m.grade) }}
+            </span>
+            <p class="mt-2 text-xs text-text-muted">
+              授权时间: {{ formatManagerAuthTime(m.dateline) }}
+            </p>
+          </article>
+        </div>
 
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-start justify-between gap-3">
-                    <h3 class="line-clamp-2 text-base font-semibold text-text-main transition-colors group-hover:text-brand-primary">
-                      {{ trainer.realname || trainer.username || '未命名教练' }}
-                    </h3>
-                    <span v-if="Number(trainer.score) > 0" class="shrink-0 text-xs font-semibold text-text-main">
-                      积分 {{ trainer.score }}
-                    </span>
-                  </div>
-
-                  <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-muted">
-                    <span>{{ formatTrainerLocation(trainer) }}</span>
-                    <span v-if="hasDisplayValue(trainer.distance)">距您{{ trainer.distance }}</span>
-                  </div>
-
-                  <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-muted">
-                    <span>{{ trainer.viewnum || 0 }}人浏览</span>
-                    <span class="font-medium text-[#39b54a]">{{ trainer.commentnum || 0 }}人推荐</span>
-                  </div>
-                </div>
-              </NuxtLink>
-            </article>
-          </div>
-
-          <div v-else class="rounded-2xl border border-border bg-surfaceSoft/60 px-4 py-12 text-center text-sm text-text-muted">
-            当前暂无驻场教练信息
-          </div>
-        </section>
-
-        <section class="rounded-card border border-border bg-white p-6 shadow-sm">
-          <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <h2 class="flex items-center gap-2 text-lg font-semibold text-text-main">
-              <svg class="h-5 w-5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-              近期比赛
-            </h2>
-            <span class="text-sm text-text-muted">共 {{ relatedMatches.length }} 场</span>
-          </div>
-
-          <div v-if="relatedMatches.length" class="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <MatchCard
-              v-for="match in relatedMatches"
-              :key="getMatchKey(match)"
-              :match="match"
-            />
-          </div>
-
-          <div v-else class="rounded-2xl border border-border bg-surfaceSoft/60 px-4 py-12 text-center text-sm text-text-muted">
-            当前暂无相关比赛
-          </div>
-        </section>
-      </div>
+        <div v-else class="rounded-2xl border border-border bg-surfaceSoft/60 px-4 py-12 text-center text-sm text-text-muted">
+          暂无管理者信息
+        </div>
+      </section>
     </div>
 
     <div v-else class="flex flex-col items-center justify-center rounded-card border border-border bg-white py-20 shadow-sm">
@@ -186,7 +176,8 @@
 </template>
 
 <script setup>
-import { fetchArenaDetail, fetchArenaTrainers, fetchArenaMatches } from '~/services/arena'
+import { fetchArenaDetail, fetchArenaMatches, fetchArenaAuthorizedUsers } from '~/services/arena'
+import { fetchTrainerDetail } from '~/services/trainer'
 
 const route = useRoute()
 const { lat, lng } = useCity()
@@ -194,8 +185,9 @@ const { $api } = useNuxtApp()
 
 const id = computed(() => route.params.id)
 const detail = ref(null)
-const trainers = ref([])
 const matches = ref([])
+const authorizedUsers = ref([])
+const trainerDetailByUid = ref({})
 const loading = ref(true)
 
 let latestRequestId = 0
@@ -210,23 +202,8 @@ const arenaPhone = computed(() => normalizeText(detail.value?.mobile) || normali
 const arenaWechat = computed(() => normalizeText(detail.value?.wx) || '无')
 const arenaContact = computed(() => normalizeText(detail.value?.contact) || '无')
 const arenaAddress = computed(() => normalizeText(detail.value?.address) || '暂无地址信息')
-const arenaLocation = computed(() => {
-  const parts = [detail.value?.province, detail.value?.city, detail.value?.district]
-    .map((item) => normalizeText(item))
-    .filter(Boolean)
-
-  return parts.join(' ') || '位置待补充'
-})
 const distanceText = computed(() => normalizeText(detail.value?.distance))
 const arenaViewCount = computed(() => Number(detail.value?.view || detail.value?.viewnum || 0))
-const arenaReviewCount = computed(() => Number(detail.value?.sumreview || detail.value?.reviews || 0))
-const arenaWantgoCount = computed(() => Number(detail.value?.wantgo || 0))
-const arenaGoesCount = computed(() => Number(detail.value?.goes || 0))
-const arenaGradeLabel = computed(() => {
-  const grade = normalizeText(detail.value?.arenaGrade)
-  if (!grade || grade === '0') return ''
-  return grade === '1' ? '精选球馆' : `等级 ${grade}`
-})
 
 useHead(() => ({
   title: arenaName.value || '球馆详情'
@@ -244,35 +221,118 @@ const dedupeByKey = (rows, getKey) => {
   return Array.from(mapped.values())
 }
 
-const relatedTrainers = computed(() => {
-  return dedupeByKey(trainers.value, (trainer, index) => normalizeText(trainer?.uid) || `${normalizeText(trainer?.realname)}-${index}`)
-})
-
 const relatedMatches = computed(() => {
+  const arenaDist = distanceText.value
   return dedupeByKey(matches.value, (match, index) => normalizeText(match?.eventid) || `${normalizeText(match?.title)}-${index}`)
-    .map((match) => ({
-      ...match,
-      distance: hasDisplayValue(match?.distance) ? match.distance : undefined
-    }))
+    .map((match) => {
+      let d
+      if (hasDisplayValue(match?.distance)) {
+        d = match.distance
+      } else if (normalizeText(match?.juli) !== '') {
+        d = match.juli
+      } else if (hasDisplayValue(arenaDist)) {
+        d = arenaDist
+      }
+      return {
+        ...match,
+        distance: d
+      }
+    })
 })
 
-const formatTrainerLocation = (trainer) => {
-  const parts = [trainer?.province, trainer?.city]
-    .map((item) => normalizeText(item))
-    .filter(Boolean)
+const managers = computed(() => dedupeByKey(authorizedUsers.value, (m) => normalizeText(m.uid)))
 
-  return parts.join(' ') || '地区待补充'
+const MANAGER_GRADE_LABELS = {
+  9: '主席',
+  8: '副主席'
 }
 
-const getTrainerKey = (trainer) => normalizeText(trainer?.uid) || normalizeText(trainer?.realname)
+const managerGradeLabel = (grade) => {
+  const n = Number(grade)
+  return MANAGER_GRADE_LABELS[n] || ''
+}
+
+const formatManagerDisplayName = (m) => {
+  const nick = normalizeText(m.username2)
+  const real = normalizeText(m.realname)
+  if (nick && real) {
+    if (nick === real) {
+      return nick
+    }
+    return `${nick} (${real})`
+  }
+  return nick || real || '未命名'
+}
+
+const formatManagerAuthTime = (dateline) => {
+  const n = Number(dateline)
+  if (!n || n <= 0) {
+    return '--'
+  }
+  const d = new Date(n * 1000)
+  const y = d.getFullYear()
+  const mo = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${mo}-${day}`
+}
+
+const managerFaceOnly = (m) => normalizeText(m.face) || ''
+
+const managerAvatarCoach = (m) => {
+  const uid = normalizeText(m.uid)
+  const d = trainerDetailByUid.value[uid]
+  if (d) {
+    const fromDetail = normalizeText(d.portrait) || normalizeText(d.image)
+    if (fromDetail) {
+      return fromDetail
+    }
+  }
+  return normalizeText(m.face) || ''
+}
+
+const isCoachNavigable = (m) => {
+  const uid = normalizeText(m.uid)
+  const d = trainerDetailByUid.value[uid]
+  if (!d) {
+    return false
+  }
+  const exp = normalizeText(d.expiretime)
+  if (!exp) {
+    return true
+  }
+  return exp.slice(0, 10) !== '1970-01-01'
+}
+
+const loadManagerTrainerDetails = async (uids, requestId) => {
+  const cleaned = [...new Set(uids.map((u) => normalizeText(u)).filter(Boolean))]
+  const next = {}
+  await Promise.all(
+    cleaned.map(async (uid) => {
+      try {
+        const res = await fetchTrainerDetail($api, { id: uid })
+        next[uid] = res.data || null
+      } catch {
+        next[uid] = null
+      }
+    })
+  )
+  if (requestId !== latestRequestId) {
+    return
+  }
+  trainerDetailByUid.value = next
+}
+
+const getManagerKey = (m) => normalizeText(m.uid)
+
 const getMatchKey = (match) => normalizeText(match?.eventid) || `${normalizeText(match?.title)}-${normalizeText(match?.starttime)}`
 
 const fetchAll = async () => {
   const arenaId = normalizeText(id.value)
   if (!arenaId) {
     detail.value = null
-    trainers.value = []
     matches.value = []
+    authorizedUsers.value = []
+    trainerDetailByUid.value = {}
     loading.value = false
     return
   }
@@ -281,23 +341,27 @@ const fetchAll = async () => {
   loading.value = true
 
   try {
-    const [detailResult, trainerResult, matchResult] = await Promise.allSettled([
+    const [detailResult, matchResult, authResult] = await Promise.allSettled([
       fetchArenaDetail($api, { id: arenaId, lat: lat.value, lng: lng.value }),
-      fetchArenaTrainers($api, { id: arenaId, page: 1 }),
-      fetchArenaMatches($api, { id: arenaId, page: 1 })
+      fetchArenaMatches($api, { id: arenaId, page: 1 }),
+      fetchArenaAuthorizedUsers($api, { shopid: arenaId })
     ])
 
     if (requestId !== latestRequestId) return
 
     detail.value = detailResult.status === 'fulfilled' ? detailResult.value?.data || null : null
-    trainers.value = trainerResult.status === 'fulfilled' ? trainerResult.value?.data?.data || [] : []
     matches.value = matchResult.status === 'fulfilled' ? matchResult.value?.data?.data || [] : []
+    authorizedUsers.value = authResult.status === 'fulfilled' ? authResult.value?.data?.managerList || [] : []
+    trainerDetailByUid.value = {}
+    const managerUids = dedupeByKey(authorizedUsers.value, (row) => normalizeText(row?.uid)).map((row) => row.uid)
+    await loadManagerTrainerDetails(managerUids, requestId)
   } catch {
     if (requestId !== latestRequestId) return
 
     detail.value = null
-    trainers.value = []
     matches.value = []
+    authorizedUsers.value = []
+    trainerDetailByUid.value = {}
   } finally {
     if (requestId === latestRequestId) {
       loading.value = false

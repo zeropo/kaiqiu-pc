@@ -42,7 +42,7 @@ const { $api } = useNuxtApp()
 const fetchDetail = async () => {
   loading.value = true
   try {
-    const res = await $api('/Trainer/detail', { method: 'GET', params: { id: id.value, ump: 1 } })
+    const res = await $api('/trainer/detail', { method: 'GET', params: { id: id.value, ump: 1 } })
     detail.value = res?.data || null
   } catch (e) {
     detail.value = null

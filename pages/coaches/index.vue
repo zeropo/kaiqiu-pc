@@ -65,7 +65,7 @@
           class="group relative z-0 flex h-full flex-col overflow-visible rounded-card border border-border bg-white shadow-card transition-all duration-smooth hover:z-20 hover:-translate-y-1 hover:shadow-cardHover"
         >
                     <NuxtLink :to="{ path: `/coaches/${coach.uid}`, query: route.query }" class="flex h-full flex-col">
-            <div class="aspect-[4/3] overflow-hidden bg-surfaceSoft">
+            <div class="aspect-[4/3] overflow-hidden rounded-t-card bg-surfaceSoft">
               <ImgFallback
                 :src="coach.image || coach.portrait"
                 :alt="coach.realname || coach.username || '教练照片'"

@@ -3,6 +3,6 @@ export async function fetchUmpireList($api, { level, city, page } = {}) {
 }
 
 export async function fetchUmpireDetail($api, { id }) {
-  return await $api('/Trainer/detail', { method: 'GET', params: { id, ump: 1 } })
+  return await $api('/trainer/detail', { method: 'GET', params: { id, ump: 1 } })
 }
 

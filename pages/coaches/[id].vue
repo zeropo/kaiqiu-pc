@@ -1,7 +1,7 @@
 <template>
   <div class="container pt-8 pb-10 md:pt-12 md:pb-16">
     <div v-if="loading" class="space-y-6">
-      <div class="h-64 animate-pulse rounded-card border border-border bg-white" />
+      <div class="h-72 animate-pulse rounded-card border border-border bg-white" />
       <div class="grid gap-6 md:grid-cols-3">
         <div v-for="n in 3" :key="n" class="h-24 animate-pulse rounded-card border border-border bg-white" />
       </div>
@@ -14,7 +14,7 @@
           <ImgFallback
             :src="detail.image || detail.portrait"
             :alt="detail.realname"
-            class="h-48 w-48 shrink-0 rounded-2xl object-cover shadow-sm md:h-56 md:w-56"
+            class="h-56 w-full rounded-2xl object-cover shadow-sm md:h-60 md:w-60 md:shrink-0"
           />
 
           <div class="min-w-0 flex-1">
@@ -41,13 +41,26 @@
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                 {{ detail.arena_name }}
               </span>
-              <span v-if="detail.distance" class="inline-flex items-center gap-1.5">
+            </div>
+
+            <div v-if="detail.distance" class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-text-muted">
+              <span class="inline-flex items-center gap-1.5">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5" stroke-width="2"></circle><circle cx="18" cy="5" r="2.5" stroke-width="2"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.5 19H17a3 3 0 000-6H7a3 3 0 010-6h8.5"></path></svg>
                 距您{{ detail.distance }}
               </span>
             </div>
 
             <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div v-if="detail.mobile" class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-3">
+                <p class="text-xs text-text-muted">手机号</p>
+                <a
+                  :href="`tel:${detail.mobile}`"
+                  class="mt-1 inline-flex items-center gap-2 text-base font-semibold text-text-main transition-colors hover:text-brand-primary"
+                >
+                  <svg class="h-4 w-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.128a11.042 11.042 0 005.516 5.516l1.128-2.257a1 1 0 011.21-.502l4.493 1.498A1 1 0 0121 15.72V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                  <span>{{ detail.mobile }}</span>
+                </a>
+              </div>
               <div v-if="detail.price" class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-3">
                 <p class="text-xs text-text-muted">课时价格</p>
                 <p class="mt-1 text-lg font-bold text-brand-primary">¥{{ detail.price }}<span class="text-xs font-normal text-text-muted">/小时</span></p>
@@ -59,16 +72,6 @@
               <div v-if="detail.score" class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-3">
                 <p class="text-xs text-text-muted">积分</p>
                 <p class="mt-1 text-base font-semibold text-text-main">{{ detail.score }}</p>
-              </div>
-              <div v-if="detail.mobile" class="rounded-xl border border-border bg-surfaceSoft/50 px-4 py-3">
-                <p class="text-xs text-text-muted">手机号</p>
-                <a
-                  :href="`tel:${detail.mobile}`"
-                  class="mt-1 inline-flex items-center gap-2 text-base font-semibold text-text-main transition-colors hover:text-brand-primary"
-                >
-                  <svg class="h-4 w-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.128a11.042 11.042 0 005.516 5.516l1.128-2.257a1 1 0 011.21-.502l4.493 1.498A1 1 0 0121 15.72V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                  <span>{{ detail.mobile }}</span>
-                </a>
               </div>
             </div>
 
