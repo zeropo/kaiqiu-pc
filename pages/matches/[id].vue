@@ -877,11 +877,16 @@ const compareMatchScoreSegment = (left, right) => {
 }
 
 const resolveByeWinner = ({ uid1, uid2, name1, name2, result1, result2 }) => {
-  const hasLeft = !!normalizeText(uid1 || name1)
-  const hasRight = !!normalizeText(uid2 || name2)
+  const normName1 = normalizeText(name1)
+  const normName2 = normalizeText(name2)
+  const hasLeft = !!(normalizeText(uid1) || normName1)
+  const hasRight = !!(normalizeText(uid2) || normName2)
 
   if (hasLeft && !hasRight) return 1
   if (hasRight && !hasLeft) return -1
+
+  if (isWalkoverToken(normName1) && !isWalkoverToken(normName2)) return -1
+  if (!isWalkoverToken(normName1) && isWalkoverToken(normName2)) return 1
 
   if (isWalkoverToken(result1) && !isWalkoverToken(result2)) return -1
   if (!isWalkoverToken(result1) && isWalkoverToken(result2)) return 1
@@ -1016,6 +1021,63 @@ const normalizeTeamBattleDetailGames = (members = []) => {
   return battleMap
 }
 
+const buildKnockoutTeamBattleDetail = (game, detailGames) => {
+  if (!Array.isArray(detailGames)) return null
+
+  const name1 = normalizeText(game?.username1)
+  const name2 = normalizeText(game?.username2)
+  if (!name1 || !name2) return null
+
+  const detailGame = detailGames.find((detail) => {
+    const roundname = normalizeText(detail?.roundname)
+    return roundname.includes(name1) && roundname.includes(name2)
+  })
+
+  if (!detailGame) return null
+
+  const roundname = normalizeText(detailGame?.roundname)
+  const scoreMatch = roundname.match(/\s+([0-9woWO]+:[0-9woWO]+)\s+/)
+  const scoreTextInRoundname = scoreMatch ? scoreMatch[1] : ''
+  const [leftPart = '', rightPart = ''] = roundname.split(scoreTextInRoundname)
+  const shouldSwapRows = !!scoreTextInRoundname && !normalizeText(leftPart).endsWith(name1) && normalizeText(rightPart).endsWith(name1)
+
+  let rows = normalizeTeamBattleRows(detailGame?.games)
+  if (shouldSwapRows) {
+    rows = rows.map((row) => ({
+      ...row,
+      player1Name: row?.player2Name || row?.player2 || '-',
+      player2Name: row?.player1Name || row?.player1 || '-',
+      leftPlayer: row?.rightPlayer || { uid: '', name: row?.player2Name || row?.player2 || '-' },
+      rightPlayer: row?.leftPlayer || { uid: '', name: row?.player1Name || row?.player1 || '-' },
+      score: (() => {
+        const [l = '0', r = '0'] = normalizeText(row?.score).split(':')
+        return `${r}:${l}`
+      })()
+    }))
+  }
+
+  return {
+    id: normalizeText(detailGame.tgameid),
+    tgameid: normalizeText(detailGame.tgameid),
+    battleKey: '',
+    scoreText: `${normalizeScoreValue(game?.result1) || '0'}:${normalizeScoreValue(game?.result2) || '0'}`,
+    stageLabel: '',
+    teamLeft: {
+      teamId: normalizeText(game?.teamid1),
+      name: name1,
+      captainUid: normalizeText(game?.uid1) || '',
+      captainName: name1
+    },
+    teamRight: {
+      teamId: normalizeText(game?.teamid2),
+      name: name2,
+      captainUid: normalizeText(game?.uid2) || '',
+      captainName: name2
+    },
+    rows
+  }
+}
+
 const buildNameLookup = (groupsPayload, honorsPayload, resultPayloads = []) => {
   const lookup = {}
 
@@ -1095,6 +1157,29 @@ const buildUidNameLookup = (nameLookup = {}) => {
 }
 
 const parseHonorDisplay = (honor, nameLookup = {}, uidNameLookup = {}) => {
+  const teamName = normalizeText(honor?.teamname)
+  const members = Array.isArray(honor?.members) ? honor.members : []
+
+  if (teamName && members.length) {
+    const memberItems = members
+      .map((member) => {
+        const memberName = normalizeText(member?.name)
+        const memberUid = normalizeText(member?.uid)
+        return {
+          name: memberName || '-',
+          uid: memberUid,
+          isCaptain: memberUid && memberUid === normalizeText(honor?.uid)
+        }
+      })
+      .filter((item) => item.name !== '-')
+
+    return {
+      name: teamName,
+      teamLabel: teamName,
+      memberItems
+    }
+  }
+
   const rawName = normalizeText(honor?.name) || normalizeText(honor?.username)
   const match = rawName.match(/^([^()（）]+)[(（]([^()（）]+)[)）]$/)
 
@@ -1148,8 +1233,18 @@ const parseHonorDisplay = (honor, nameLookup = {}, uidNameLookup = {}) => {
 const normalizeKnockoutRounds = (rounds, nameLookup = {}, context = {}) => {
   if (!Array.isArray(rounds)) return []
 
+  const teamLookup = buildTeamIdentityLookup(context.members || [])
+  const knockoutTeamBattleMap = context.isTeamEvent ? normalizeTeamBattleDetailGames(context.members || []) : {}
+
   return rounds
     .map((round, roundIndex) => {
+      const parsedRoundBattle = context.isTeamEvent ? parseTeamBattleRoundName(round?.roundname, teamLookup) : null
+      const roundBattleDetail = parsedRoundBattle ? knockoutTeamBattleMap[parsedRoundBattle.battleKey] || null : null
+
+      if (roundBattleDetail) {
+        roundBattleDetail.stageLabel = '淘汰赛'
+      }
+
       const matches = Array.isArray(round?.games)
         ? round.games.map((game, gameIndex) => {
             const uid1 = normalizeText(game?.uid1)
@@ -1163,6 +1258,24 @@ const normalizeKnockoutRounds = (rounds, nameLookup = {}, context = {}) => {
               ? resolveByeWinner({ uid1, uid2, name1, name2, result1, result2 })
               : 0
 
+            const gameBattleDetail = context.isTeamEvent
+              ? buildKnockoutTeamBattleDetail(game, context.knockoutDetailGames)
+              : null
+            const activeDetail = gameBattleDetail || roundBattleDetail
+
+            const leftTeam = activeDetail?.teamLeft || parsedRoundBattle?.leftTeam || {
+              teamId: normalizeText(game?.teamid1) || '',
+              name: name1,
+              captainUid: uid1,
+              captainName: name1
+            }
+            const rightTeam = activeDetail?.teamRight || parsedRoundBattle?.rightTeam || {
+              teamId: normalizeText(game?.teamid2) || '',
+              name: name2,
+              captainUid: uid2,
+              captainName: name2
+            }
+
             return {
               id: `${roundIndex}-${gameIndex}-${uid1}-${uid2}`,
               gameId: normalizeText(game?.gameid),
@@ -1170,7 +1283,20 @@ const normalizeKnockoutRounds = (rounds, nameLookup = {}, context = {}) => {
               itemId: normalizeText(context.itemId),
               uid1,
               uid2,
-              stageLabel: normalizeText(game?.groupid) === '-1' ? '淘汰赛' : '小组赛',
+              isTeamEvent: !!context.isTeamEvent,
+              detail: activeDetail,
+              leftPlayer: {
+                uid: leftTeam.captainUid || uid1,
+                name: leftTeam.name || name1,
+                teamId: leftTeam.teamId || ''
+              },
+              rightPlayer: {
+                uid: rightTeam.captainUid || uid2,
+                name: rightTeam.name || name2,
+                teamId: rightTeam.teamId || ''
+              },
+              scoreText: `${result1}:${result2}`,
+              stageLabel: '淘汰赛',
               player1: {
                 uid: uid1,
                 name: name1,
@@ -1222,6 +1348,9 @@ const normalizeCompetitionData = ({ eventId, itemsList, groupsPayload, honorsPay
         : {}
       const knockoutRounds = resultMeta?.ttgames && typeof resultMeta.ttgames === 'object'
         ? resultMeta.ttgames[itemId]
+        : []
+      const knockoutDetailGames = resultMeta?.ttdetailgames && typeof resultMeta.ttdetailgames === 'object'
+        ? resultMeta.ttdetailgames[itemId]
         : []
       const honors = Array.isArray(honorsPayload?.[itemId])
         ? honorsPayload[itemId].map((honor, honorIndex) => ({
@@ -1299,7 +1428,10 @@ const normalizeCompetitionData = ({ eventId, itemsList, groupsPayload, honorsPay
         honors,
         knockoutRounds: normalizeKnockoutRounds(knockoutRounds, nameLookup, {
           eventId,
-          itemId
+          itemId,
+          isTeamEvent: normalizedGroups.some((group) => group.isTeamEvent),
+          members: groups.flatMap((groupMembers) => Array.isArray(groupMembers) ? groupMembers : []),
+          knockoutDetailGames
         })
       }
     })

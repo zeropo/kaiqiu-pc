@@ -197,7 +197,19 @@ const getPlayerCardClass = (player) => {
   return 'border-slate-200 bg-white text-slate-500'
 }
 
+const normalizeText = (value) => String(value ?? '').trim()
+
+const isWalkoverToken = (value) => {
+  const text = normalizeText(value).toLowerCase()
+  return text === 'wo' || text === 'bye' || text === '轮空'
+}
+
+const isByeMatch = (match) => {
+  return isWalkoverToken(match?.player1?.name) || isWalkoverToken(match?.player2?.name)
+}
+
 const canOpenMatchDetail = (match) => {
+  if (isByeMatch(match)) return false
   if (match?.isTeamEvent) return !!match?.detail
   return !!(match?.gameId || (match?.eventId && match?.itemId && match?.uid1 && match?.uid2))
 }
