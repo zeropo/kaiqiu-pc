@@ -92,8 +92,8 @@ const tabs = [
 ]
 
 const sortOptions = [
-  { value: 'time_asc', label: '开赛更早', description: '按时间由早到晚' },
   { value: 'time_desc', label: '开赛更晚', description: '按时间由晚到早' },
+  { value: 'time_asc', label: '开赛更早', description: '按时间由早到晚' },
   { value: 'distance_asc', label: '距离最近', description: '按距离由近到远' },
   { value: 'distance_desc', label: '距离最远', description: '按距离由远到近' }
 ]
@@ -102,7 +102,7 @@ const route = useRoute()
 const router = useRouter()
 const { city, lat, lng } = useCity()
 const normalizeActiveTab = (value) => (value === 'history' ? 'history' : 'local')
-const getDefaultSortForTab = (tab) => (tab === 'history' ? 'time_desc' : 'time_asc')
+const getDefaultSortForTab = (tab) => 'time_desc'
 const normalizeSortOption = (value, tab) => sortOptions.some((option) => option.value === value) ? value : getDefaultSortForTab(tab)
 
 const activeTab = ref(normalizeActiveTab(route.query.tab))

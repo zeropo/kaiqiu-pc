@@ -94,6 +94,14 @@
                   <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                   <span class="truncate">{{ formatLocation(coach) }}</span>
                 </div>
+                <div v-if="formatSex(coach.sex)" class="flex items-center gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                  <span>{{ formatSex(coach.sex) }}</span>
+                </div>
+                <div v-if="formatAge(coach.age)" class="flex items-center gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span>{{ formatAge(coach.age) }}</span>
+                </div>
                 <div class="flex items-center gap-2 text-sm text-text-muted">
                   <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                   <span class="truncate">{{ coach.viewnum || 0 }}人浏览</span>
@@ -219,6 +227,18 @@ const dedupeCoaches = (rows) => {
 const formatLocation = (coach) => `${coach.province || ''}${coach.city || ''}` || '未知地区'
 const formatDistance = (distance) => distance ? `距您${distance}` : '距离未知'
 const hasScore = (coach) => Number(coach.score) > 0
+
+const formatSex = (sex) => {
+  if (String(sex) === '1' || String(sex) === '男') return '男'
+  if (String(sex) === '2' || String(sex) === '女') return '女'
+  return ''
+}
+
+const formatAge = (age) => {
+  if (!age) return ''
+  const ageStr = String(age)
+  return ageStr.includes('岁') ? ageStr : `${ageStr}岁`
+}
 const showCoachTooltip = (key) => {
   activeCoachTooltip.value = key
 }

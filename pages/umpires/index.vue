@@ -3,7 +3,7 @@
     <div class="mb-8 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div>
         <h1 class="font-display text-3xl font-bold text-text-main">裁判大厅</h1>
-        <p class="mt-2 text-text-muted">浏览全国注册裁判信息，并按执裁等级快速筛选。</p>
+        <p class="mt-2 text-text-muted">浏览并筛选您身边的乒乓球裁判</p>
       </div>
     </div>
 
@@ -23,7 +23,7 @@
             <p class="text-sm text-text-muted">当前共展示 {{ displayList.length }} 位裁判</p>
           </div>
 
-          <div class="grid grid-cols-2 gap-3 md:grid-cols-4 xl:min-w-[720px]">
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 xl:min-w-[960px]">
             <button
               v-for="option in levelOptions"
               :key="option.value"
@@ -79,7 +79,6 @@
               <h3 class="line-clamp-1 flex-1 text-lg font-semibold leading-snug text-text-main transition-colors group-hover:text-brand-primary">
                 {{ umpire.realname || '未命名裁判' }}
               </h3>
-              <p class="mt-1 text-sm text-text-muted">编号：{{ umpire.uid }}</p>
 
               <div class="mt-4 space-y-2">
                 <div class="flex items-center gap-2 text-sm text-text-muted">
@@ -87,18 +86,13 @@
                   <span class="truncate">{{ formatLocation(umpire) }}</span>
                 </div>
                 <div class="flex items-center gap-2 text-sm text-text-muted">
-                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A3 3 0 016 17h12a3 3 0 01.879.804M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                  <span class="truncate">{{ formatSex(umpire.sex) }} / {{ formatAge(umpire.birthyear) }}</span>
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                  <span class="truncate">{{ formatSex(umpire.sex) }}</span>
                 </div>
-              </div>
-
-              <div class="mt-5 flex items-center justify-between border-t border-surfaceSoft pt-4">
-                <span class="rounded-md bg-brand-secondary/10 px-2.5 py-1 text-xs font-semibold text-brand-secondary">
-                  {{ formatSex(umpire.sex) }}
-                </span>
-                <span class="inline-flex items-center rounded-md border border-[#39b54a] bg-white px-2.5 py-1 text-xs font-semibold text-[#39b54a]">
-                  {{ formatAge(umpire.birthyear) }}
-                </span>
+                <div v-if="umpire.birthyear" class="flex items-center gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span class="truncate">{{ formatAge(umpire.birthyear) }}</span>
+                </div>
               </div>
             </div>
           </NuxtLink>
@@ -135,18 +129,24 @@ const tabs = [
 
 const levelOptions = [
   { value: '', label: '全部', description: '查看全部执裁等级' },
-  { value: '3', label: '国家一级', description: '高级执裁资格' },
-  { value: '4', label: '国家二级', description: '常见区域赛事级别' },
-  { value: '5', label: '国家三级', description: '基础执裁信息' }
+  { value: '1', label: '国际级', description: '执裁国际顶级赛事' },
+  { value: '2', label: '国家级', description: '执裁国内顶级赛事' },
+  { value: '3', label: '国家一级', description: '执裁省级及省际比赛' },
+  { value: '4', label: '国家二级', description: '执裁市级及地区比赛' },
+  { value: '5', label: '国家三级', description: '执裁区县及单位比赛' }
 ]
 
-const levelTextMap = {
+const filterLevelTextMap = {
+  1: '国际级',
+  2: '国家级',
   3: '国家一级',
   4: '国家二级',
   5: '国家三级'
 }
 
-const legacyLevelTextMap = {
+const cardLevelTextMap = {
+  4: '国际级',
+  3: '国家级',
   2: '国家一级',
   1: '国家二级',
   0: '国家三级'
@@ -161,10 +161,7 @@ const normalizeActiveTab = (value) => (value === 'all' ? 'all' : 'local')
 const normalizeSelectedLevel = (value) => {
   const normalized = String(value ?? '')
 
-  if (['3', '4', '5', ''].includes(normalized)) return normalized
-  if (normalized === '2') return '3'
-  if (normalized === '1') return '4'
-  if (normalized === '0') return '5'
+  if (['1', '2', '3', '4', '5', ''].includes(normalized)) return normalized
 
   return ''
 }
@@ -179,7 +176,7 @@ const initialized = ref(false)
 
 const cityLabel = computed(() => city.value || '杭州市')
 const requestCity = computed(() => activeTab.value === 'all' ? '' : city.value)
-const activeLevelLabel = computed(() => levelTextMap[selectedLevel.value] || '全部')
+const activeLevelLabel = computed(() => filterLevelTextMap[selectedLevel.value] || '全部')
 const currentViewLabel = computed(() => {
   const scopeLabel = activeTab.value === 'all' ? '全部裁判' : '同城裁判'
   return selectedLevel.value ? `${scopeLabel} · ${activeLevelLabel.value}` : scopeLabel
@@ -212,7 +209,11 @@ const syncQuery = async () => {
   await router.replace({ query: nextQuery })
 }
 
-const formatLevel = (level) => levelTextMap[String(level)] || legacyLevelTextMap[String(level)] || '未定级'
+const formatLevel = (level) => {
+  const levelStr = String(level ?? '')
+  if (!levelStr || levelStr === 'undefined' || levelStr === 'null') return '国家三级'
+  return cardLevelTextMap[levelStr] || '国家三级'
+}
 
 const formatSex = (sex) => {
   if (String(sex) === '1') return '男'

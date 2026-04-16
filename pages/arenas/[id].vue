@@ -102,61 +102,63 @@
         </h2>
 
         <div v-if="managers.length" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <article
-            v-for="m in managers"
-            :key="getManagerKey(m)"
-            :class="[
-              'flex flex-col items-center rounded-2xl border border-border bg-surfaceSoft/20 p-4 text-center shadow-card',
-              isCoachNavigable(m)
-                ? 'group cursor-pointer transition-shadow duration-300 hover:shadow-cardHover'
-                : ''
-            ]"
-          >
+          <template v-for="m in managers" :key="getManagerKey(m)">
             <NuxtLink
               v-if="isCoachNavigable(m)"
               :to="`/coaches/${m.uid}`"
               target="_blank"
               rel="noopener noreferrer"
-              class="shrink-0 cursor-pointer"
+              class="group flex flex-col items-center rounded-2xl border border-border bg-surfaceSoft/20 p-4 text-center shadow-card transition-shadow duration-300 hover:shadow-cardHover"
             >
-              <ImgFallback
-                :src="managerAvatarCoach(m)"
-                :alt="formatManagerDisplayName(m)"
-                class="h-16 w-16 rounded-full object-cover"
-              />
+              <div class="shrink-0">
+                <ImgFallback
+                  :src="managerAvatarCoach(m)"
+                  :alt="formatManagerDisplayName(m)"
+                  class="h-16 w-16 rounded-full object-cover"
+                />
+              </div>
+              <p class="mt-3 line-clamp-2 text-sm font-semibold text-text-main group-hover:text-brand-primary">
+                {{ formatManagerDisplayName(m) }}
+              </p>
+              <div class="mt-3 h-7">
+                <span
+                  v-if="managerGradeLabel(m.grade)"
+                  class="inline-flex items-center rounded-full border border-brand-primary/20 bg-brand-primary/5 px-2.5 py-1 text-xs font-medium leading-none text-brand-primary"
+                >
+                  {{ managerGradeLabel(m.grade) }}
+                </span>
+              </div>
+              <p class="mt-3 text-xs text-text-muted">
+                授权时间: {{ formatManagerAuthTime(m.dateline) }}
+              </p>
             </NuxtLink>
-            <div v-else class="shrink-0 cursor-default">
-              <ImgFallback
-                :src="managerFaceOnly(m)"
-                :alt="formatManagerDisplayName(m)"
-                class="h-16 w-16 rounded-full object-cover"
-              />
-            </div>
-            <NuxtLink
-              v-if="isCoachNavigable(m)"
-              :to="`/coaches/${m.uid}`"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="mt-3 line-clamp-2 min-h-[2.75rem] cursor-pointer text-sm font-semibold text-text-main group-hover:text-brand-primary"
-            >
-              {{ formatManagerDisplayName(m) }}
-            </NuxtLink>
-            <p
+            <article
               v-else
-              class="mt-3 line-clamp-2 min-h-[2.75rem] cursor-default text-sm font-semibold text-text-main"
+              class="flex flex-col items-center rounded-2xl border border-border bg-surfaceSoft/20 p-4 text-center shadow-card"
             >
-              {{ formatManagerDisplayName(m) }}
-            </p>
-            <span
-              v-if="managerGradeLabel(m.grade)"
-              class="mt-2 inline-block rounded-full border border-brand-primary/20 bg-brand-primary/5 px-2.5 py-0.5 text-xs font-medium text-brand-primary"
-            >
-              {{ managerGradeLabel(m.grade) }}
-            </span>
-            <p class="mt-2 text-xs text-text-muted">
-              授权时间: {{ formatManagerAuthTime(m.dateline) }}
-            </p>
-          </article>
+              <div class="shrink-0">
+                <ImgFallback
+                  :src="managerFaceOnly(m)"
+                  :alt="formatManagerDisplayName(m)"
+                  class="h-16 w-16 rounded-full object-cover"
+                />
+              </div>
+              <p class="mt-3 line-clamp-2 text-sm font-semibold text-text-main">
+                {{ formatManagerDisplayName(m) }}
+              </p>
+              <div class="mt-3 h-7">
+                <span
+                  v-if="managerGradeLabel(m.grade)"
+                  class="inline-flex items-center rounded-full border border-brand-primary/20 bg-brand-primary/5 px-2.5 py-1 text-xs font-medium leading-none text-brand-primary"
+                >
+                  {{ managerGradeLabel(m.grade) }}
+                </span>
+              </div>
+              <p class="mt-3 text-xs text-text-muted">
+                授权时间: {{ formatManagerAuthTime(m.dateline) }}
+              </p>
+            </article>
+          </template>
         </div>
 
         <div v-else class="rounded-2xl border border-border bg-surfaceSoft/60 px-4 py-12 text-center text-sm text-text-muted">
@@ -282,7 +284,7 @@ const managerAvatarCoach = (m) => {
   const uid = normalizeText(m.uid)
   const d = trainerDetailByUid.value[uid]
   if (d) {
-    const fromDetail = normalizeText(d.portrait) || normalizeText(d.image)
+    const fromDetail = normalizeText(d.image) || normalizeText(d.portrait)
     if (fromDetail) {
       return fromDetail
     }

@@ -132,10 +132,11 @@
 <script setup>
 const levelOptions = [
   { value: '', label: '不限' },
-  { value: '3', label: '国家级' },
-  { value: '2', label: '国家一级' },
-  { value: '1', label: '国家二级' },
-  { value: '0', label: '国家三级' }
+  { value: '1', label: '国际级' },
+  { value: '2', label: '国家级' },
+  { value: '3', label: '国家一级' },
+  { value: '4', label: '国家二级' },
+  { value: '5', label: '国家三级' }
 ]
 
 const { city, lat, lng } = useCity()
@@ -171,15 +172,15 @@ const { loadMoreSentinel } = useAutoLoadMore({
   onLoadMore: () => load(page.value + 1)
 })
 
-const formatLevel = (level) => {
-  const mapped = {
-    0: '国家三级',
-    1: '国家二级',
-    2: '国家一级',
-    3: '国家级'
-  }
-  return mapped[level] || '未定级'
+const cardLevelTextMap = {
+  4: '国际级',
+  3: '国家级',
+  2: '国家一级',
+  1: '国家二级',
+  0: '国家三级'
 }
+
+const formatLevel = (level) => cardLevelTextMap[String(level)] || '未定级'
 
 const formatSex = (sex) => {
   if (String(sex) === '1') return '男'

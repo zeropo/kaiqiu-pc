@@ -148,8 +148,8 @@ const tabs = [
 ]
 
 const sortOptions = [
-  { value: 'default', label: '默认排序', description: '按收录时间由晚到早' },
-  { value: 'distance', label: '距离排序', description: '按球馆距离由近到远' }
+  { value: 'distance', label: '距离排序', description: '按球馆距离由近到远' },
+  { value: 'time', label: '时间排序', description: '按收录时间由晚到早' }
 ]
 
 const route = useRoute()
@@ -158,7 +158,7 @@ const { city, lat, lng } = useCity()
 const { $api } = useNuxtApp()
 
 const normalizeActiveTab = (value) => (value === 'all' ? 'all' : 'local')
-const normalizeSortOption = (value) => (value === 'distance' ? 'distance' : 'default')
+const normalizeSortOption = (value) => (value === 'time' ? 'time' : 'distance')
 
 const activeTab = ref(normalizeActiveTab(route.query.tab))
 const sortOption = ref(normalizeSortOption(route.query.sort))
