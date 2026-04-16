@@ -3,38 +3,17 @@
     <div class="mb-8 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div>
         <h1 class="font-display text-3xl font-bold text-text-main">{{ pageTitle }}</h1>
-        <p class="mt-2 text-text-muted">{{ pageSubtitle }}</p>
       </div>
     </div>
 
     <div class="mb-10 rounded-card border border-border bg-white p-5 shadow-sm">
-      <div class="flex flex-col gap-5">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center">
-          <SegmentTabs
-            :model-value="activeTab"
-            :tabs="tabs"
-            wrapper-class="inline-flex w-auto self-start rounded-full bg-surfaceSoft p-1"
-            button-base-class="relative z-10 rounded-full px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors duration-300"
-            @update:model-value="changeTab"
-          />
-        </div>
-
-        <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div class="space-y-1">
-            <p class="text-sm font-semibold text-text-main">{{ currentViewLabel }}</p>
-            <p class="text-sm text-text-muted">{{ currentViewDescription }}</p>
-          </div>
-
-          <div class="flex flex-wrap gap-3 text-sm">
-            <span class="inline-flex items-center rounded-full bg-surfaceSoft px-3 py-1.5 font-medium text-text-main">
-              {{ rankingKindLabel }}
-            </span>
-            <span class="inline-flex items-center rounded-full bg-brand-primary/10 px-3 py-1.5 font-medium text-brand-primary">
-              共展示 {{ displayRows.length }} 条
-            </span>
-          </div>
-        </div>
-      </div>
+      <SegmentTabs
+        :model-value="activeTab"
+        :tabs="tabs"
+        wrapper-class="inline-flex w-auto rounded-full bg-surfaceSoft p-1"
+        button-base-class="relative z-10 rounded-full px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors duration-300"
+        @update:model-value="changeTab"
+      />
     </div>
 
     <div v-if="loading" class="space-y-4">
@@ -46,10 +25,10 @@
       class="flex flex-col items-center justify-center rounded-card border border-border bg-white px-6 py-20 text-center shadow-sm"
     >
       <div class="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-surfaceSoft text-text-light">
-        <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-7 5h8a2 2 0 002-2V7.414a2 2 0 00-.586-1.414l-3.414-3.414A2 2 0 0014.586 2H8a2 2 0 00-2 2v15a2 2 0 002 2z"></path></svg>
+        <svg v-if="errorMessage" class="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <svg v-else class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-7 5h8a2 2 0 002-2V7.414a2 2 0 00-.586-1.414l-3.414-3.414A2 2 0 0014.586 2H8a2 2 0 00-2 2v15a2 2 0 002 2z"></path></svg>
       </div>
-      <p class="text-lg font-semibold text-text-main">{{ emptyTitle }}</p>
-      <p class="mt-2 max-w-xl text-sm leading-6 text-text-muted">{{ emptyDescription }}</p>
+      <p class="text-lg font-semibold text-text-main">{{ errorMessage || emptyTitle }}</p>
     </div>
 
     <div v-else class="overflow-hidden rounded-card border border-border bg-white shadow-sm">
@@ -103,7 +82,8 @@
                 </template>
 
                 <template v-else-if="column.key === 'score'">
-                  <span class="font-display text-base font-bold text-brand-primary">{{ row.score }}</span>
+                  <span v-if="row.score === '0'" class="text-text-light">-</span>
+                  <span v-else class="font-display text-base font-bold text-brand-primary">{{ row.score }}</span>
                 </template>
 
                 <template v-else-if="column.key === 'special'">
@@ -116,7 +96,7 @@
 
                 <template v-else-if="column.key === 'action'">
                   <NuxtLink
-                    v-if="row.actionHref"
+                    v-if="row.actionHref && row.score !== '0'"
                     :to="row.actionHref"
                     class="inline-block font-medium text-brand-primary transition-colors hover:text-brand-primaryHover"
                   >
@@ -160,6 +140,7 @@ const metricHeader = ref('')
 const list = ref([])
 const rankingCatalog = ref([])
 const loading = ref(true)
+const errorMessage = ref('')
 const activeTab = ref(normalizeActiveTab(route.query.tab))
 
 let requestVersion = 0
@@ -333,6 +314,7 @@ async function fetchRankingDetail() {
 async function load() {
   const currentRequest = ++requestVersion
   loading.value = true
+  errorMessage.value = ''
 
   try {
     const [detailResult, catalogResult] = await Promise.allSettled([
@@ -354,6 +336,9 @@ async function load() {
       title.value = ''
       metricHeader.value = ''
       list.value = []
+      // 提取错误信息
+      const reason = detailResult.reason
+      errorMessage.value = reason?.data?.message || reason?.message || '接口请求失败'
     }
   } finally {
     if (currentRequest === requestVersion) {
@@ -401,13 +386,16 @@ function formatSex(value) {
 
 function formatCellValue(value, fallback = '-') {
   const text = normalizeDisplayText(value)
+  if (!text && rankingShape.value === 'umpire') {
+    return '国家三级'
+  }
   return text || fallback
 }
 
 function formatMetricValue(label, value) {
-  const text = formatCellValue(value)
+  const text = normalizeDisplayText(value)
 
-  if (text === '-') return text
+  if (!text || text === '0') return '-'
 
   if (label.includes('注册时间') && /^\d{4}$/.test(text)) {
     return `${text}年`
@@ -421,8 +409,9 @@ function buildActionHref(row) {
   const shopId = normalizeIdentifier(row?.shopid)
 
   if (uid) {
+    const path = rankingShape.value === 'umpire' ? `/umpires/${uid}` : `/scores/${uid}`
     return {
-      path: `/scores/${uid}`,
+      path,
       query: { ...route.query, tab: activeTab.value }
     }
   }

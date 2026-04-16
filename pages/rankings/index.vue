@@ -3,7 +3,6 @@
     <div class="mb-8 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div>
         <h1 class="font-display text-3xl font-bold text-text-main">风云榜单</h1>
-        <p class="mt-2 text-text-muted">集中查看积分、人气、参赛、组织、俱乐部、城市与裁判等多维排行榜单</p>
       </div>
     </div>
 
@@ -27,8 +26,7 @@
             <div class="w-12 h-12 rounded-xl bg-surfaceSoft text-brand-primary flex items-center justify-center mb-6 group-hover:bg-brand-primary group-hover:text-white transition-colors duration-smooth shadow-sm">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
             </div>
-            <h3 class="font-display text-xl font-bold text-text-main mb-2 group-hover:text-brand-primary transition-colors leading-snug">{{ t.name }}</h3>
-            <p class="text-text-muted text-sm line-clamp-2 min-h-[40px] leading-relaxed">{{ t.desc || '展示系统内置的积分排行榜单数据。' }}</p>
+            <h3 class="font-display text-xl font-bold text-text-main group-hover:text-brand-primary transition-colors leading-snug">{{ t.name }}</h3>
           </div>
           <div class="mt-8 flex items-end justify-between gap-4">
             <div class="flex items-center text-brand-primary font-medium text-sm group-hover:translate-x-2 transition-transform w-fit select-none">
