@@ -56,11 +56,11 @@
       </div>
     </form>
 
-    <div v-if="loading" class="space-y-4">
+    <div v-if="loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       <div
-        v-for="item in 4"
+        v-for="item in 8"
         :key="item"
-        class="h-36 animate-pulse rounded-3xl border border-border bg-white"
+        class="h-64 animate-pulse rounded-card border border-border bg-white"
       ></div>
     </div>
 
@@ -74,40 +74,49 @@
       </p>
     </div>
 
-    <div v-else-if="list.length" class="space-y-4">
-      <article
-        v-for="umpire in list"
-        :key="umpire.uid"
-        class="overflow-hidden rounded-3xl border border-border bg-white shadow-sm transition-shadow hover:shadow-card"
-      >
-        <NuxtLink :to="`/umpires/${umpire.uid}`" class="grid gap-4 p-4 sm:grid-cols-[72px_minmax(0,1fr)] sm:p-5">
-          <ImgFallback
-            :src="umpire.image || umpire.portrait"
-            :alt="umpire.realname || '裁判头像'"
-            class="h-[72px] w-[72px] rounded-full object-cover"
-          />
-
-          <div class="min-w-0">
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <h3 class="text-2xl font-semibold text-text-main">
-                {{ umpire.realname || '未命名裁判' }}
-              </h3>
-              <span class="inline-flex rounded-xl border border-[#80d67e] px-3 py-1 text-sm font-medium text-[#39b54a]">
+    <div v-else-if="list.length" class="space-y-8">
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <article
+          v-for="umpire in list"
+          :key="umpire.uid"
+          class="group overflow-hidden rounded-card border border-border bg-white shadow-card transition-all duration-smooth hover:-translate-y-1 hover:shadow-cardHover"
+        >
+          <NuxtLink :to="{ path: `/umpires/${umpire.uid}`, query: route.query }" class="flex h-full flex-col">
+            <div class="relative aspect-[4/3] overflow-hidden bg-surfaceSoft">
+              <span class="absolute left-3 top-3 z-10 inline-flex items-center rounded-sm bg-[#39b54a] px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
                 {{ formatLevel(umpire.level) }}
               </span>
+              <ImgFallback
+                :src="umpire.image || umpire.portrait"
+                :alt="umpire.realname || '裁判头像'"
+                class="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent"></div>
             </div>
 
-            <div class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-base text-text-muted">
-              <span>性别: {{ formatSex(umpire.sex) }}</span>
-              <span>年龄: {{ formatAge(umpire.birthyear) }}</span>
-            </div>
+            <div class="flex flex-1 flex-col p-5">
+              <h3 class="line-clamp-1 flex-1 text-lg font-semibold leading-snug text-text-main transition-colors group-hover:text-brand-primary">
+                {{ umpire.realname || '未命名裁判' }}
+              </h3>
 
-            <p class="mt-4 text-base text-text-main">
-              {{ formatLocation(umpire) }}
-            </p>
-          </div>
-        </NuxtLink>
-      </article>
+              <div class="mt-4 space-y-2">
+                <div class="flex items-center gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  <span class="truncate">{{ formatLocation(umpire) }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                  <span class="truncate">{{ formatSex(umpire.sex) }}</span>
+                </div>
+                <div v-if="umpire.birthyear" class="flex items-center gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span class="truncate">{{ formatAge(umpire.birthyear) }}岁</span>
+                </div>
+              </div>
+            </div>
+          </NuxtLink>
+        </article>
+      </div>
 
       <div
         v-if="hasMore"
@@ -139,22 +148,23 @@ const levelOptions = [
   { value: '5', label: '国家三级' }
 ]
 
+const route = useRoute()
+const router = useRouter()
 const { city, lat, lng } = useCity()
-const { $api } = useNuxtApp()
 
-const keyword = ref('')
-const cityMode = ref('current')
-const levelValue = ref('')
+const keyword = ref(route.query.keyword || '')
+const cityMode = ref(route.query.cityMode || 'current')
+const levelValue = ref(route.query.level || '')
 const submittedFilters = ref({
-  key: '',
-  city: '',
-  value: '',
-  level: ''
+  key: route.query.keyword || '',
+  city: route.query.cityMode === 'current' ? (city.value || '杭州市') : '',
+  value: route.query.level || '',
+  level: route.query.level || ''
 })
 const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
-const hasSearched = ref(false)
+const hasSearched = ref(!!route.query.keyword || !!route.query.level)
 const loading = ref(false)
 const loadingMore = ref(false)
 
@@ -198,6 +208,17 @@ const formatLocation = (umpire) => {
   const province = umpire?.province || ''
   const cityName = umpire?.city || ''
   return `${province}${cityName}` || '未知地区'
+}
+
+const updateQuery = () => {
+  router.replace({
+    query: {
+      ...route.query,
+      keyword: keyword.value.trim(),
+      cityMode: cityMode.value,
+      level: levelValue.value
+    }
+  })
 }
 
 const load = async (nextPage = 1) => {
@@ -253,8 +274,15 @@ const handleSearch = async () => {
     value: levelValue.value,
     level: levelValue.value
   }
+  updateQuery()
   page.value = 1
   hasMore.value = false
   await load(1)
 }
+
+onMounted(() => {
+  if (hasSearched.value) {
+    load(1)
+  }
+})
 </script>

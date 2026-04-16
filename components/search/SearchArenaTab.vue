@@ -23,11 +23,11 @@
       </div>
     </form>
 
-    <div v-if="loading" class="space-y-4">
+    <div v-if="loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       <div
-        v-for="item in 4"
+        v-for="item in 8"
         :key="item"
-        class="h-48 animate-pulse rounded-3xl border border-border bg-white"
+        class="h-64 animate-pulse rounded-card border border-border bg-white"
       ></div>
     </div>
 
@@ -37,50 +37,59 @@
     >
       <p class="text-lg font-semibold text-text-main">输入球馆名称开始搜索</p>
       <p class="mt-2 text-sm text-text-muted">
-        会展示球馆名称、地址、距离、浏览量和评论数。
+        会展示球馆名称、地址、距离和浏览量。
       </p>
     </div>
 
-    <div v-else-if="list.length" class="space-y-4">
-      <article
-        v-for="arena in list"
-        :key="arena.id"
-        class="overflow-hidden rounded-3xl border border-border bg-white shadow-sm transition-shadow hover:shadow-card"
-      >
-        <NuxtLink :to="`/arenas/${arena.id}`" class="grid gap-4 p-4 sm:grid-cols-[132px_minmax(0,1fr)] sm:p-5">
-          <div class="relative overflow-hidden rounded-2xl bg-surfaceSoft">
-            <ImgFallback
-              :src="arena.image"
-              :alt="arena.name || '球馆图片'"
-              class="h-32 w-full object-cover sm:h-full"
-            />
-            <span class="absolute left-2 top-2 rounded-md bg-[#39b54a] px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
-              {{ arena.city || arena.province || '球馆' }}
-            </span>
-          </div>
-
-          <div class="min-w-0">
-            <h3 class="text-2xl font-semibold text-text-main">
-              {{ arena.name || '未命名球馆' }}
-            </h3>
-            <p class="mt-3 line-clamp-2 text-base leading-7 text-text-muted">
-              地址：{{ arena.address || '暂无地址信息' }}
-            </p>
-
-            <div class="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-              <span class="text-text-main">
-                距您 {{ arena.distance || '--' }}
-              </span>
-              <span class="text-text-muted">
-                {{ arena.view || '0' }}人浏览
-              </span>
-              <span class="rounded-xl border border-[#80d67e] px-3 py-1 font-medium text-[#39b54a]">
-                {{ arena.reviews || '0' }}评论
-              </span>
+    <div v-else-if="list.length" class="space-y-8">
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <article
+          v-for="arena in list"
+          :key="arena.id"
+          class="group relative flex h-full flex-col overflow-hidden rounded-card border border-border bg-white shadow-card transition-all duration-smooth hover:-translate-y-1 hover:shadow-cardHover"
+        >
+          <NuxtLink :to="{ path: `/arenas/${arena.id}`, query: route.query }" class="flex h-full flex-col">
+            <div class="relative aspect-[4/3] overflow-hidden bg-surfaceSoft">
+              <ImgFallback
+                :src="arena.image || arena.pic"
+                :alt="arena.name || '球馆图片'"
+                class="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent"></div>
+              <div class="absolute left-3 top-3 z-20 flex gap-2 pointer-events-none">
+                <span class="inline-flex items-center rounded-sm bg-[#39b54a] px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
+                  {{ arena.city || arena.province || '球馆' }}
+                </span>
+              </div>
             </div>
-          </div>
-        </NuxtLink>
-      </article>
+
+            <div class="flex flex-1 flex-col p-5">
+              <h2 class="line-clamp-2 text-lg font-semibold leading-snug text-text-main transition-colors group-hover:text-brand-primary">
+                {{ arena.name || '未命名球馆' }}
+              </h2>
+
+              <div class="mt-4 space-y-2">
+                <div class="flex items-start gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  <span class="line-clamp-2">{{ arena.address || '暂无地址信息' }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                  <span class="truncate">{{ arena.view || 0 }}人浏览</span>
+                </div>
+              </div>
+
+              <div class="mt-auto pt-4">
+                <div class="border-t border-surfaceSoft pt-4">
+                  <span class="rounded-md bg-brand-secondary/10 px-2.5 py-1 text-xs font-semibold text-brand-secondary">
+                    距您 {{ arena.distance || '--' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </NuxtLink>
+        </article>
+      </div>
 
       <div
         v-if="hasMore"
@@ -106,12 +115,15 @@
 const { lat, lng } = useCity()
 const { $api } = useNuxtApp()
 
-const keyword = ref('')
-const submittedKeyword = ref('')
+const route = useRoute()
+const router = useRouter()
+
+const keyword = ref(route.query.keyword || '')
+const submittedKeyword = ref(route.query.keyword || '')
 const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
-const hasSearched = ref(false)
+const hasSearched = ref(!!route.query.keyword)
 const loading = ref(false)
 const loadingMore = ref(false)
 
@@ -120,6 +132,15 @@ const { loadMoreSentinel } = useAutoLoadMore({
   canLoadMore,
   onLoadMore: () => load(page.value + 1)
 })
+
+const updateQuery = () => {
+  router.replace({
+    query: {
+      ...route.query,
+      keyword: submittedKeyword.value
+    }
+  })
+}
 
 const load = async (nextPage = 1) => {
   const isFirstPage = nextPage === 1
@@ -166,8 +187,15 @@ const load = async (nextPage = 1) => {
 
 const handleSearch = async () => {
   submittedKeyword.value = keyword.value.trim()
+  updateQuery()
   page.value = 1
   hasMore.value = false
   await load(1)
 }
+
+onMounted(() => {
+  if (submittedKeyword.value) {
+    load(1)
+  }
+})
 </script>

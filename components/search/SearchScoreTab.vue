@@ -68,7 +68,7 @@
               </td>
               <td class="px-5 py-4 font-semibold text-text-main">
                 <NuxtLink
-                  :to="`/scores/${user.uid}`"
+                  :to="{ path: `/scores/${user.uid}`, query: route.query }"
                   class="transition-colors hover:text-brand-primary"
                 >
                   {{ user.realname || user.username2 || '-' }}
@@ -84,7 +84,7 @@
                 {{ formatLocation(user) }}
               </td>
               <td class="px-5 py-4">
-                <NuxtLink :to="`/scores/${user.uid}`" class="font-medium text-brand-primary hover:text-brand-primaryHover">
+                <NuxtLink :to="{ path: `/scores/${user.uid}`, query: route.query }" class="font-medium text-brand-primary hover:text-brand-primaryHover">
                   详情
                 </NuxtLink>
               </td>
@@ -115,14 +115,16 @@
 
 <script setup>
 const { $api } = useNuxtApp()
+const route = useRoute()
+const router = useRouter()
 
-const keyword = ref('')
-const submittedKeyword = ref('')
+const keyword = ref(route.query.keyword || '')
+const submittedKeyword = ref(route.query.keyword || '')
 const page = ref(1)
 const perPage = ref(10)
 const list = ref([])
 const hasMore = ref(false)
-const hasSearched = ref(false)
+const hasSearched = ref(!!route.query.keyword)
 const loading = ref(false)
 const loadingMore = ref(false)
 
@@ -142,6 +144,14 @@ const formatLocation = (user) => {
   return user?.residecity || user?.resideprovince || '-'
 }
 
+const updateQuery = () => {
+  router.replace({
+    query: {
+      ...route.query,
+      keyword: submittedKeyword.value
+    }
+  })
+}
 
 const load = async (nextPage = 1) => {
   const isFirstPage = nextPage === 1
@@ -187,8 +197,15 @@ const load = async (nextPage = 1) => {
 
 const handleSearch = async () => {
   submittedKeyword.value = keyword.value.trim()
+  updateQuery()
   page.value = 1
   hasMore.value = false
   await load(1)
 }
+
+onMounted(() => {
+  if (submittedKeyword.value) {
+    load(1)
+  }
+})
 </script>

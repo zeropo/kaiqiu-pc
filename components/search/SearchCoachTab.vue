@@ -23,11 +23,11 @@
       </div>
     </form>
 
-    <div v-if="loading" class="space-y-4">
+    <div v-if="loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       <div
-        v-for="item in 4"
+        v-for="item in 8"
         :key="item"
-        class="h-40 animate-pulse rounded-3xl border border-border bg-white"
+        class="h-64 animate-pulse rounded-card border border-border bg-white"
       ></div>
     </div>
 
@@ -41,52 +41,71 @@
       </p>
     </div>
 
-    <div v-else-if="list.length" class="space-y-4">
-      <article
-        v-for="coach in list"
-        :key="coach.uid"
-        class="overflow-hidden rounded-3xl border border-border bg-white shadow-sm transition-shadow hover:shadow-card"
-      >
-        <NuxtLink :to="`/coaches/${coach.uid}`" class="grid gap-4 p-4 sm:grid-cols-[88px_minmax(0,1fr)] sm:p-5">
-          <ImgFallback
-            :src="coach.image || coach.portrait"
-            :alt="coach.realname || '教练头像'"
-            class="h-20 w-20 rounded-full object-cover sm:h-[88px] sm:w-[88px]"
-          />
+    <div v-else-if="list.length" class="space-y-8">
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <article
+          v-for="coach in list"
+          :key="coach.uid"
+          class="group relative z-0 flex h-full flex-col overflow-visible rounded-card border border-border bg-white shadow-card transition-all duration-smooth hover:z-20 hover:-translate-y-1 hover:shadow-cardHover"
+        >
+          <NuxtLink :to="{ path: `/coaches/${coach.uid}`, query: route.query }" class="flex h-full flex-col">
+            <div class="aspect-[4/3] overflow-hidden rounded-t-card bg-surfaceSoft">
+              <ImgFallback
+                :src="coach.image || coach.portrait"
+                :alt="coach.realname || coach.username || '教练照片'"
+                class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+            </div>
 
-          <div class="min-w-0">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div class="min-w-0 shrink-0">
-                <h3 class="text-2xl font-semibold text-text-main">
+            <div class="flex flex-1 flex-col p-5">
+              <div class="flex items-start gap-3">
+                <h3
+                  class="min-w-0 flex-1 line-clamp-2 text-lg font-semibold leading-snug text-text-main transition-colors group-hover:text-brand-primary"
+                  :title="coach.realname || coach.username || '未命名教练'"
+                >
                   {{ coach.realname || coach.username || '未命名教练' }}
                 </h3>
+
+                <div class="flex shrink-0 items-start justify-end pl-2 text-sm text-right">
+                  <span v-if="Number(coach.score) > 0" class="font-semibold whitespace-nowrap text-text-main">
+                    积分：{{ coach.score }}
+                  </span>
+                </div>
               </div>
 
-              <div class="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-                <span class="text-base text-text-main">
-                  积分: {{ coach.score || '0' }}
-                </span>
-                <span class="font-medium text-text-main">
-                  {{ formatLocation(coach) }}
-                </span>
-                <span class="text-text-main">
+              <div class="mt-4 space-y-2">
+                <div class="flex items-center gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  <span class="truncate">{{ formatLocation(coach) }}</span>
+                </div>
+                <div v-if="formatSex(coach.sex)" class="flex items-center gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                  <span>{{ formatSex(coach.sex) }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-text-muted">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                  <span class="truncate">{{ coach.viewnum || 0 }}人浏览</span>
+                </div>
+              </div>
+
+              <div class="mt-4 flex-1">
+                <p class="line-clamp-3 text-sm leading-6 text-text-muted">
+                  {{ coach.description || coach.arena_name || '暂无教练简介' }}
+                </p>
+              </div>
+
+              <div class="mt-4 flex items-end justify-between gap-3 border-t border-surfaceSoft pt-4">
+                <span class="rounded-md bg-brand-secondary/10 px-2.5 py-1 text-xs font-semibold text-brand-secondary">
                   距您 {{ coach.distance || '--' }}
                 </span>
-                <span class="text-text-muted">
-                  {{ coach.viewnum || '0' }}人浏览
-                </span>
-                <span class="rounded-xl border border-[#80d67e] px-3 py-1 font-medium text-[#39b54a]">
-                  {{ coach.commentnum || '0' }}人推荐
+                <span class="inline-flex items-center rounded-md border border-[#39b54a] bg-white px-2.5 py-1 text-xs font-semibold text-[#39b54a]">
+                  {{ coach.commentnum || 0 }}人推荐
                 </span>
               </div>
             </div>
-
-            <p class="mt-4 text-sm leading-7 text-text-muted">
-              简介：{{ coach.description || '暂无简介' }}
-            </p>
-          </div>
-        </NuxtLink>
-      </article>
+          </NuxtLink>
+        </article>
+      </div>
 
       <div
         v-if="hasMore"
@@ -112,12 +131,15 @@
 const { lat, lng } = useCity()
 const { $api } = useNuxtApp()
 
-const keyword = ref('')
-const submittedKeyword = ref('')
+const route = useRoute()
+const router = useRouter()
+
+const keyword = ref(route.query.keyword || '')
+const submittedKeyword = ref(route.query.keyword || '')
 const page = ref(1)
 const list = ref([])
 const hasMore = ref(false)
-const hasSearched = ref(false)
+const hasSearched = ref(!!route.query.keyword)
 const loading = ref(false)
 const loadingMore = ref(false)
 
@@ -131,6 +153,21 @@ const formatLocation = (coach) => {
   const province = coach?.province || ''
   const city = coach?.city || ''
   return `${province}${city}` || '未知地区'
+}
+
+const formatSex = (sex) => {
+  if (String(sex) === '1' || String(sex) === '男') return '男'
+  if (String(sex) === '2' || String(sex) === '女') return '女'
+  return ''
+}
+
+const updateQuery = () => {
+  router.replace({
+    query: {
+      ...route.query,
+      keyword: submittedKeyword.value
+    }
+  })
 }
 
 const load = async (nextPage = 1) => {
@@ -178,8 +215,15 @@ const load = async (nextPage = 1) => {
 
 const handleSearch = async () => {
   submittedKeyword.value = keyword.value.trim()
+  updateQuery()
   page.value = 1
   hasMore.value = false
   await load(1)
 }
+
+onMounted(() => {
+  if (submittedKeyword.value) {
+    load(1)
+  }
+})
 </script>

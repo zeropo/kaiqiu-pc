@@ -1,6 +1,6 @@
 const DEFAULT_CITY = '杭州市'
-const DEFAULT_LAT = '30.21'
-const DEFAULT_LNG = '120.21'
+const DEFAULT_LAT = '30.184'
+const DEFAULT_LNG = '120.204'
 
 export function useCity() {
   const city = useState('city', () => DEFAULT_CITY)
@@ -98,11 +98,24 @@ export function useCity() {
     )
   })
 
+  const resolveCityByCoords = async (latitude, longitude) => {
+    try {
+      const resp = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=zh`
+      )
+      const data = await resp.json()
+      return data.address?.city || data.address?.town || ''
+    } catch {
+      return ''
+    }
+  }
+
   onMounted(async () => {
     if (!process.client) return
 
     const s = window.localStorage
-    city.value = s.getItem('kq_city') || DEFAULT_CITY
+    const cachedCity = s.getItem('kq_city')
+    city.value = cachedCity || DEFAULT_CITY
 
     if (process.dev) {
       lat.value = DEFAULT_LAT
@@ -117,11 +130,27 @@ export function useCity() {
     if (cachedLat && cachedLng) {
       lat.value = cachedLat
       lng.value = cachedLng
-    } else {
-      await tryGeolocation()
+      loadCitiesFromStorage()
+      return
     }
 
+    const located = await tryGeolocation()
     loadCitiesFromStorage()
+
+    // 首次访问定位成功，根据坐标逆地理编码匹配城市
+    if (located && !cachedCity) {
+      const geoCity = await resolveCityByCoords(lat.value, lng.value)
+      if (geoCity) {
+        await ensureCityGroups()
+        const allCities = cityGroups.value.flatMap(g => g.list)
+        const matched = allCities.find(c => c.name === geoCity) ||
+          allCities.find(c => geoCity.includes(c.name) || c.name.includes(geoCity))
+        if (matched) {
+          setCity(matched.name)
+          markSwitched()
+        }
+      }
+    }
   })
 
   watch([city, lat, lng], () => {

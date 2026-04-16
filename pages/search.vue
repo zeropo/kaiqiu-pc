@@ -21,9 +21,7 @@
       </div>
     </section>
 
-    <KeepAlive>
-      <component :is="activeComponent" :key="activeTab" />
-    </KeepAlive>
+    <component :is="activeComponent" :key="route.fullPath" />
   </div>
 </template>
 
@@ -54,7 +52,27 @@ const tabComponents = {
   umpire: SearchUmpireTab
 }
 
-const activeTab = ref('match')
+const route = useRoute()
+const router = useRouter()
+
+const activeTab = ref(route.query.tab || 'match')
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    const next = tab || 'match'
+    if (next !== activeTab.value) activeTab.value = next
+  }
+)
+
+watch(activeTab, (newTab) => {
+  // 切换 Tab 时，清空旧 Tab 的搜索参数，只保留 tab 标识
+  router.replace({
+    query: {
+      tab: newTab
+    }
+  })
+})
 
 const activeComponent = computed(() => tabComponents[activeTab.value] || SearchMatchTab)
 </script>

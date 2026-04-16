@@ -24,6 +24,7 @@
             <span class="text-sm text-text-light">至</span>
             <SearchCalendarPicker
               :model-value="endDate"
+              :min-value="startDate"
               panel-align="right"
               placeholder="截止日期"
               @update:model-value="handleEndDateChange"
@@ -136,9 +137,9 @@
       </div>
     </form>
 
-    <div v-if="loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+    <div v-if="loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       <div
-        v-for="item in 6"
+        v-for="item in 8"
         :key="item"
         class="h-72 animate-pulse rounded-card border border-border bg-white"
       ></div>
@@ -167,7 +168,7 @@
         </p>
       </div>
 
-      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <MatchCard
           v-for="match in list"
           :key="match.eventid || `${match.title}-${match.starttime}`"
@@ -203,6 +204,10 @@ const SearchCalendarPicker = defineComponent({
       type: String,
       default: ''
     },
+    minValue: {
+      type: String,
+      default: ''
+    },
     placeholder: {
       type: String,
       default: '请选择日期'
@@ -231,6 +236,7 @@ const SearchCalendarPicker = defineComponent({
       const startDate = new Date(firstDay)
       startDate.setDate(1 - firstDay.getDay())
       const today = formatDateInput(new Date())
+      const minDate = parseDateInput(props.minValue)
 
       return Array.from({ length: 42 }, (_, index) => {
         const current = new Date(startDate)
@@ -243,12 +249,17 @@ const SearchCalendarPicker = defineComponent({
           label: current.getDate(),
           isCurrentMonth: current.getFullYear() === panelMonth.value.getFullYear() && current.getMonth() === panelMonth.value.getMonth(),
           isToday: value === today,
-          isSelected: value === props.modelValue
+          isSelected: value === props.modelValue,
+          isDisabled: minDate ? current.getTime() < minDate.getTime() : false
         }
       })
     })
 
     const getDayClass = (day) => {
+      if (day.isDisabled) {
+        return 'h-10 cursor-not-allowed rounded-xl bg-surfaceMuted text-sm text-text-light/60'
+      }
+
       if (day.isSelected) {
         return 'h-10 rounded-xl bg-brand-primary text-sm font-semibold text-white shadow-sm transition-colors'
       }
@@ -279,8 +290,10 @@ const SearchCalendarPicker = defineComponent({
       panelMonth.value = new Date(panelMonth.value.getFullYear(), panelMonth.value.getMonth() + offset, 1)
     }
 
-    const selectDate = (value) => {
-      emit('update:modelValue', value)
+    const selectDate = (day) => {
+      if (day.isDisabled) return
+
+      emit('update:modelValue', day.value)
       closePanel()
     }
 
@@ -380,7 +393,8 @@ const SearchCalendarPicker = defineComponent({
                   key: day.key,
                   type: 'button',
                   class: getDayClass(day),
-                  onClick: () => selectDate(day.value)
+                  disabled: day.isDisabled,
+                  onClick: () => selectDate(day)
                 },
                 String(day.label)
               ))
@@ -424,15 +438,17 @@ const sortOptions = [
 
 const { city, lat, lng } = useCity()
 const { $api } = useNuxtApp()
+const route = useRoute()
+const router = useRouter()
 
-const eventTitle = ref('')
-const startDate = ref('')
-const endDate = ref('')
-const selectedPreset = ref('')
-const cityScope = ref('')
-const distance = ref('gt0')
-const selectedTags = ref([])
-const sortType = ref(0)
+const eventTitle = ref(route.query.keyword || '')
+const startDate = ref(route.query.startDate || '')
+const endDate = ref(route.query.endDate || '')
+const selectedPreset = ref(route.query.preset || '')
+const cityScope = ref(route.query.cityScope || '')
+const distance = ref(route.query.distance || 'gt0')
+const selectedTags = ref(route.query.tags ? route.query.tags.split(',') : [])
+const sortType = ref(Number(route.query.sort || 0))
 const submittedFilters = ref(null)
 const page = ref(1)
 const list = ref([])
@@ -442,6 +458,22 @@ const loading = ref(false)
 const loadingMore = ref(false)
 
 const cityLabel = computed(() => city.value || '杭州市')
+
+const updateQuery = () => {
+  router.replace({
+    query: {
+      ...route.query,
+      keyword: eventTitle.value.trim(),
+      startDate: startDate.value,
+      endDate: endDate.value,
+      preset: selectedPreset.value,
+      cityScope: cityScope.value,
+      distance: distance.value,
+      tags: selectedTags.value.join(','),
+      sort: sortType.value
+    }
+  })
+}
 const cityDisplayText = computed(() => (cityScope.value ? '不限' : cityLabel.value))
 const cityDisplayClass = computed(() => (
   cityScope.value
@@ -569,11 +601,22 @@ const applyDatePreset = (preset) => {
   endDate.value = formatDateInput(range.end)
 }
 
-applyDatePreset('thisWeekend')
+// 移除这里的默认调用，改为在 onMounted 中根据逻辑处理
+// applyDatePreset('thisWeekend')
+
+const clearInvalidEndDate = () => {
+  const start = parseDateInput(startDate.value)
+  const end = parseDateInput(endDate.value)
+
+  if (start && end && end.getTime() < start.getTime()) {
+    endDate.value = ''
+  }
+}
 
 const handleStartDateChange = (value) => {
   startDate.value = value
   selectedPreset.value = ''
+  clearInvalidEndDate()
 }
 
 const handleEndDateChange = (value) => {
@@ -611,19 +654,11 @@ const buildSubmittedFilters = () => {
   const start = parseDateInput(startDate.value)
   const end = parseDateInput(endDate.value)
 
-  let normalizedStart = start
-  let normalizedEnd = end
-
-  if (normalizedStart && normalizedEnd && normalizedStart.getTime() > normalizedEnd.getTime()) {
-    normalizedStart = end
-    normalizedEnd = start
-  }
-
   return {
     city: cityScope.value || cityLabel.value,
     eventTitle: eventTitle.value.trim(),
-    startMatchTimestamp: normalizedStart ? toTimestampSeconds(normalizedStart) : undefined,
-    endMatchTimestamp: normalizedEnd ? toTimestampSeconds(addDays(normalizedEnd, 1)) : undefined,
+    startMatchTimestamp: start ? toTimestampSeconds(start) : undefined,
+    endMatchTimestamp: end ? toTimestampSeconds(addDays(end, 1)) : undefined,
     quickTags: selectedTags.value.length ? selectedTags.value.join(',') : undefined,
     distance: distance.value,
     search: 1,
@@ -678,7 +713,9 @@ const load = async (nextPage = 1) => {
 }
 
 const handleSearch = async () => {
+  clearInvalidEndDate()
   submittedFilters.value = buildSubmittedFilters()
+  updateQuery()
   page.value = 1
   hasMore.value = false
   await load(1)
@@ -696,4 +733,13 @@ const resetFilters = async () => {
   applyDatePreset('thisWeekend')
   await handleSearch()
 }
+
+onMounted(() => {
+  clearInvalidEndDate()
+
+  if (route.query.keyword || route.query.startDate || route.query.preset) {
+    submittedFilters.value = buildSubmittedFilters()
+    load(1)
+  }
+})
 </script>
