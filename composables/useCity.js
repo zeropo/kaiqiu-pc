@@ -100,11 +100,14 @@ export function useCity() {
 
   const resolveCityByCoords = async (latitude, longitude) => {
     try {
-      const resp = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=zh`
-      )
-      const data = await resp.json()
-      return data.address?.city || data.address?.town || ''
+      const { $api } = useNuxtApp()
+      const res = await $api('/public/current-city', {
+        params: {
+          lat: latitude,
+          lng: longitude
+        }
+      })
+      return res?.data?.name || ''
     } catch {
       return ''
     }
@@ -137,7 +140,7 @@ export function useCity() {
     const located = await tryGeolocation()
     loadCitiesFromStorage()
 
-    // 首次访问定位成功，根据坐标逆地理编码匹配城市
+    // 首次访问定位成功后，根据经纬度接口匹配城市
     if (located && !cachedCity) {
       const geoCity = await resolveCityByCoords(lat.value, lng.value)
       if (geoCity) {
