@@ -126,6 +126,7 @@ const hasMore = ref(false)
 const hasSearched = ref(!!route.query.keyword)
 const loading = ref(false)
 const loadingMore = ref(false)
+const initialized = ref(false)
 
 const canLoadMore = computed(() => hasMore.value && !loading.value && !loadingMore.value)
 const { loadMoreSentinel } = useAutoLoadMore({
@@ -133,13 +134,33 @@ const { loadMoreSentinel } = useAutoLoadMore({
   onLoadMore: () => load(page.value + 1)
 })
 
-const updateQuery = () => {
-  router.replace({
+const updateQuery = async () => {
+  await router.replace({
     query: {
       ...route.query,
       keyword: submittedKeyword.value
     }
   })
+}
+
+const buildRequestBody = (nextPage = 1) => ({
+  key: submittedKeyword.value,
+  page: nextPage,
+  lat: lat.value,
+  lng: lng.value
+})
+
+const fetchPage = async (nextPage = 1) => {
+  const response = await $api('/arena/lists', {
+    method: 'POST',
+    body: buildRequestBody(nextPage)
+  })
+
+  return {
+    rows: Array.isArray(response?.data?.data) ? response.data.data : [],
+    currentPage: Number(response?.data?.current_page ?? nextPage),
+    lastPage: Number(response?.data?.last_page ?? nextPage)
+  }
 }
 
 const load = async (nextPage = 1) => {
@@ -153,18 +174,7 @@ const load = async (nextPage = 1) => {
   }
 
   try {
-    const response = await $api('/arena/lists', {
-      method: 'POST',
-      body: {
-        key: submittedKeyword.value,
-        page: nextPage,
-        lat: lat.value,
-        lng: lng.value
-      }
-    })
-    const rows = Array.isArray(response?.data?.data) ? response.data.data : []
-    const currentPage = Number(response?.data?.current_page ?? nextPage)
-    const lastPage = Number(response?.data?.last_page ?? currentPage)
+    const { rows, currentPage, lastPage } = await fetchPage(nextPage)
 
     list.value = isFirstPage ? rows : list.value.concat(rows)
     page.value = currentPage
@@ -185,17 +195,39 @@ const load = async (nextPage = 1) => {
   }
 }
 
+const { data: initialData } = await useAsyncData(() => `search-arena:${submittedKeyword.value}:${lat.value}:${lng.value}`, async () => {
+  if (!submittedKeyword.value) return null
+
+  try {
+    return await fetchPage(1)
+  } catch {
+    return { rows: [], currentPage: 1, lastPage: 1 }
+  }
+}, {
+  default: () => null,
+  watch: false
+})
+
+if (initialData.value) {
+  list.value = initialData.value.rows
+  page.value = initialData.value.currentPage
+  hasMore.value = initialData.value.rows.length > 0 && initialData.value.currentPage < initialData.value.lastPage
+  hasSearched.value = true
+}
+
 const handleSearch = async () => {
   submittedKeyword.value = keyword.value.trim()
-  updateQuery()
   page.value = 1
   hasMore.value = false
+
+  if (initialized.value) {
+    await updateQuery()
+  }
+
   await load(1)
 }
 
 onMounted(() => {
-  if (submittedKeyword.value) {
-    load(1)
-  }
+  initialized.value = true
 })
 </script>

@@ -131,6 +131,7 @@ const hasMore = ref(false)
 const hasSearched = ref(!!route.query.keyword)
 const loading = ref(false)
 const loadingMore = ref(false)
+const initialized = ref(false)
 
 const canLoadMore = computed(() => hasMore.value && !loading.value && !loadingMore.value)
 const { loadMoreSentinel } = useAutoLoadMore({
@@ -148,13 +149,34 @@ const formatLocation = (user) => {
   return user?.residecity || user?.resideprovince || '-'
 }
 
-const updateQuery = () => {
-  router.replace({
+const updateQuery = async () => {
+  await router.replace({
     query: {
       ...route.query,
       keyword: submittedKeyword.value
     }
   })
+}
+
+const buildRequestBody = (nextPage = 1) => ({
+  page: nextPage,
+  key: submittedKeyword.value,
+  sort: 2,
+  index: 0
+})
+
+const fetchPage = async (nextPage = 1) => {
+  const response = await $api('/user/lists', {
+    method: 'POST',
+    body: buildRequestBody(nextPage)
+  })
+
+  return {
+    rows: Array.isArray(response?.data?.data) ? response.data.data : [],
+    currentPage: Number(response?.data?.current_page ?? nextPage),
+    lastPage: Number(response?.data?.last_page ?? nextPage),
+    perPage: Number(response?.data?.per_page ?? perPage.value) || 10
+  }
 }
 
 const load = async (nextPage = 1) => {
@@ -168,20 +190,9 @@ const load = async (nextPage = 1) => {
   }
 
   try {
-    const response = await $api('/user/lists', {
-      method: 'POST',
-      body: {
-        page: nextPage,
-        key: submittedKeyword.value,
-        sort: 2,
-        index: 0
-      }
-    })
-    const rows = Array.isArray(response?.data?.data) ? response.data.data : []
-    const currentPage = Number(response?.data?.current_page ?? nextPage)
-    const lastPage = Number(response?.data?.last_page ?? currentPage)
+    const { rows, currentPage, lastPage, perPage: nextPerPage } = await fetchPage(nextPage)
 
-    perPage.value = Number(response?.data?.per_page ?? perPage.value) || 10
+    perPage.value = nextPerPage
     list.value = isFirstPage ? rows : list.value.concat(rows)
     page.value = currentPage
     hasMore.value = rows.length > 0 && Number.isFinite(currentPage) && Number.isFinite(lastPage) && currentPage < lastPage
@@ -201,17 +212,40 @@ const load = async (nextPage = 1) => {
   }
 }
 
+const { data: initialData } = await useAsyncData(() => `search-score:${submittedKeyword.value}`, async () => {
+  if (!submittedKeyword.value) return null
+
+  try {
+    return await fetchPage(1)
+  } catch {
+    return { rows: [], currentPage: 1, lastPage: 1, perPage: 10 }
+  }
+}, {
+  default: () => null,
+  watch: false
+})
+
+if (initialData.value) {
+  perPage.value = initialData.value.perPage
+  list.value = initialData.value.rows
+  page.value = initialData.value.currentPage
+  hasMore.value = initialData.value.rows.length > 0 && initialData.value.currentPage < initialData.value.lastPage
+  hasSearched.value = true
+}
+
 const handleSearch = async () => {
   submittedKeyword.value = keyword.value.trim()
-  updateQuery()
   page.value = 1
   hasMore.value = false
+
+  if (initialized.value) {
+    await updateQuery()
+  }
+
   await load(1)
 }
 
 onMounted(() => {
-  if (submittedKeyword.value) {
-    load(1)
-  }
+  initialized.value = true
 })
 </script>

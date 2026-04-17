@@ -168,6 +168,7 @@ const hasMore = ref(false)
 const hasSearched = ref(!!route.query.keyword || !!route.query.level)
 const loading = ref(false)
 const loadingMore = ref(false)
+const initialized = ref(false)
 
 const cityLabel = computed(() => city.value || '杭州市')
 
@@ -211,8 +212,8 @@ const formatLocation = (umpire) => {
   return `${province}${cityName}` || '未知地区'
 }
 
-const updateQuery = () => {
-  router.replace({
+const updateQuery = async () => {
+  await router.replace({
     query: {
       ...route.query,
       keyword: keyword.value.trim(),
@@ -220,6 +221,29 @@ const updateQuery = () => {
       level: levelValue.value
     }
   })
+}
+
+const buildRequestBody = (nextPage = 1) => ({
+  city: submittedFilters.value.city,
+  key: submittedFilters.value.key,
+  value: submittedFilters.value.value,
+  level: submittedFilters.value.level,
+  page: nextPage,
+  lat: lat.value,
+  lng: lng.value
+})
+
+const fetchPage = async (nextPage = 1) => {
+  const response = await $api('/umpire/lists', {
+    method: 'POST',
+    body: buildRequestBody(nextPage)
+  })
+
+  return {
+    rows: Array.isArray(response?.data?.data) ? response.data.data : [],
+    currentPage: Number(response?.data?.current_page ?? nextPage),
+    lastPage: Number(response?.data?.last_page ?? nextPage)
+  }
 }
 
 const load = async (nextPage = 1) => {
@@ -233,21 +257,7 @@ const load = async (nextPage = 1) => {
   }
 
   try {
-    const response = await $api('/umpire/lists', {
-      method: 'POST',
-      body: {
-        city: submittedFilters.value.city,
-        key: submittedFilters.value.key,
-        value: submittedFilters.value.value,
-        level: submittedFilters.value.level,
-        page: nextPage,
-        lat: lat.value,
-        lng: lng.value
-      }
-    })
-    const rows = Array.isArray(response?.data?.data) ? response.data.data : []
-    const currentPage = Number(response?.data?.current_page ?? nextPage)
-    const lastPage = Number(response?.data?.last_page ?? currentPage)
+    const { rows, currentPage, lastPage } = await fetchPage(nextPage)
 
     list.value = isFirstPage ? rows : list.value.concat(rows)
     page.value = currentPage
@@ -268,6 +278,26 @@ const load = async (nextPage = 1) => {
   }
 }
 
+const { data: initialData } = await useAsyncData(() => `search-umpire:${submittedFilters.value.key}:${submittedFilters.value.city}:${submittedFilters.value.level}:${lat.value}:${lng.value}`, async () => {
+  if (!hasSearched.value) return null
+
+  try {
+    return await fetchPage(1)
+  } catch {
+    return { rows: [], currentPage: 1, lastPage: 1 }
+  }
+}, {
+  default: () => null,
+  watch: false
+})
+
+if (initialData.value) {
+  list.value = initialData.value.rows
+  page.value = initialData.value.currentPage
+  hasMore.value = initialData.value.rows.length > 0 && initialData.value.currentPage < initialData.value.lastPage
+  hasSearched.value = true
+}
+
 const handleSearch = async () => {
   submittedFilters.value = {
     key: keyword.value.trim(),
@@ -275,9 +305,13 @@ const handleSearch = async () => {
     value: levelValue.value,
     level: levelValue.value
   }
-  updateQuery()
   page.value = 1
   hasMore.value = false
+
+  if (initialized.value) {
+    await updateQuery()
+  }
+
   await load(1)
 }
 
@@ -293,8 +327,6 @@ const handleFilterChange = async ({ city, level }) => {
 }
 
 onMounted(() => {
-  if (hasSearched.value) {
-    load(1)
-  }
+  initialized.value = true
 })
 </script>

@@ -449,10 +449,11 @@ const hasMore = ref(false)
 const hasSearched = ref(false)
 const loading = ref(false)
 const loadingMore = ref(false)
+const initialized = ref(false)
 
 const cityLabel = computed(() => city.value || '杭州市')
 
-const updateQuery = () => {
+const updateQuery = async () => {
   const nextQuery = {
     ...route.query,
     keyword: eventTitle.value.trim(),
@@ -465,7 +466,7 @@ const updateQuery = () => {
     sort: sortType.value
   }
   delete nextQuery.cityScope
-  router.replace({ query: nextQuery })
+  await router.replace({ query: nextQuery })
 }
 const citySummary = computed(() => {
   if (!submittedFilters.value) return cityMode.value === 'all' ? '全国范围' : cityLabel.value
@@ -650,6 +651,18 @@ const buildSubmittedFilters = () => {
   }
 }
 
+const fetchPage = async (nextPage = 1) => {
+  const response = await $api('/match/lists', {
+    method: 'POST',
+    body: {
+      ...submittedFilters.value,
+      page: nextPage
+    }
+  })
+
+  return Array.isArray(response?.data?.data) ? response.data.data : []
+}
+
 const load = async (nextPage = 1) => {
   const isFirstPage = nextPage === 1
 
@@ -665,14 +678,7 @@ const load = async (nextPage = 1) => {
   const previousCount = isFirstPage ? 0 : list.value.length
 
   try {
-    const response = await $api('/match/lists', {
-      method: 'POST',
-      body: {
-        ...submittedFilters.value,
-        page: nextPage
-      }
-    })
-    const rows = Array.isArray(response?.data?.data) ? response.data.data : []
+    const rows = await fetchPage(nextPage)
     const merged = isFirstPage ? dedupeMatches(rows) : dedupeMatches(list.value.concat(rows))
 
     list.value = merged
@@ -694,12 +700,41 @@ const load = async (nextPage = 1) => {
   }
 }
 
+const shouldHydrateFromQuery = computed(() => !!route.query.keyword || !!route.query.startDate || !!route.query.preset || !!route.query.cityMode)
+
+const { data: initialData } = await useAsyncData(() => `search-match:${JSON.stringify(route.query)}`, async () => {
+  if (!shouldHydrateFromQuery.value) return null
+
+  submittedFilters.value = buildSubmittedFilters()
+
+  try {
+    const rows = await fetchPage(1)
+    return { rows, merged: dedupeMatches(rows) }
+  } catch {
+    return { rows: [], merged: [] }
+  }
+}, {
+  default: () => null,
+  watch: false
+})
+
+if (initialData.value) {
+  list.value = initialData.value.merged
+  page.value = 1
+  hasMore.value = initialData.value.rows.length > 0 && initialData.value.merged.length > 0
+  hasSearched.value = true
+}
+
 const handleSearch = async () => {
   clearInvalidEndDate()
   submittedFilters.value = buildSubmittedFilters()
-  updateQuery()
   page.value = 1
   hasMore.value = false
+
+  if (initialized.value) {
+    await updateQuery()
+  }
+
   await load(1)
 }
 
@@ -719,12 +754,10 @@ const resetFilters = async () => {
 onMounted(() => {
   clearInvalidEndDate()
 
-  if (route.query.keyword || route.query.startDate || route.query.preset || route.query.cityMode) {
-    submittedFilters.value = buildSubmittedFilters()
-    load(1)
-    return
+  if (!shouldHydrateFromQuery.value) {
+    applyDatePreset('thisWeekend')
   }
 
-  applyDatePreset('thisWeekend')
+  initialized.value = true
 })
 </script>

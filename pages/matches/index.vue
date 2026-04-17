@@ -101,6 +101,9 @@ const sortOptions = [
 const route = useRoute()
 const router = useRouter()
 const { city, lat, lng } = useCity()
+const initialCity = city.value
+const initialLat = lat.value
+const initialLng = lng.value
 const normalizeActiveTab = (value) => (value === 'history' ? 'history' : 'local')
 const getDefaultSortForTab = (tab) => 'time_desc'
 const normalizeSortOption = (value, tab) => sortOptions.some((option) => option.value === value) ? value : getDefaultSortForTab(tab)
@@ -240,6 +243,52 @@ const resolveHasMore = ({ rows, currentPage, lastPage, previousCount, nextCount 
   return nextCount > previousCount
 }
 
+const buildRequestBody = (requestPage = 1) => ({
+  city: requestCity.value,
+  cityName: requestCityName.value,
+  lat: lat.value,
+  lng: lng.value,
+  sort: 2,
+  page: requestPage
+})
+
+const { data: initialListState } = await useAsyncData(() => `matches-page:${activeTab.value}:${requestCity.value}:${lat.value}:${lng.value}`, async () => {
+  try {
+    const res = await $api('/match/lists', {
+      method: 'POST',
+      body: buildRequestBody(1)
+    })
+
+    const rows = Array.isArray(res?.data?.data) ? res.data.data : []
+    const nextList = dedupeMatches(rows)
+    const currentPage = Number(res?.data?.current_page)
+    const lastPage = Number(res?.data?.last_page)
+    const resolvedCurrentPage = Number.isFinite(currentPage) && currentPage > 0 ? currentPage : 1
+
+    return {
+      rows: nextList,
+      page: resolvedCurrentPage,
+      hasMore: resolveHasMore({
+        rows,
+        currentPage,
+        lastPage,
+        previousCount: 0,
+        nextCount: nextList.length
+      })
+    }
+  } catch {
+    return { rows: [], page: 1, hasMore: false }
+  }
+}, {
+  default: () => ({ rows: [], page: 1, hasMore: false }),
+  watch: false
+})
+
+rawList.value = initialListState.value.rows
+page.value = initialListState.value.page
+hasMore.value = initialListState.value.hasMore
+loading.value = false
+
 const displayList = computed(() => {
   return rawList.value
     .filter((match) => activeTab.value === 'history' ? isHistoryMatch(match) : !isHistoryMatch(match))
@@ -259,14 +308,7 @@ const load = async (p = 1) => {
   try {
     const res = await $api('/match/lists', {
       method: 'POST',
-      body: {
-        city: requestCity.value,
-        cityName: requestCityName.value,
-        lat: lat.value,
-        lng: lng.value,
-        sort: 2,
-        page: p
-      }
+      body: buildRequestBody(p)
     })
 
     const rows = Array.isArray(res?.data?.data) ? res.data.data : []
@@ -328,7 +370,11 @@ watch([city, lat, lng], async ([nextCity, nextLat, nextLng], [prevCity, prevLat,
 
 onMounted(async () => {
   await syncQuery()
-  await load(1)
+
+  if (activeTab.value === 'local' && (city.value != initialCity || lat.value != initialLat || lng.value != initialLng)) {
+    await load(1)
+  }
+
   initialized.value = true
 })
 </script>

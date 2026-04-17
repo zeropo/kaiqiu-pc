@@ -1,8 +1,3 @@
-import proxy from '../_utils/request'
-import { okOrThrow } from '../_utils/form'
+import { createCachedPostProxyHandler } from '../_utils/cache'
 
-export default defineEventHandler(async (event) => {
-  const res = await proxy(event, 'POST', '/user/lists')
-  return okOrThrow(res)
-})
-
+export default createCachedPostProxyHandler('/user/lists', { maxAge: 120 })

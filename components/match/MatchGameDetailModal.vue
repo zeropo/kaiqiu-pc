@@ -34,21 +34,45 @@
         <div v-else class="space-y-8">
           <section class="overflow-hidden rounded-[28px] border border-border bg-gradient-to-br from-surfaceSoft via-white to-brand-primary/10 p-5 shadow-sm md:p-6">
             <div class="grid gap-6 md:grid-cols-[1fr_auto_1fr] md:items-center">
-              <div class="flex flex-col items-center text-center">
+              <component
+                :is="currentPlayer1.href ? 'a' : 'div'"
+                :href="currentPlayer1.href || undefined"
+                :target="currentPlayer1.href ? '_blank' : undefined"
+                :rel="currentPlayer1.href ? 'noopener noreferrer' : undefined"
+                :class="[
+                  'group/player flex flex-col items-center text-center transition-colors',
+                  currentPlayer1.href ? 'cursor-pointer' : ''
+                ]"
+              >
                 <ImgFallback :src="currentPlayer1.avatar" class="h-20 w-20 rounded-full border-4 border-white object-cover shadow-sm md:h-24 md:w-24" />
-                <h4 class="mt-3 text-lg font-display font-bold text-text-main md:text-xl">{{ currentPlayer1.heading }}</h4>
+                <h4 :class="[
+                  'mt-3 text-lg font-display font-bold md:text-xl transition-colors',
+                  currentPlayer1.href ? 'text-text-main group-hover/player:text-brand-primary' : 'text-text-main'
+                ]">{{ currentPlayer1.heading }}</h4>
                 <p class="mt-1.5 text-sm font-medium text-text-muted md:text-base">当前积分：{{ currentPlayer1.currentScore }}</p>
-              </div>
+              </component>
 
               <div class="text-center">
                 <p class="font-display text-3xl font-black tracking-[0.18em] text-brand-primary md:text-4xl">VS</p>
               </div>
 
-              <div class="flex flex-col items-center text-center">
+              <component
+                :is="currentPlayer2.href ? 'a' : 'div'"
+                :href="currentPlayer2.href || undefined"
+                :target="currentPlayer2.href ? '_blank' : undefined"
+                :rel="currentPlayer2.href ? 'noopener noreferrer' : undefined"
+                :class="[
+                  'group/player flex flex-col items-center text-center transition-colors',
+                  currentPlayer2.href ? 'cursor-pointer' : ''
+                ]"
+              >
                 <ImgFallback :src="currentPlayer2.avatar" class="h-20 w-20 rounded-full border-4 border-white object-cover shadow-sm md:h-24 md:w-24" />
-                <h4 class="mt-3 text-lg font-display font-bold text-text-main md:text-xl">{{ currentPlayer2.heading }}</h4>
+                <h4 :class="[
+                  'mt-3 text-lg font-display font-bold md:text-xl transition-colors',
+                  currentPlayer2.href ? 'text-text-main group-hover/player:text-brand-primary' : 'text-text-main'
+                ]">{{ currentPlayer2.heading }}</h4>
                 <p class="mt-1.5 text-sm font-medium text-text-muted md:text-base">当前积分：{{ currentPlayer2.currentScore }}</p>
-              </div>
+              </component>
             </div>
           </section>
 
@@ -292,6 +316,11 @@ const formatDisplayValue = (value, fallback = '-') => {
   return text || fallback
 }
 
+const buildScoreDetailHref = (uid) => {
+  const normalized = normalizeText(uid)
+  return normalized ? `/scores/${normalized}` : ''
+}
+
 const formatPlayerName = (username, realname) => {
   const primary = normalizeText(username)
   const secondary = normalizeText(realname)
@@ -427,13 +456,15 @@ const selectedGameId = computed(() => normalizeText(props.activeGameId) || norma
 const currentPlayer1 = computed(() => ({
   heading: currentGameMeta.value?.left?.heading || '-',
   currentScore: currentGameMeta.value?.left?.currentScore || '-',
-  avatar: currentGameMeta.value?.left?.avatar || ''
+  avatar: currentGameMeta.value?.left?.avatar || '',
+  href: buildScoreDetailHref(currentGameMeta.value?.left?.uid)
 }))
 
 const currentPlayer2 = computed(() => ({
   heading: currentGameMeta.value?.right?.heading || '-',
   currentScore: currentGameMeta.value?.right?.currentScore || '-',
-  avatar: currentGameMeta.value?.right?.avatar || ''
+  avatar: currentGameMeta.value?.right?.avatar || '',
+  href: buildScoreDetailHref(currentGameMeta.value?.right?.uid)
 }))
 
 const currentDateText = computed(() => formatDateText(currentGame.value?.start_time))

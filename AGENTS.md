@@ -56,12 +56,14 @@
 - API 调用主链路是：页面或组件 -> `$api` 插件 -> 本地 `/api/*` Nitro 路由 -> 上游接口。
 - `plugins/api.client.js` 与 `plugins/api.server.js` 注入 `$api`，基础路径来自 `runtimeConfig.public.apiBase`，默认是 `/api`。
 - `server/api/**` 是上游接口代理层。
+- `server/api/_utils/body.js` 负责统一读取并缓存 `event.context.requestBody`，避免同一次请求里重复 `readBody`。
 - `server/api/_utils/request.js` 负责：
   - 转发 GET 查询参数
-  - 读取并合并 POST body
+  - 复用 `readEventBody(event)` 读取并合并 POST body
   - 把 POST body 转成 `application/x-www-form-urlencoded`
   - 在请求上游前补齐鉴权头
-- `server/api/_utils/auth.js` 负责服务端静默鉴权、cookie 持久化与鉴权头构造。
+- `server/api/_utils/cache.js` 封装 `createCachedPostProxyHandler()`，给热点 POST 列表接口提供基于请求体 hash 的 SWR 缓存。
+- `server/api/_utils/auth.js` 负责服务端静默鉴权、cookie 持久化、进程内短时鉴权复用与并发静默登录去重。
 - `server/api/_utils/form.js` 会把上游返回中 `code !== 1` 的响应视为错误。
 - 上游路径大小写敏感，修改 route 或 service 时要严格保持原样，例如 `/Top/...`、`/Trainer/detail` 这类路径大小写不能改。
 
@@ -71,6 +73,7 @@
 - `KQ_SILENT_LOGIN_ACCOUNT`、`KQ_SILENT_LOGIN_PASSWORD`、`KQ_SILENT_LOGIN_OPEN_ID` 用于服务端静默鉴权。
 - 不要在代码或文档里扩散默认鉴权配置值；只记录变量名即可。
 - `public.apiBase` 当前固定为 `/api`。
+- `nuxt.config.js` 的 `nitro.routeRules` 已给 `/`、`/matches`、`/search`、`/scores`、`/arenas`、`/coaches`、`/umpires`、`/rankings` 配置 SWR，并给 `/_nuxt/**` 配置长效静态缓存。
 
 ## 共享状态与页面模式
 
@@ -79,7 +82,11 @@
 - 开发环境直接使用杭州默认值；生产环境只有在没有缓存坐标时才尝试浏览器定位。
 - `components/common/GlobalCitySwitcher.vue` 依赖 `useCity()` 做城市切换。
 - 列表页普遍会结合 `SegmentTabs`、筛选按钮和 `useAutoLoadMore()` 组织交互。
+- `pages/index.vue` 与 `pages/matches/index.vue` 已改为 `useAsyncData` 首屏预取；如果 hydration 后定位和 SSR 阶段不一致，再主动刷新同城数据。
 - 搜索页 `pages/search.vue` 通过 `components/search/**` 组合不同查询类型，而不是拆成多个独立搜索页面。
+- 搜索页切换 Tab 时，必须先清空旧 query、只保留 `tab`，并使用 `activeTab` 作为动态组件 key，避免不同搜索类型串参。
+- `components/search/**` 各 Tab 已支持基于 URL query 的 `useAsyncData` 首屏请求；保留 `initialized` 的目的就是避免 hydration 期间重复回写 query。
+- `components/match/MatchGameDetailModal.vue` 顶部对阵选手只有在存在 `uid` 时才显示可点击态，并跳转到 `/scores/:uid`。
 
 ## 样式与 SEO
 
@@ -93,5 +100,7 @@
 ## 协作提醒
 
 - 修改接口参数、字段映射或代理路径前，先看 `api/standard/**`，必要时再回查 `api/original/**`。
+- 新增或修改热点 POST 列表代理时，优先复用 `createCachedPostProxyHandler()`，不要重复手写缓存逻辑。
+- 改搜索页或搜索 Tab 时，同时检查 SSR 首屏结果、URL query 回写和 Tab 切换隔离是否仍然成立。
 - 页面直接调 `$api` 是当前项目的正常模式，不要为了“看起来更整洁”强行改成统一 service 架构。
 - 文档更新时，优先描述真实存在且公开可见的页面、目录和链路，不要把仓库里的内部实现细节写进 README 一类对外文档。

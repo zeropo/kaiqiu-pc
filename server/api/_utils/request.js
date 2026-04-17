@@ -1,26 +1,5 @@
+import { readEventBody } from './body'
 import { buildKqAuthHeaders, ensureKqAuth } from './auth'
-
-function parseFormEncodedBody(raw = '') {
-  const params = new URLSearchParams(raw)
-  const parsed = {}
-
-  for (const [key, value] of params.entries()) {
-    parsed[key] = value
-  }
-
-  return parsed
-}
-
-async function readRequestBody(event) {
-  const payload = await readBody(event)
-
-  if (!payload) return {}
-  if (typeof payload === 'string') return parseFormEncodedBody(payload)
-  if (payload instanceof URLSearchParams) return Object.fromEntries(payload.entries())
-  if (typeof payload === 'object') return payload
-
-  return {}
-}
 
 export default async function proxyRequest(event, method, path, { query = {}, body = {} } = {}) {
   const config = useRuntimeConfig()
@@ -32,7 +11,7 @@ export default async function proxyRequest(event, method, path, { query = {}, bo
     Accept: 'application/json',
     ...buildKqAuthHeaders(auth)
   }
-  let fetchOptions = { method, headers }
+  const fetchOptions = { method, headers }
 
   if (method === 'GET') {
     const merged = { ...getQuery(event), ...query }
@@ -45,7 +24,7 @@ export default async function proxyRequest(event, method, path, { query = {}, bo
 
   if (method === 'POST') {
     const { toFormData } = await import('./form')
-    const incomingBody = await readRequestBody(event)
+    const incomingBody = await readEventBody(event)
     const payload = toFormData({ ...incomingBody, ...body })
     fetchOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded'
     fetchOptions.body = payload

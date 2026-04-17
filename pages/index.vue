@@ -115,42 +115,44 @@ useHead({
 })
 
 const { $api } = useNuxtApp()
-const { city, lat, lng, switchVersion, tryGeolocation } = useCity()
-const matches = ref([])
-const users = ref([])
-const loadingMatches = ref(true)
-const loadingUsers = ref(true)
+const { city, lat, lng, switchVersion } = useCity()
+const initialCity = city.value
+const initialLat = lat.value
+const initialLng = lng.value
 
 const FEATURED_PLAYERS_CITY = '-1'
 const FEATURED_PLAYERS_INDEX = 11111
 
-const loadMatches = async () => {
-  loadingMatches.value = true
-  try {
-    const res = await $api('/match/lists', { method: 'POST', body: { city: city.value, lat: lat.value, lng: lng.value, page: 1, sort: 2 } })
-    let matchList = res?.data?.data || []
-    
-    // 按距离升序排序（距离越近越前面）
-    if (matchList.length > 0) {
-      matchList.sort((a, b) => {
-        const distanceA = parseFloat(a.distance) || Infinity
-        const distanceB = parseFloat(b.distance) || Infinity
-        return distanceA - distanceB
-      })
-    }
-    
-    matches.value = matchList.slice(0, 4)
-  } catch (e) {
-    matches.value = []
-  } finally {
-    loadingMatches.value = false
+const buildMatchCards = (rows = []) => {
+  const matchList = Array.isArray(rows) ? rows.slice() : []
+
+  if (matchList.length) {
+    matchList.sort((a, b) => {
+      const distanceA = parseFloat(a.distance) || Infinity
+      const distanceB = parseFloat(b.distance) || Infinity
+      return distanceA - distanceB
+    })
   }
+
+  return matchList.slice(0, 4)
 }
 
-const loadUsers = async () => {
-  loadingUsers.value = true
-  try {
-    const res = await $api('/user/lists', {
+const buildFeaturedUsers = (rows = []) => {
+  const userList = Array.isArray(rows) ? rows : []
+
+  return userList
+    .slice()
+    .sort((a, b) => (Number(b?.score) || 0) - (Number(a?.score) || 0))
+    .slice(0, 4)
+}
+
+const loadHomeData = async () => {
+  const [matchRes, userRes] = await Promise.all([
+    $api('/match/lists', {
+      method: 'POST',
+      body: { city: city.value, lat: lat.value, lng: lng.value, page: 1, sort: 2 }
+    }),
+    $api('/user/lists', {
       method: 'POST',
       body: {
         city: FEATURED_PLAYERS_CITY,
@@ -160,25 +162,51 @@ const loadUsers = async () => {
         index: FEATURED_PLAYERS_INDEX
       }
     })
-    const userList = Array.isArray(res?.data?.data) ? res.data.data : []
+  ])
 
-    users.value = userList
-      .slice()
-      .sort((a, b) => (Number(b?.score) || 0) - (Number(a?.score) || 0))
-      .slice(0, 4)
-  } catch (e) {
-    users.value = []
-  } finally {
-    loadingUsers.value = false
+  return {
+    matches: buildMatchCards(matchRes?.data?.data),
+    users: buildFeaturedUsers(userRes?.data?.data)
   }
 }
 
-// 首屏不主动请求定位，避免浏览器警告。仅加载数据，用户可在页面触发定位后刷新列表。
-watch(switchVersion, async () => {
-  await Promise.all([loadMatches(), loadUsers()])
+const emptyHomeState = { matches: [], users: [] }
+const loadingMatches = ref(true)
+const loadingUsers = ref(true)
+
+const { data: homeData, refresh: refreshHomeData } = await useAsyncData('home-page-data', async () => {
+  try {
+    return await loadHomeData()
+  } catch {
+    return emptyHomeState
+  }
+}, {
+  default: () => emptyHomeState
 })
 
-onMounted(async () => { await Promise.all([loadMatches(), loadUsers()]) })
+const matches = computed(() => homeData.value?.matches || [])
+const users = computed(() => homeData.value?.users || [])
+
+loadingMatches.value = false
+loadingUsers.value = false
+
+watch(switchVersion, async () => {
+  loadingMatches.value = true
+  loadingUsers.value = true
+  await refreshHomeData()
+  loadingMatches.value = false
+  loadingUsers.value = false
+})
+
+onMounted(async () => {
+  if (city.value == initialCity && lat.value == initialLat && lng.value == initialLng) return
+
+  loadingMatches.value = true
+  loadingUsers.value = true
+  await refreshHomeData()
+  loadingMatches.value = false
+  loadingUsers.value = false
+})
 </script>
 
 

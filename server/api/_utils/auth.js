@@ -8,6 +8,11 @@ const TOKEN_COOKIE = 'kq_auth_token'
 const USER_ID_COOKIE = 'kq_auth_user_id'
 const READY_COOKIE = 'kq_auth_ready'
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
+const SHARED_AUTH_MAX_AGE = 60 * 30 * 1000
+
+let sharedAuth = null
+let sharedAuthExpiresAt = 0
+let sharedAuthPromise = null
 
 function buildCookieOptions(httpOnly = true) {
   return {
@@ -23,7 +28,32 @@ function setReadyCookie(event, value = '1') {
   setCookie(event, READY_COOKIE, value, buildCookieOptions(false))
 }
 
+function getSharedKqAuth() {
+  if (!sharedAuth || Date.now() >= sharedAuthExpiresAt) {
+    sharedAuth = null
+    sharedAuthExpiresAt = 0
+    return null
+  }
+
+  return sharedAuth
+}
+
+function setSharedKqAuth(auth) {
+  if (!auth?.token) return
+
+  sharedAuth = {
+    token: auth.token,
+    userId: auth.userId || '',
+    username: auth.username || '',
+    authenticated: true
+  }
+  sharedAuthExpiresAt = Date.now() + SHARED_AUTH_MAX_AGE
+}
+
 export function clearKqAuth(event) {
+  sharedAuth = null
+  sharedAuthExpiresAt = 0
+  sharedAuthPromise = null
   deleteCookie(event, TOKEN_COOKIE, { path: '/' })
   deleteCookie(event, USER_ID_COOKIE, { path: '/' })
   deleteCookie(event, READY_COOKIE, { path: '/' })
@@ -44,6 +74,7 @@ export function getStoredKqAuth(event) {
 }
 
 function persistKqAuth(event, auth) {
+  setSharedKqAuth(auth)
   setCookie(event, TOKEN_COOKIE, auth.token, buildCookieOptions(true))
 
   if (auth.userId) {
@@ -124,12 +155,26 @@ export async function ensureKqAuth(event, { force = false, throwOnError = false 
   const existing = force ? null : getStoredKqAuth(event)
 
   if (existing?.token) {
+    setSharedKqAuth(existing)
     setReadyCookie(event)
     return existing
   }
 
+  const shared = force ? null : getSharedKqAuth()
+
+  if (shared?.token) {
+    setReadyCookie(event)
+    return shared
+  }
+
   try {
-    return await loginKq(event)
+    if (!sharedAuthPromise) {
+      sharedAuthPromise = loginKq(event).finally(() => {
+        sharedAuthPromise = null
+      })
+    }
+
+    return await sharedAuthPromise
   } catch (error) {
     clearKqAuth(event)
 

@@ -53,6 +53,14 @@ export default defineNuxtConfig(() => ({
   },
   nitro: {
     routeRules: {
+      '/': { swr: 300 },
+      '/matches': { swr: 180 },
+      '/search': { swr: 120 },
+      '/scores': { swr: 180 },
+      '/arenas': { swr: 180 },
+      '/coaches': { swr: 180 },
+      '/umpires': { swr: 180 },
+      '/rankings': { swr: 180 },
       '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } }
     }
   },

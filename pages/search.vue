@@ -15,13 +15,13 @@
           :tabs="tabs"
           wrapper-class="inline-flex w-auto self-start rounded-full bg-surfaceSoft p-1"
           button-base-class="relative z-10 rounded-full px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors duration-300"
-          @update:model-value="activeTab = $event"
+          @update:model-value="handleTabChange"
         />
 
       </div>
     </section>
 
-    <component :is="activeComponent" :key="route.fullPath" />
+    <component :is="activeComponent" :key="activeTab" />
   </div>
 </template>
 
@@ -65,14 +65,16 @@ watch(
   }
 )
 
-watch(activeTab, (newTab) => {
-  // 切换 Tab 时，清空旧 Tab 的搜索参数，只保留 tab 标识
-  router.replace({
+const handleTabChange = async (newTab) => {
+  if (newTab === activeTab.value) return
+
+  // 切换 Tab 时，先清空旧 Tab 的搜索参数，再挂载新的 Tab 组件。
+  await router.replace({
     query: {
       tab: newTab
     }
   })
-})
+}
 
 const activeComponent = computed(() => tabComponents[activeTab.value] || SearchMatchTab)
 </script>
