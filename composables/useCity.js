@@ -1,6 +1,11 @@
 const DEFAULT_CITY = '杭州市'
 const DEFAULT_LAT = '30.184'
 const DEFAULT_LNG = '120.204'
+const GEOLOCATION_OPTIONS = {
+  timeout: 12000,
+  enableHighAccuracy: false,
+  maximumAge: 300000
+}
 
 export function useCity() {
   const city = useState('city', () => DEFAULT_CITY)
@@ -94,7 +99,7 @@ export function useCity() {
         resolve(true)
       },
       () => resolve(false),
-      { timeout: 2500 }
+      GEOLOCATION_OPTIONS
     )
   })
 
@@ -111,6 +116,20 @@ export function useCity() {
     } catch {
       return ''
     }
+  }
+
+  const switchCityByLocation = async () => {
+    const geoCity = await resolveCityByCoords(lat.value, lng.value)
+    if (!geoCity) return
+
+    await ensureCityGroups()
+    const allCities = cityGroups.value.flatMap(g => g.list)
+    const matched = allCities.find(c => c.name === geoCity) ||
+      allCities.find(c => geoCity.includes(c.name) || c.name.includes(geoCity))
+    if (!matched) return
+
+    setCity(matched.name)
+    markSwitched()
   }
 
   onMounted(async () => {
@@ -142,17 +161,7 @@ export function useCity() {
 
     // 首次访问定位成功后，根据经纬度接口匹配城市
     if (located && !cachedCity) {
-      const geoCity = await resolveCityByCoords(lat.value, lng.value)
-      if (geoCity) {
-        await ensureCityGroups()
-        const allCities = cityGroups.value.flatMap(g => g.list)
-        const matched = allCities.find(c => c.name === geoCity) ||
-          allCities.find(c => geoCity.includes(c.name) || c.name.includes(geoCity))
-        if (matched) {
-          setCity(matched.name)
-          markSwitched()
-        }
-      }
+      await switchCityByLocation()
     }
   })
 
