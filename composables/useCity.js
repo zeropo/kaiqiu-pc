@@ -7,6 +7,8 @@ const GEOLOCATION_OPTIONS = {
   maximumAge: 300000
 }
 
+let cityInitPromise = null
+
 export function useCity() {
   const city = useState('city', () => DEFAULT_CITY)
   const lat = useState('lat', () => DEFAULT_LAT)
@@ -127,14 +129,13 @@ export function useCity() {
     const matched = allCities.find(c => c.name === geoCity) ||
       allCities.find(c => geoCity.includes(c.name) || c.name.includes(geoCity))
     if (!matched) return
+    if (matched.name === city.value) return
 
     setCity(matched.name)
     markSwitched()
   }
 
-  onMounted(async () => {
-    if (!process.client) return
-
+  const initClientCityState = async () => {
     const s = window.localStorage
     const cachedCity = s.getItem('kq_city')
     city.value = cachedCity || DEFAULT_CITY
@@ -163,6 +164,16 @@ export function useCity() {
     if (located && !cachedCity) {
       await switchCityByLocation()
     }
+  }
+
+  onMounted(async () => {
+    if (!process.client) return
+
+    if (!cityInitPromise) {
+      cityInitPromise = initClientCityState()
+    }
+
+    await cityInitPromise
   })
 
   watch([city, lat, lng], () => {
