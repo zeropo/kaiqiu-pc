@@ -9,7 +9,7 @@
           <input
             v-model="keyword"
             type="search"
-            placeholder="请输入用户姓名"
+            placeholder="请输入选手姓名"
             class="h-12 w-full rounded-2xl border border-border bg-white pl-12 pr-4 text-sm text-text-main outline-none transition-colors placeholder:text-text-light focus:border-brand-primary"
           />
         </div>
@@ -35,9 +35,9 @@
       v-else-if="!hasSearched"
       class="rounded-3xl border border-dashed border-border bg-surfaceSoft/35 px-6 py-14 text-center"
     >
-      <p class="text-lg font-semibold text-text-main">输入用户姓名开始查询积分</p>
+      <p class="text-lg font-semibold text-text-main">输入选手姓名开始查询积分</p>
       <p class="mt-2 text-sm text-text-muted">
-        结果会展示姓名、当前积分、性别和所在地区。
+        支持按姓名搜索，结果会展示积分、性别和地区等。
       </p>
     </div>
 
@@ -51,6 +51,7 @@
             <tr>
               <th class="px-5 py-4 font-semibold">序号</th>
               <th class="px-5 py-4 font-semibold">姓名</th>
+              <th class="px-5 py-4 font-semibold">昵称</th>
               <th class="px-5 py-4 font-semibold">当前积分</th>
               <th class="px-5 py-4 font-semibold">性别</th>
               <th class="px-5 py-4 font-semibold">地区</th>
@@ -73,6 +74,9 @@
                 >
                   {{ user.realname || user.username2 || '-' }}
                 </NuxtLink>
+              </td>
+              <td class="px-5 py-4 text-text-muted">
+                {{ user.username2 || '-' }}
               </td>
               <td class="px-5 py-4 font-semibold text-text-main">
                 {{ user.score || '-' }}
@@ -165,10 +169,12 @@ const load = async (nextPage = 1) => {
 
   try {
     const response = await $api('/user/lists', {
-      method: 'GET',
-      params: {
+      method: 'POST',
+      body: {
         page: nextPage,
-        key: submittedKeyword.value
+        key: submittedKeyword.value,
+        sort: 2,
+        index: 0
       }
     })
     const rows = Array.isArray(response?.data?.data) ? response.data.data : []

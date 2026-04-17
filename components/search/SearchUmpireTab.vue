@@ -9,7 +9,7 @@
           <input
             v-model="keyword"
             type="search"
-            placeholder="请输入用户姓名"
+            placeholder="请输入裁判姓名"
             class="h-12 w-full rounded-2xl border border-border bg-white pl-12 pr-4 text-sm text-text-main outline-none transition-colors placeholder:text-text-light focus:border-brand-primary"
           />
         </div>
@@ -28,14 +28,14 @@
           <button
             type="button"
             :class="chipClass(cityMode === 'current')"
-            @click="cityMode = 'current'"
+            @click="handleFilterChange({ city: 'current' })"
           >
             {{ cityLabel }}
           </button>
           <button
             type="button"
             :class="chipClass(cityMode === 'all')"
-            @click="cityMode = 'all'"
+            @click="handleFilterChange({ city: 'all' })"
           >
             全国范围
           </button>
@@ -48,7 +48,7 @@
             :key="option.value"
             type="button"
             :class="chipClass(levelValue === option.value)"
-            @click="levelValue = option.value"
+            @click="handleFilterChange({ level: option.value })"
           >
             {{ option.label }}
           </button>
@@ -70,7 +70,7 @@
     >
       <p class="text-lg font-semibold text-text-main">输入裁判姓名开始搜索</p>
       <p class="mt-2 text-sm text-text-muted">
-        支持按当前城市或全国范围检索，并可按等级进一步筛选。
+        支持按姓名及当前城市或全国范围搜索，并可按等级进一步筛选。
       </p>
     </div>
 
@@ -151,6 +151,7 @@ const levelOptions = [
 const route = useRoute()
 const router = useRouter()
 const { city, lat, lng } = useCity()
+const { $api } = useNuxtApp()
 
 const keyword = ref(route.query.keyword || '')
 const cityMode = ref(route.query.cityMode || 'current')
@@ -278,6 +279,17 @@ const handleSearch = async () => {
   page.value = 1
   hasMore.value = false
   await load(1)
+}
+
+const handleFilterChange = async ({ city, level }) => {
+  const nextCityMode = city ?? cityMode.value
+  const nextLevelValue = level ?? levelValue.value
+
+  if (nextCityMode === cityMode.value && nextLevelValue === levelValue.value) return
+
+  cityMode.value = nextCityMode
+  levelValue.value = nextLevelValue
+  await handleSearch()
 }
 
 onMounted(() => {

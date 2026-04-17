@@ -1,138 +1,78 @@
 # kaiqiu-pc
 
-开球网（网页版）- 乒乓球信息查询平台
+`kaiqiu-pc` 是开球网的网页版查询站点，基于 `Nuxt 4 + Vue 3 + Tailwind CSS` 构建，面向桌面端与移动端浏览器提供统一的乒乓球信息查询体验。
 
-## 项目简介
-
-kaiqiu-pc 是开球网的网页版应用，将微信小程序中的开球网功能移植到网页端。该项目提供乒乓球相关信息的查询服务，包括比赛、球馆、教练、裁判、积分以及排行榜等功能。
-
-### 设计理念
-
-- 参考 WTT 官方网站（https://www.worldtabletennis.com/）的网页端布局设计
-- 现代化风格，界面美观、动画流畅
-- 支持响应式设计，完美适配电脑、平板、手机等不同设备
-- 不滥用 emoji，不使用烂大街的蓝紫色渐变
-- 做好 SEO 管理，为部署到 Vercel 做好准备
-
-### 功能范围
-
-- ✅ 查询功能（无需登录）
-- ❌ 登录、报名相关功能（暂不支持）
-
-## 功能特性
-
-- 🏓 **比赛查询** - 查看近期赛事和比赛详情
-- 🏟️ **球馆查询** - 查找乒乓球馆信息
-- 👨‍🏫 **教练查询** - 浏览教练资料
-- 👨‍⚖️ **裁判查询** - 查看裁判信息
-- 📊 **积分查询** - 查询选手积分
-- 🏆 **排行榜** - 查看各类排名榜单
-- 🔍 **搜索功能** - 全局搜索各类信息
-- 📍 **城市定位** - 支持基于地理位置的查询
-- 📱 **响应式布局** - 完美适配各种设备
+项目当前只覆盖公开查询能力，重点是比赛、球馆、教练、裁判、积分、榜单与全局搜索，不提供用户登录、报名等前台操作。
 
 ## 技术栈
 
-- **前端框架**: Nuxt.js 4
-- **UI 框架**: Vue 3
-- **样式方案**: Tailwind CSS
-- **图片优化**: @nuxt/image
-- **部署平台**: Vercel
-- **构建工具**: Vite
-- **开发语言**: JavaScript（不使用 TypeScript）
+- `Nuxt 4` + `Vue 3`
+- `JavaScript`（不使用 TypeScript）
+- `Tailwind CSS`
+- `@nuxt/image`
+- `Nitro Server Routes / Server API`
+- `SSR`
 
-## 项目结构
+## 主要能力
 
-```
+- 比赛列表与详情查询
+- 球馆列表与详情查询
+- 教练列表与详情查询
+- 裁判列表与详情查询
+- 积分列表与选手详情查询
+- 榜单列表与详情查询
+- 多类型统一搜索
+- 城市切换与定位辅助
+- 基础 SEO、`robots.txt`、`sitemap.xml`
+
+## 目录概览
+
+```text
 kaiqiu-pc/
-├── api/                          # API 接口文档
-│   ├── original/                 # 原始接口文档
-│   │   ├── 0. 开球网接口文档-公共.md
-│   │   ├── 1. 开球网接口文档-比赛.md
-│   │   ├── 2. 开球网接口文档-教练.md
-│   │   ├── 3. 开球网接口文档-球馆.md
-│   │   ├── 4. 开球网接口文档-积分.md
-│   │   ├── 5. 开球网接口文档-排行榜.md
-│   │   └── 6. 开球网接口文档-裁判.md
-│   └── standard/                 # 标准化接口文档
-├── assets/                       # 静态资源
-│   ├── css/
-│   │   └── tailwind.css
-│   └── design/
-│       └── tokens.css
-├── components/                   # 组件
-│   ├── card/                     # 卡片组件
-│   │   ├── ArenaCard.vue
-│   │   ├── MatchCard.vue
-│   │   └── PersonCard.vue
-│   ├── common/                   # 通用组件
-│   │   └── CityPicker.vue
-│   └── ui/                       # UI 组件
-│       ├── ImgFallback.vue
-│       └── Modal.vue
-├── composables/                  # 组合式函数
-│   ├── useCity.js
-│   └── useHtmlDecode.js
-├── layouts/                      # 布局文件
-│   ├── default.vue
-│   └── empty.vue
-├── pages/                        # 页面路由
-│   ├── arenas/                   # 球馆页面
-│   │   ├── [id].vue
-│   │   └── index.vue
-│   ├── coaches/                  # 教练页面
-│   │   ├── [id].vue
-│   │   └── index.vue
-│   ├── matches/                  # 比赛页面
-│   │   ├── [id].vue
-│   │   └── index.vue
-│   ├── rankings/                 # 排行榜页面
-│   │   ├── [tid].vue
-│   │   └── index.vue
-│   ├── scores/                   # 积分页面
-│   │   ├── [uid].vue
-│   │   └── index.vue
-│   ├── umpires/                  # 裁判页面
-│   │   ├── [id].vue
-│   │   └── index.vue
-│   ├── 404.vue                   # 404 页面
-│   ├── index.vue                 # 首页
-│   └── search.vue                # 搜索页
-├── plugins/                      # 插件
-│   ├── api.client.js
-│   └── api.server.js
-├── public/                       # 公共文件
-│   ├── android-chrome-192x192.png
-│   ├── android-chrome-512x512.png
-│   ├── apple-touch-icon.png
-│   ├── favicon-16x16.png
-│   ├── favicon-32x32.png
-│   ├── favicon.ico
-│   └── site.webmanifest
-├── server/                       # 服务端代码
-│   └── api/                      # API 代理
-│       ├── Top/
-│       ├── _utils/
-│       ├── arena/
-│       ├── enter/
-│       ├── match/
-│       ├── public/
-│       └── trainer/
-├── .editorconfig
-├── .gitignore
-├── app.vue                       # 根组件
-├── error.vue                     # 错误页面
-├── nuxt.config.js                # Nuxt 配置
-├── package.json                  # 项目依赖
-└── tailwind.config.js            # Tailwind 配置
+├── api/                  # 接口文档，分 original / standard 两套
+├── assets/               # 全局样式与设计 token
+├── components/           # 页面复用组件，含 card / match / score / search / ui / common
+├── composables/          # 共享状态与组合逻辑
+├── layouts/              # 默认布局与轻量布局
+├── pages/                # 文件路由，按公开查询模块拆分
+├── plugins/              # $api 注入与客户端静默鉴权
+├── public/               # favicon、manifest 等静态资源
+├── server/               # Nitro 服务端代理与 SEO 路由
+├── services/             # 对 $api 的轻量封装
+├── app.vue               # 应用外壳
+├── nuxt.config.js        # Nuxt / runtimeConfig / SEO / image 配置
+├── tailwind.config.js    # Tailwind 设计系统配置
+├── README.md
+└── AGENTS.md
 ```
 
-## 快速开始
+### 关键目录说明
 
-### 环境要求
+- `pages/`：公开页面入口，采用“列表页 + 详情页”的组织方式。
+- `components/search/`：搜索页的多 Tab 检索组件。
+- `components/card/`、`components/match/`、`components/score/`：卡片、比赛详情、积分详情等核心展示组件。
+- `composables/useCity.js`：城市、经纬度、本地缓存与切换版本号的共享状态。
+- `composables/useAutoLoadMore.js`：列表页无限滚动加载。
+- `plugins/api.client.js`、`plugins/api.server.js`：统一注入 `$api`。
+- `server/api/_utils/request.js`：服务端请求转发与表单编码。
+- `server/api/_utils/auth.js`：上游接口静默鉴权与 cookie 持久化。
+- `server/routes/robots.txt.js`、`server/routes/sitemap.xml.js`：SEO 文件路由。
 
-- Node.js 18+
-- npm 或 yarn
+## 数据链路
+
+项目采用页面驱动的数据获取模式，主链路如下：
+
+`页面 / 组件` -> `$api` 插件 -> 本地 `/api/*` -> `server/api/**` -> 开球网上游接口
+
+补充说明：
+
+- `services/**` 存在，但不是唯一的数据访问层，很多页面会直接调用 `$api`。
+- `GET` 请求会转发查询参数。
+- `POST` 请求统一使用 `application/x-www-form-urlencoded`，不是 JSON。
+- 服务端代理请求上游前会先完成静默鉴权，并把凭证写入 cookie。
+- 上游路径大小写敏感，本地代理路径需要严格保持原样。
+
+## 运行方式
 
 ### 安装依赖
 
@@ -140,75 +80,64 @@ kaiqiu-pc/
 npm install
 ```
 
-### 开发模式
+### 本地开发
 
 ```bash
 npm run dev
 ```
 
-访问 http://localhost:3000
+默认启动在 `http://localhost:3000`。
 
-### 构建生产版本
+### 生产构建
 
 ```bash
 npm run build
 ```
 
-### 预览生产版本
+### 本地预览
 
 ```bash
 npm run preview
 ```
 
-### 启动生产服务器
+### 启动生产服务
 
 ```bash
 npm run start
 ```
 
-## 部署
+## 环境变量
 
-### Vercel 部署
+建议在本地环境或部署平台显式配置以下变量：
 
-项目已配置好 Vercel 持续部署。
+- `KQ_BASE_URL`：开球网上游接口基础地址
+- `KQ_SILENT_LOGIN_ACCOUNT`：服务端静默鉴权账号
+- `KQ_SILENT_LOGIN_PASSWORD`：服务端静默鉴权密码
+- `KQ_SILENT_LOGIN_OPEN_ID`：服务端静默鉴权 openId
 
-**环境变量：**
-- `KQ_BASE_URL`（可选）- 开球网 API 基础地址，默认为 `https://kaiqiuwang.cc/xcx/public/index.php/api`
+运行时公开前缀由 `runtimeConfig.public.apiBase` 控制，当前配置为 `/api`。
 
-### 接口代理说明
+## 接口文档
 
-- 所有请求统一走 `/api` 前缀
-- 由 `server/api/**` 代理至后端标准接口
+仓库内已保留两套接口资料：
 
-## API 接口
+- `api/original/**`：原始接口文档，保留上游真实路径与原始字段
+- `api/standard/**`：标准化接口文档，更适合对照当前代理实现
 
-项目包含完整的 API 接口文档：
+调整代理路由、请求参数或字段映射前，建议先看 `api/standard/**`，再回看 `api/original/**`。
 
-- `/api/original/` - 原始接口文档
-- `/api/standard/` - 标准化接口文档
+## SEO 与静态资源
 
-主要接口模块：
-- 公共接口（城市列表等）
-- 比赛接口
-- 教练接口
-- 球馆接口
-- 积分接口
-- 排行榜接口
-- 裁判接口
+- 全局站点信息在 `nuxt.config.js`
+- 页面级 SEO 主要通过各页面内的 `useHead(...)` 设置
+- `server/routes/robots.txt.js` 生成 `robots.txt`
+- `server/routes/sitemap.xml.js` 生成站点地图
+- `public/**` 保存 favicon、manifest 等静态资源
+- `@nuxt/image` 已配置上游图片域名白名单
 
-## 在线访问
+## 开发补充
 
-项目已部署在 Vercel 上：
-https://kaiqiu-pc.vercel.app
+- 当前仓库没有 `lint` 脚本，也没有 `test` 脚本。
+- 项目以查询体验为中心，页面逻辑通常直接围绕当前页面组织，而不是强制抽成统一 service 层。
+- 城市定位相关能力集中在 `composables/useCity.js`，比赛、球馆、教练、积分、榜单等页面都会依赖它。
 
-## 仓库地址
-
-https://github.com/zeropo/kaiqiu-pc
-
-## 作者
-
-zeropo
-
-## License
-
-ISC

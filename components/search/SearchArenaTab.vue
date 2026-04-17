@@ -37,7 +37,7 @@
     >
       <p class="text-lg font-semibold text-text-main">输入球馆名称开始搜索</p>
       <p class="mt-2 text-sm text-text-muted">
-        会展示球馆名称、地址、距离和浏览量。
+        支持按名称搜索，结果会展示地址、距离和浏览量等。
       </p>
     </div>
 

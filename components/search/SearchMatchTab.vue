@@ -50,26 +50,19 @@
         <div class="grid gap-3 lg:grid-cols-[120px_minmax(0,1fr)] lg:items-start">
           <span class="pt-1 text-sm font-semibold text-text-main md:text-base">举办城市</span>
           <div class="flex flex-wrap items-center gap-2">
-            <div :class="cityDisplayClass">
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657 13.414 20.9a1.998 1.998 0 0 1-2.827 0L6.343 16.657a8 8 0 1 1 11.314 0Z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
-              </svg>
-              <span>{{ cityDisplayText }}</span>
-            </div>
             <button
               type="button"
-              :class="chipClass(cityScope === 'unlimitedCity')"
-              @click="toggleCityScope('unlimitedCity')"
+              :class="chipClass(cityMode === 'current')"
+              @click="cityMode = 'current'"
             >
-              全国范围
+              {{ cityLabel }}
             </button>
             <button
               type="button"
-              :class="chipClass(cityScope === 'overseas')"
-              @click="toggleCityScope('overseas')"
+              :class="chipClass(cityMode === 'all')"
+              @click="cityMode = 'all'"
             >
-              海外城市
+              全国范围
             </button>
           </div>
         </div>
@@ -151,7 +144,7 @@
     >
       <p class="text-lg font-semibold text-text-main">从比赛开始搜索</p>
       <p class="mt-2 text-sm text-text-muted">
-        标题、日期、距离、标签和排序都可以自由组合，结果会自动带上当前城市和当前位置。
+        标题、日期、距离、标签支持自由组合，并支持按当前城市或全国范围搜索。
       </p>
     </div>
 
@@ -445,7 +438,7 @@ const eventTitle = ref(route.query.keyword || '')
 const startDate = ref(route.query.startDate || '')
 const endDate = ref(route.query.endDate || '')
 const selectedPreset = ref(route.query.preset || '')
-const cityScope = ref(route.query.cityScope || '')
+const cityMode = ref(route.query.cityMode === 'all' ? 'all' : 'current')
 const distance = ref(route.query.distance || 'gt0')
 const selectedTags = ref(route.query.tags ? route.query.tags.split(',') : [])
 const sortType = ref(Number(route.query.sort || 0))
@@ -460,31 +453,23 @@ const loadingMore = ref(false)
 const cityLabel = computed(() => city.value || '杭州市')
 
 const updateQuery = () => {
-  router.replace({
-    query: {
-      ...route.query,
-      keyword: eventTitle.value.trim(),
-      startDate: startDate.value,
-      endDate: endDate.value,
-      preset: selectedPreset.value,
-      cityScope: cityScope.value,
-      distance: distance.value,
-      tags: selectedTags.value.join(','),
-      sort: sortType.value
-    }
-  })
+  const nextQuery = {
+    ...route.query,
+    keyword: eventTitle.value.trim(),
+    startDate: startDate.value,
+    endDate: endDate.value,
+    preset: selectedPreset.value,
+    cityMode: cityMode.value,
+    distance: distance.value,
+    tags: selectedTags.value.join(','),
+    sort: sortType.value
+  }
+  delete nextQuery.cityScope
+  router.replace({ query: nextQuery })
 }
-const cityDisplayText = computed(() => (cityScope.value ? '不限' : cityLabel.value))
-const cityDisplayClass = computed(() => (
-  cityScope.value
-    ? 'inline-flex items-center gap-2 rounded-2xl border border-border bg-surfaceSoft px-4 py-3 text-sm font-semibold text-text-light'
-    : 'inline-flex items-center gap-2 rounded-2xl border border-brand-primary/20 bg-brand-primary/5 px-4 py-3 text-sm font-semibold text-brand-primary'
-))
 const citySummary = computed(() => {
-  if (!submittedFilters.value) return cityLabel.value
-  if (submittedFilters.value.city === 'unlimitedCity') return '全国范围'
-  if (submittedFilters.value.city === 'overseas') return '海外城市'
-  return submittedFilters.value.city
+  if (!submittedFilters.value) return cityMode.value === 'all' ? '全国范围' : cityLabel.value
+  return submittedFilters.value.city === 'unlimitedCity' ? '全国范围' : submittedFilters.value.city
 })
 const sortSummary = computed(() => (
   submittedFilters.value?.searchResultSortType === 1 ? '距离近到远' : '时间近到远'
@@ -624,9 +609,6 @@ const handleEndDateChange = (value) => {
   selectedPreset.value = ''
 }
 
-const toggleCityScope = (value) => {
-  cityScope.value = cityScope.value === value ? '' : value
-}
 
 const toggleTag = (value) => {
   if (selectedTags.value.includes(value)) {
@@ -655,7 +637,7 @@ const buildSubmittedFilters = () => {
   const end = parseDateInput(endDate.value)
 
   return {
-    city: cityScope.value || cityLabel.value,
+    city: cityMode.value === 'all' ? 'unlimitedCity' : cityLabel.value,
     eventTitle: eventTitle.value.trim(),
     startMatchTimestamp: start ? toTimestampSeconds(start) : undefined,
     endMatchTimestamp: end ? toTimestampSeconds(addDays(end, 1)) : undefined,
@@ -726,7 +708,7 @@ const resetFilters = async () => {
   startDate.value = ''
   endDate.value = ''
   selectedPreset.value = ''
-  cityScope.value = ''
+  cityMode.value = 'current'
   distance.value = 'gt0'
   selectedTags.value = []
   sortType.value = 0
@@ -737,9 +719,12 @@ const resetFilters = async () => {
 onMounted(() => {
   clearInvalidEndDate()
 
-  if (route.query.keyword || route.query.startDate || route.query.preset) {
+  if (route.query.keyword || route.query.startDate || route.query.preset || route.query.cityMode) {
     submittedFilters.value = buildSubmittedFilters()
     load(1)
+    return
   }
+
+  applyDatePreset('thisWeekend')
 })
 </script>

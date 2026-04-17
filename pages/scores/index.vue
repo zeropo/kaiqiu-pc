@@ -30,6 +30,7 @@
             <tr>
               <th class="px-6 py-4 rounded-tl-card">序号</th>
               <th class="px-6 py-4">姓名</th>
+              <th class="px-6 py-4">昵称</th>
               <th class="px-6 py-4">当前积分</th>
               <th class="px-6 py-4">最高积分</th>
               <th class="px-6 py-4">性别</th>
@@ -50,6 +51,7 @@
                   {{ u.realname || '-' }}
                 </NuxtLink>
               </td>
+              <td class="px-6 py-4 text-text-muted">{{ u.username2 || '-' }}</td>
               <td class="px-6 py-4 font-display font-bold text-brand-primary text-base">{{ u.score || '-' }}</td>
               <td class="px-6 py-4 text-text-muted">{{ u.maxscore || '-' }}</td>
               <td class="px-6 py-4 text-text-muted">{{ formatSex(u.sex) }}</td>
@@ -64,7 +66,7 @@
               </td>
             </tr>
             <tr v-if="!list.length">
-              <td colspan="7" class="px-6 py-16 text-center text-text-muted">暂无符合条件的数据</td>
+              <td colspan="8" class="px-6 py-16 text-center text-text-muted">暂无符合条件的数据</td>
             </tr>
           </tbody>
         </table>

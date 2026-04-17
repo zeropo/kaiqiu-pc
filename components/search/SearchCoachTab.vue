@@ -9,7 +9,7 @@
           <input
             v-model="keyword"
             type="search"
-            placeholder="请输入教练姓名或证书编号"
+            placeholder="请输入教练姓名"
             class="h-12 w-full rounded-2xl border border-border bg-white pl-12 pr-4 text-sm text-text-main outline-none transition-colors placeholder:text-text-light focus:border-brand-primary"
           />
         </div>
@@ -37,7 +37,7 @@
     >
       <p class="text-lg font-semibold text-text-main">输入教练姓名开始搜索</p>
       <p class="mt-2 text-sm text-text-muted">
-        支持按姓名或证书编号搜索，结果会展示积分、城市、距离和推荐情况。
+        支持按姓名搜索，结果会展示积分、城市、距离和推荐情况等。
       </p>
     </div>
 
