@@ -395,7 +395,7 @@
             class="rounded-[24px] border border-border bg-[linear-gradient(135deg,rgba(255,249,235,0.5),rgba(255,255,255,1)_38%,rgba(248,250,252,1))] p-4"
           >
             <div class="flex items-start gap-3">
-              <img :src="honor.honor" alt="" class="mt-0.5 h-10 w-10 shrink-0" />
+              <img :src="getHonorMedalSrc(honor.honor)" alt="" class="mt-0.5 h-10 w-10 shrink-0" />
               <div class="min-w-0 flex-1">
                 <p class="text-[15px] font-semibold leading-6 text-text-main">{{ honor.subject }}</p>
                 <p class="mt-2 text-sm text-text-muted">{{ formatUnixDate(honor.posttime) || '时间未知' }}</p>
@@ -760,6 +760,19 @@ const championChallenge = computed(() => {
 const championChallengePanelStyle = computed(() => ({
   backgroundImage: `radial-gradient(circle at top right, ${toRgba(accentColor.value, 0.16)}, transparent 34%), linear-gradient(135deg, ${toRgba(accentColor.value, 0.08)}, rgba(255,255,255,0.96) 42%, ${toRgba(accentColor.value, 0.03)} 100%)`
 }))
+
+const HONOR_MEDAL_SRC_MAP = {
+  gold: '/medals/gold_medal_40.png',
+  silver: '/medals/silver_medal_40.png',
+  bronze: '/medals/bronze_medal_40.png'
+}
+
+const getHonorMedalSrc = (src) => {
+  if (String(src).includes('gold_medal')) return HONOR_MEDAL_SRC_MAP.gold
+  if (String(src).includes('silver_medal')) return HONOR_MEDAL_SRC_MAP.silver
+  if (String(src).includes('bronze_medal')) return HONOR_MEDAL_SRC_MAP.bronze
+  return src
+}
 
 const recentHonors = computed(() => {
   if (!Array.isArray(profile.value?.honors)) return []
