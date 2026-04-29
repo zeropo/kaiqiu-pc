@@ -53,7 +53,7 @@ export default defineNuxtConfig(() => ({
   },
   nitro: {
     routeRules: {
-      '/': { swr: 300 },
+      '/': { swr: 60 },
       '/matches': { swr: 180 },
       '/search': { swr: 120 },
       '/scores': { swr: 180 },

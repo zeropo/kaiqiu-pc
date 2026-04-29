@@ -11,7 +11,7 @@
       </div>
       <div class="absolute bottom-3 left-3 z-20 flex gap-2 pointer-events-none">
         <span class="text-xs text-white bg-black/40 backdrop-blur-md px-2 py-1 rounded-md font-medium border border-white/10">
-          {{ match.status }}
+          {{ displayStatus }}
         </span>
       </div>
       <div v-if="isWanghong" class="absolute right-3 bottom-3 z-20 pointer-events-none">
@@ -102,6 +102,8 @@ const isRecommended = computed(() => {
 const isWanghong = computed(() => {
   return String(props.match?.wanghong ?? '').trim() === '1'
 })
+
+const displayStatus = computed(() => props.match?.displayStatus || props.match?.status || '详情')
 
 // 格式化距离显示
 const formatDistance = (distance) => {

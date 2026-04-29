@@ -120,54 +120,11 @@ const initialCity = city.value
 const initialLat = lat.value
 const initialLng = lng.value
 
-const FEATURED_PLAYERS_CITY = '-1'
-const FEATURED_PLAYERS_INDEX = 11111
-
-const buildMatchCards = (rows = []) => {
-  const matchList = Array.isArray(rows) ? rows.slice() : []
-
-  if (matchList.length) {
-    matchList.sort((a, b) => {
-      const distanceA = parseFloat(a.distance) || Infinity
-      const distanceB = parseFloat(b.distance) || Infinity
-      return distanceA - distanceB
-    })
-  }
-
-  return matchList.slice(0, 4)
-}
-
-const buildFeaturedUsers = (rows = []) => {
-  const userList = Array.isArray(rows) ? rows : []
-
-  return userList
-    .slice()
-    .sort((a, b) => (Number(b?.score) || 0) - (Number(a?.score) || 0))
-    .slice(0, 4)
-}
-
 const loadHomeData = async () => {
-  const [matchRes, userRes] = await Promise.all([
-    $api('/match/lists', {
-      method: 'POST',
-      body: { city: city.value, lat: lat.value, lng: lng.value, page: 1, sort: 2 }
-    }),
-    $api('/user/lists', {
-      method: 'POST',
-      body: {
-        city: FEATURED_PLAYERS_CITY,
-        now: city.value,
-        sort: 2,
-        page: 1,
-        index: FEATURED_PLAYERS_INDEX
-      }
-    })
-  ])
-
-  return {
-    matches: buildMatchCards(matchRes?.data?.data),
-    users: buildFeaturedUsers(userRes?.data?.data)
-  }
+  return await $api('/home/summary', {
+    method: 'POST',
+    body: { city: city.value, lat: lat.value, lng: lng.value }
+  })
 }
 
 const emptyHomeState = { matches: [], users: [] }
@@ -208,5 +165,4 @@ onMounted(async () => {
   loadingUsers.value = false
 })
 </script>
-
 
